@@ -1,0 +1,660 @@
+%% 
+%% Copyright 2007-2025 Elsevier Ltd
+%% 
+%% This file is part of the 'Elsarticle Bundle'.
+%% ---------------------------------------------
+%% 
+%% It may be distributed under the conditions of the LaTeX Project Public
+%% License, either version 1.3 of this license or (at your option) any
+%% later version.  The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 1999/12/01 or later.
+%% 
+%% The list of all files belonging to the 'Elsarticle Bundle' is
+%% given in the file `manifest.txt'.
+%% 
+%% Template article for Elsevier's document class `elsarticle'
+%% with numbered style bibliographic references
+%% SP 2008/03/01
+%% $Id: elsarticle-template-num.tex 272 2025-01-09 17:36:26Z rishi $
+%%
+\sloppy
+\documentclass[preprint,12pt]{elsarticle}
+\usepackage[UTF8]{ctex}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage{booktabs}
+\usepackage{comment}
+%% Use the option review to obtain double line spacing
+%% \documentclass[authoryear,preprint,review,12pt]{elsarticle}
+
+%% Use the options 1p,twocolumn; 3p; 3p,twocolumn; 5p; or 5p,twocolumn
+%% for a journal layout:
+%% \documentclass[final,1p,times]{elsarticle}
+%% \documentclass[final,1p,times,twocolumn]{elsarticle}
+%% \documentclass[final,3p,times]{elsarticle}
+%% \documentclass[final,3p,times,twocolumn]{elsarticle}
+%% \documentclass[final,5p,times]{elsarticle}
+%% \documentclass[final,5p,times,twocolumn]{elsarticle}
+
+%% For including figures, graphicx.sty has been loaded in
+%% elsarticle.cls. If you prefer to use the old commands
+%% please give \usepackage{epsfig}
+
+%% The amssymb package provides various useful mathematical symbols
+\usepackage{amssymb}
+%% The amsmath package provides various useful equation environments.
+\usepackage{amsmath}
+%% The amsthm package provides extended theorem environments
+%% \usepackage{amsthm}
+\usepackage{subfigure}
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers.
+%% \usepackage{lineno}
+
+\journal{Nuclear Physics B}
+\usepackage{cleveref}
+\crefname{figure}{Fig.}{Figs.} % 小写引用格式
+\crefname{equation}{Eq.}{Eqs.} % 大写引用格式
+\crefname{table}{Table}{Table}  
+\renewcommand{\figurename}{Fig.}
+\begin{document}
+
+\begin{frontmatter}
+
+%% Title, authors and addresses
+
+%% use the tnoteref command within \title for footnotes;
+%% use the tnotetext command for theassociated footnote;
+%% use the fnref command within \author or \affiliation for footnotes;
+%% use the fntext command for theassociated footnote;
+%% use the corref command within \author for corresponding author footnotes;
+%% use the cortext command for theassociated footnote;
+%% use the ead command for the email address,
+%% and the form \ead[url] for the home page:
+%% \title{Title\tnoteref{label1}}
+%% \tnotetext[label1]{}
+%% \author{Name\corref{cor1}\fnref{label2}}
+%% \ead{email address}
+%% \ead[url]{home page}
+%% \fntext[label2]{}
+%% \cortext[cor1]{}
+%% \affiliation{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+%% \fntext[label3]{}
+
+\title{PointSS：一种基于几何感知的多尺度状态空间点云分析方法}
+
+%% use optional labels to link authors explicitly to addresses:
+%% \author[label1,label2]{}
+%% \affiliation[label1]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+%%
+%% \affiliation[label2]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+
+\author{Xinyuan Zhang, Xin Wang} %% Author name
+
+%% Author affiliation
+\affiliation{organization={Jilin University},%Department and Organization
+            addressline={}, 
+            city={},
+            postcode={}, 
+            state={},
+            country={China}}
+
+%% Abstract
+\begin{abstract}
+%% Text of abstract
+
+目前自然语言处理领域兴起的Mamba模型在点云分析领域已有大规模应用，取得了良好的效果。但由于点云具有无序性，而Mamba要求顺序序列的输入，因此传统状态空间模型直接应用于点云较为困难。为此，主流基于Mamba的点云分析方案会将点云序列化后进行特征提取。但这也暴露了问题：受序列化方式的影响，空间坐标距离最邻近的点集合并不一定在序列化后是相邻的。而关键几何结构信息通常是由最邻近点集合提供的，因此基于序列化的点云特征提取方案很难学习到关键的几何结构信息。
+此外在Mamba的长序列的邻域划分方案下，模型通常无法分辨更邻近的点和更远点的学习权重，导致其无法精确学习到更邻近点带来的细节信息，以及更远点带来的高层次信息。同时其也忽略了点云本质上的无序特性，为点云强加了因果关系。
+为解决相关问题，本文提出了一种基于多尺度的序列化状态空间的点云特征提取神经网络PointSS。针对几何信息丢失问题，我们设计了全局几何感知机制(Global Geometry-Aware Mechanism,GGAM)。其在特征维度上结合点云的几何特征(曲率和法向量)，并利用交叉注意力机制动态聚合几何信息和上下文特征。该方法能够高效地增强几何特征表示，提升模型对点云几何结构的建模能力。此外我们引入基于多尺度特征融合的序列化点云学习策略(Multi-Scale Feature Fusion Strategy)MSFFS，使模型能够在长序列的点云中，在考虑点云无序性的同时，将点云的特征学习层次化，提升模型对于长序列点云的处理能力。
+
+实验结果证明，所提出的算法较目前主流方法以及基于状态空间的点云分析方法有明显优势。在统一不使用预训练的情况下，在点云室内分割基准S3DIS中达到了73.6\%的mean Intersection over Union(mIoU)，以3.8\%的mIoU超过了效果最好的同类模型PCM 。在3D分类基准ModelNet40中以1.9\%的整体正确率超过了效果最好的同类模型Mamba3D。
+\end{abstract}
+
+%%Graphical abstract
+\begin{graphicalabstract}
+%\includegraphics{grabs}
+\end{graphicalabstract}
+
+
+%% Keywords
+\begin{keyword}
+%% keywords here, in the form: keyword \sep keyword
+
+%% PACS codes here, in the form: \PACS code \sep code
+Point cloud analysis, State space models, Multi scale feature fusion, Point cloud serialization, Geometric structure
+%% MSC codes here, in the form: \MSC code \sep code
+%% or \MSC[2008] code \sep code (2000 is the default)
+
+\end{keyword}
+
+\end{frontmatter}
+
+%% Add \usepackage{lineno} before \begin{document} and uncomment 
+%% following line to enable line numbers
+%% \linenumbers
+
+%% main text
+%%
+
+%% Use \section commands to start a section
+\section{Introduction}
+\label{sec1}
+%% Labels are used to cross-reference an item using \ref command.
+点云分析被广泛应用于自动驾驶、增强现实（AR）/虚拟现实（VR）领域，相较于二维图像，点云有着稀疏性、无序性等特点。因此对于点云分析需要有区别于二维图像分析的新思路。
+目前随着点云重建技术的成熟，大规模高密度的点云场景将会逐渐普及。大规模点云场景为点云分析任务带来了挑战\cite{Vertex}，其需要更高效且精准度更高的处理手段，比如在提升点云处理效率或提升特征学习性能方面。且随着点云密度的增加，同一窗口下的点云也将增多，其对模型的上下文理解能力有了更高的要求。
+
+点云分析最初依赖PointNet\cite{pointnet,PointNet++}等基于邻近点搜索和MLP的方法，虽避免了中间表示转换，但特征提取能力有限。随后，Transformer\cite{pt,ptv3,superpoint} 因其更强的全局建模能力被广泛应用，却受限于二次计算复杂度与长序列理解不足。这些缺陷已成为点云大模型与大规模场景分析的发展瓶颈。受自然语言处理领域时序化特征提取方案的启发 \cite{ssm,Mamba,Lstm}，越来越多Mamba\cite{Mamba,VisionMamba}相关工作被应用到点云分析，如PCM(Point Cloud Mamba)\cite{pcm}和PointMamba\cite{PointMamba}。其线性时间复杂度的特点具有天然优势且对于点云的特征提取也有良好的效果。
+
+目前基于Mamba的点云分析方法还有两个关键问题需要解决。其一：模型依赖点云序列化后进行特征提取，这种方式导致空间邻近的点在序列化后可能分离，破坏了点云的局部几何结构，使得模型难以有效学习法向量、曲率等关键几何信息，从而影响对复杂形状的精确学习。我们称这种情况为“几何丢失”。其二：当前的模型对于针对长序列下特征提取粒度单一，且为点云强加了因果关系，导致最终点云分析效果不佳。
+
+几何结构的丢失问题出现的核心原因在于序列化特征提取范式与点云几何特性的天然矛盾。点云序列化导致局部几何邻域断裂，使用空间填充曲线进行点云序列化无法完全保证空间邻近的点在序列中相邻。我们称这些点为割裂点。Mamba的离散化状态空间模型通过状态向量、输入向量和输出向量以及相应的系统矩阵来描述系统的时序演化过程。在此框架下，已学习过的点云记忆信息保存在状态向量中。Mamba在顺序特征提取过程中，由于对新点的学习，状态向量会逐渐更新。但由于割裂点的几何信息对于非中心点来说并不重要，所以状态向量会逐渐遗忘掉割裂点的结构信息。而进行点云分析时的边界点正是对几何结构信息最敏感的点。这些点往往在法线或曲率上有较大的变化。例如三维空间中距离仅 0.1m 的两个点，可能因 x 坐标差异被序列化为相隔数千点的位置，导致其所属的 k 近邻集合在序列中被割裂，最终导致分割效果不佳。如图\cref{fig:analysis}展示了几何结构丢失的可视化，我们以墙面与方柱的边界分割为例。其中红色点为center point表示我们需要预测的中心点。绿色点key points代表了空间邻近且序列化后位置与中心点邻近的点，这些点的几何结构信息一般能够正常被学习。橙色的点代表其在空间上与center point相邻，但序列化后并不相邻，也就是割裂点。这些点的几何结构信息很有可能在到center point时就被遗忘，最终导致center point点的分割效果不佳。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{picture/analysis.JPG}
+	\caption{序列化后几何结构丢失可视化}
+	\label{fig:analysis}
+\end{figure}
+
+长序列下特征粒度单一与因果关系强加的问题出现的核心原因在于，PCM虽通过增加排序策略改善序列化效果，但在处理长序列点云时，受Mamba线性计算特性影响，无法在邻域内精准区分远近点的学习权重，难以同时捕捉邻近点的细节信息与较远点的高层次语义，导致特征提取的粒度与层次化不足。此外，这些方法常依赖对点云进行特定排序或结构化预处理，忽略了点云本质上的无序特性，为点云强加了因果关系，从而在一定程度上丢失了数据的多样性和原始特征分布的完整性，使模型对序列顺序过度敏感，输入顺序的变化可能导致完全不同的输出，不利于模型的鲁棒性。
+
+针对几何丢失问题，我们首先从几何信息建模的核心矛盾出发：既然序列化导致局部几何邻域割裂，那么需显式引入点云固有的几何特征（如法向量、曲率）并建立全局关联。借鉴图神经网络中显式建模节点间几何关系的类似思想（如 DGCNN 对局部几何关系的捕捉\cite{DGCNN}），我们可通过构建图的方式来构建邻域的几何关系，并进一步结合交叉注意力机制，让几何信息与上下文特征动态聚合，以缓解序列化带来的信息丢失。
+
+针对长序列下特征粒度单一与因果关系强加的问题，我们思考：点云的无序性本质要求模型摆脱固定序列依赖，受到计算机视觉领域多尺度特征金字塔\cite{fpn}）的启发，多尺度学习是平衡局部细节与全局语义的有效路径。因此可在不同尺度下分别处理有序与乱序点云：低尺度保留有序序列以利用 SSM 的高效建模能力，高尺度引入乱序点云以打破人为因果关系，通过动态窗口调整策略让模型为不同距离的邻域点分配差异化权重，从而实现细节信息不遗漏、高层次语义不丢失的特征学习目标。
+
+为解决上述问题，本文提出PointSS,该模型核心由全局几何感知机制（GGAM）、以及多尺度特征融合策略（MSFFS） 两大核心组件构成，形成 “几何信息补全 - 细粒度特征提取 - 多尺度无序学习” 的解决方案。其中，GGAM 通过双序列化（Z-order 与 Hilbert）交叉注意力与几何一致性约束，显式融合点云法向量、曲率等关键几何特征，直接解决序列化导致的局部几何邻域割裂问题；MSFFS 则通过 “低尺度有序学习 + 高尺度乱序学习” 的多尺度并行策略，在保留 SSM 长序列处理效率的同时，尊重点云无序本质，打破人为强加的因果关系，解决长序列下远近点权重区分不精确的问题。
+
+本文提出的 PointSS 通过全局几何感知机制与多尺度特征融合策略，针对性解决上述问题，为点云分析提供更高效、准确的解决方案。
+本文主要工作如下：
+\begin{itemize}
+	\item 提出基于多尺度序列化状态空间的点云分析网络PointSS。其仅需在训练初始阶段完成点云序列化，避免传统 SSM 模型的多次序列化冗余操作；简化架构设计并将 Mamba 融入解码器，在保证高效计算的同时，显著增强空间信息建模能力。
+	\item 设计了全局几何感知机制(Global Geometry-Aware Mechanism,GGAM)。其通过序列化的方式为邻域构建图结构，统一计算法向量与曲率，具有极低的计算成本。结合双序列化（Z-order+Hilbert）信息融合机制，动态聚合几何特征与上下文信息，有效解决序列化导致的几何结构丢失问题。
+	\item 设计了基于多尺度特征融合的序列化点云学习模块MSFFS。模块增强了点云局部到全局的信息交互，让多尺度特征更加充分地融合，最终构建出表达力更强的点云层次信息矩阵，同时考虑了点云的无序性，保留了数据的多样性和原始特征分布的完整性，使模型在长序列下也有细粒度的分析精度。
+	\item 我们在大型室内数据集S3DIS（Stanford Large-Scale 3D Indoor Spaces Dataset）\cite{s3dis}，以及点云分类数据集ModelNet40\cite{ModelNet40}数据集上进行了实验，以评估我们的方法。以及详细的消融实验来证明我们提出的方法相较于传统特征提取方案的优越性。即使在具有大规模数据集的复杂环境中，也证明了它的鲁棒性能。
+\end{itemize}
+
+
+
+
+
+\section{Related Work}
+近年来，点云分析领域经历了从早期基于几何先验的方法到深度学习驱动的端到端模型的重要转变。研究人员针对点云数据的稀疏性、无序性和高维特性等挑战，提出了一系列创新性解决方案。本节将从深度学习在点云语义分析的发展、几何特征增强策略以及多尺度特征融合技术三个维度系统梳理相关工作，分析各方法的核心思想、技术贡献及其局限性。
+
+\subsection{基于深度学习的点云语义分析}
+早期的PointNet\cite{pointnet}作为开创性工作，通过对称函数（如最大池化）巧妙解决了点云无序性问题，设计了两级特征聚合
+架构实现端到端处理。然而其全局池化策略虽能捕捉整体形状信息，但在局部几何细节建模方面存在明显不足。PointNet++\cite{PointNet++}提出分层特征学习框架，通过"采样-分组-特征提取"策略，在不同尺度上递归
+应用PointNet结构，有效平衡了局部细节与全局结构的建模需求。随后，DGCNN\cite{DGCNN}引入动态图构建机制，在特征空间中定义邻域关系，显著增强了对复杂几何结构的适应能力。FusionNet\cite{FusionNet}通过
+多分辨率特征提取模块实现多尺度特征融合，提升了分析精度。但基于CNN的方法仍受限于规则网格卷积和固定感受野，难以有效构建多尺度语义信息的"层次信息矩阵"。
+
+随着Transformer在自然语言处理和计算机视觉领域的成功，点云分析迎来了新的发展机遇。Point Transformer\cite{pt}作为先驱工作，设计了专门的点云自注意力模块，通过位置编码和特征增强策略，实现了对点云几
+何信息和语义特征的联合建模。其注意力计算不仅考虑特征相似性，还融入相对位置信息，使模型能够同时感知语义关联和空间邻近关系。PCT\cite{PCT}通过轻量化的注意力机制提升了特征提取效率，Point
+Transformer V2\cite{ptv2}引入分组向量注意力机制有效降低了计算复杂度。PTv3\cite{ptv3}则采用简化设计理念，摒弃复杂的注意力交互机制，通过直接序列化策略取得了SOTA性能，证明了"简单即有效"的设计哲学      
+。尽管Transformer方法在全局建模能力上表现卓越，但标准自注意力机制的$O(N^2)$复杂度使得模型在面对大规模点云时难以保持实时性，且其全局感知特性在精细几何建模任务中的局部结构细节敏感性不足。
+
+为解决Transformer的计算复杂度瓶颈，基于状态空间模型（SSM）的方法成为新兴方向。Mamba\cite{Mamba}通过选择性状态空间机制实现高效序列建模，其线性时间复杂度为大规模点云处理提供了理论基础。PointMamba     
+\cite{PointMamba}首次将Mamba架构引入点云分析，通过空间填充曲线将三维点云序列化为一维序列，能够以线性复杂度实现全局信息聚合。PCM\cite{pcm}进一步优化了序列化策略，提出空间相邻性保持的点云排序方法     
+，并设计新的位置编码机制增强空间感知能力。然而，现有SSM方法在将三维非结构化数据适配到一维序列处理框架时面临本质性挑战：其一，PointMamba 依赖固定序列化规则处理点云，导致空间上邻近的点在序列中可能被割裂，使得法向量、曲率等由局部几何邻域定义的关键特征难以被有效建模，进而影响模型对复杂曲面、尖锐边缘等精细结构的表征能力;
+其二，PCM 虽通过特定序列化策略缓解了割裂现象，但受限于 Mamba 线性计算框架，在长序列场景下无法为不同距离的邻域点动态分配差异化权重 —— 邻近点的细节几何信息（如高曲率区域的精确法向量变化）与较远点的全局语义关联（如部件间结构关系）未能在特征聚合中实现层次化区分，导致特征表达的粒度单一，难以兼顾局部几何细节与跨尺度语义关联。
+\subsection{基于几何特征增强的点云分析方法}
+点云数据本质上携带丰富的几何信息，如局部表面法向量、曲率、边缘特征等，这些几何特征对于理解三维结构至关重要。近年来，研究者们越来越关注如何显式地建模和利用这些几何特征来增强点云分析性能。
+
+PointGA（Geometrically Aware Transformer）\cite{pointga}其核心思想是将原始三维坐标扩展为多维几何信息，为网络注入更多几何先验知识。该方法设计了适用于点云的三角位置编码机制     
+，通过重构局部三角形结构来捕捉细粒度的几何关系。实验表明，显式的几何信息融入能够显著提升模型的特征表达能力。PointMSGT\cite{pointmsgt}提出了多尺度几何特征提取框架，其核心模块包括几何特征提取（GFE）和多尺度注意力（MSA）。GFE模块通过每个点的两个近邻重构三角形结构，利用三角形质心、法向量和平面常数提取详细的局部几何关系      
+。这种几何建模策略在复杂场景下表现出较强的鲁棒性。在几何约束方面，最近的研究\cite{gsrnet,geotransformer}探索了利用几何一致性来改善点云配准和重建任务。这些方法通过引入几何约束（如距离保持、角度保持等）来规范特征学习过程，确保学习到的特征表示符合物理世界的几何规律。Geo-CNN\cite{geo-cnn}通过构建几何图（Geometric
+Graph）来捕捉点云的几何特征，利用点之间的几何相似性定义边权重，但其需要额外的几何信息，依赖高质量的输入点云。
+
+然而，现有的几何特征增强方法主要面临两个挑战：一是计算效率问题，精确的几何特征计算（如基于k近邻的法向量估计）往往计算代价较高，特别是在大规模点云上；二是特征融合问题，如何将几何特征与深度特征有     
+效融合，避免信息冗余和特征冲突，仍然是一个开放性问题。大多数方法依赖传统的KNN搜索进行几何关系建模，这在处理百万级点云时成为性能瓶颈。
+
+  \subsection{基于多尺度特征融合的点云分析方法}
+多尺度特征融合是点云分析中的核心技术之一，传统的多尺度方法如特征金字塔网络（FPN）启发了点云领域的层次化特征学习。早期的工作通过多个并行分支提取不同尺度的局部特征，然后在多个层次上进行特征融合，但这种方法往往存在特征冗余和计算开销大的问     
+题。近年来，这一方向的研究主要集中在设计更有效的多尺度特征提取和融合策略上。
+
+自适应融合策略在多尺度特征整合中表现出色。Bi等人\cite{adaptive_fusion_2025}提出了多尺度稀疏卷积与点卷积的自适应融合方法，该方法引入空间位置重要性（IoSL）稀疏3D卷积模块，有效解决了LiDAR点云语义分割中的低精度和特征冗余问题。Liu等人\cite{projection_based_fusion_2024}提出基于原始点云和投影的多尺度特征融合方法，通过结合点云的三维几何信息和投影图像的二维纹理信息，实现了更完整的多尺度特征表达。该方法在保持计算效率的同   时，显著提升了小目标和远距离目标的检测性能。
+Wen等人\cite{local_feature_fusion_2024}提出了基于局部特征融合和多层注意力机制的语义分割网络，通过分离编码几何信息和特征信息，充分利用点云的特征感知能力和几何结构表示能力。该方法在复杂室内场景的语义分割任务中取得了显著的性能提升。
+
+多尺度特征融合在点云分析中发挥了重要作用，但现有方法仍面临一些挑战\cite{multiscale_survey_2024}：一是尺度选择问题，如何自动确定合适的尺度范围和尺度间隔仍需进一步研究；二是融合权重学习问题，不同尺度特征的重要性在不同区域和不同任务中可能存在差异，如何设计自适应的权重学习机制是一个关键问题     
+；三是计算复杂度问题，多尺度处理往往带来额外的计算开销，如何在保证性能的前提下优化计算效率仍然是研究重点。特别是在长序列点云处理中，现有方法难以在不同尺度间实现有效的信息传递和权重分配，限制了模型对复杂场景的理解能力。
+
+
+
+
+
+
+\section{提出方法}
+
+\subsection{ Framework Overview}
+如\cref{fig:architecture}为PointSS模型整体架构，其中数据处理部分包括数据增强，点云序列化。序列化编码方式采用Ptv3\cite{ptv3}的方法。数据处理完后由GGAM对点云进行全局几何特征感知。特征学习部分采用基于PointNet的U型编码器-解码器架构。编码器和解码器都采取了逐点提取策略。需要注意的是图中标橙色的Repeated Points，它是为了窗口可以被均匀划分而进行的操作，详细细节将在Window Partitioning部分介绍。随后将点云数据进行最终的语义特征融合，在模型末尾根据标签预测概率的最大值得到最终的预测结果。相较于PCM，该方案只需要在训练初始时序列化点云，并通过序列化的点云采用池化的方式直接进行下采样，而非在编码器中进行多次序列化并使用KNN进行邻域搜索与下采样，具有显著的性能优势。
+%% If you have bib database file and want bibtex to generate the% TODO: \usepackage{graphicx} required
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{picture/architecture.jpg}
+	\caption{PointSS整体架构}
+	\label{fig:architecture}
+\end{figure}
+
+
+\subsection{Global Geometry-Aware Mechanism(GGAM)}
+
+
+针对前文所述的基于Mamba的点云分析方法中存在的几何结构丢失问题，核心在于Mamba的状态空间模型机制与点云几何特性之间的矛盾。Mamba通过以下离散化状态空间方程进行序列建模：
+\begin{equation}
+\begin{aligned}
+x_{k} &= \overline{A}x_{k-1} + \overline{B}u_{k} \\
+y_{k} &= \overline{C}x_{k} + \overline{D}u_{k}
+\end{aligned}
+\end{equation}
+其中$x_k$为状态向量，$u_k$为输入向量，$y_k$为输出向量，$\overline{A}$、$\overline{B}$、$\overline{C}$、$\overline{D}$为系统矩阵。在点云序列化处理过程中，几何相邻的点由于序列化规则被分离，导致状态向量$x_k$在更新过程中逐渐遗忘割裂点的几何信息，特别是法向量和曲率等关键几何特征。
+
+因此，我们设计了全局几何感知机制（GGAM），通过显式建模点云几何特征并建立全局关联，为后续的编码器和解码器提供丰富的增强几何信息，从而缓解几何结构丢失问题。GGAM整体设计如\cref{fig:ggam}所示。其主要包括点云图构建与几何特征提取、几何特征增强和融合两部分。
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{picture/ggam.jpg}
+	\caption{GGAM的结构}
+	\label{fig:ggam}
+\end{figure}
+
+\textbf{点云图构建与几何特征提取}：传统的点云图构建与几何关系计算（如曲率、法向量）方法通常依赖$K$近邻（KNN）搜索来进行构建。然而，KNN搜索的计算复杂度较高，特别是在处理大规模点云数据时。为了解决这一问题，我们提出了一种基于点云序列化的高效边构建与曲率法向量计算方法。经验证在点数量为20万时，计算速度可提高70倍。
+
+
+给定点云$\{p_1, p_2, \ldots, p_N\}$及其序列化后的点序列$Q$即$\{q_1, q_2, \ldots, q_N\}$，我们将其划分为不重叠的窗口：
+\begin{equation}
+	W_m = \{q_{(m-1) \cdot k + 1}, q_{(m-1) \cdot k + 2}, \ldots, q_{m \cdot k}\}
+\end{equation}
+其中$m = 1, 2, \ldots, \lfloor N/k \rfloor$是窗口索引，$k$是窗口大小。在划分过程中可能会出现最后一个窗口的点云数量不到$k$的情况，此时我们使用窗口填充策略，将倒数第二个窗口的点云填充到最后一个窗口。详细做法见后文Window Partitioning部分。
+
+对于任意点$p_i$，设其在序列化后的位置为$pos(i)$，则该点的邻域定义为其所属窗口：
+\begin{equation}
+	\mathcal{N}_k(p_i) = W_{\lfloor \frac{pos(i)-1}{k} \rfloor + 1}
+\end{equation}
+基于窗口化邻域，我们构建点云的边连接关系。对于每个窗口$W_m$内的点，建立全连接：
+\begin{equation}
+	\mathcal{E}_m = \{(q_i, q_j) : q_i, q_j \in W_m, i \neq j\}
+\end{equation}
+与传统的KNN方法相比，这种方法通过简单的窗口划分避免了昂贵的距离计算，显著提高了计算效率。在构建的窗口化邻域内，我们通过标准的PCA方法计算每个邻域统一的法向量和曲率特征，曲率包括主曲率与高斯曲率。“统一”表现在邻域内的点的法向量与曲率我们近似认为是一致的。
+
+
+在构建的窗口化邻域基础上，我们为每条边$(q_i, q_j)$提取8维特征向量，以充分描述点对之间的几何关系,构建点云图。在图结构中，节点表示每个点，边代表两个点所构成的几何关系。点云图的边的构建性质决定了点云图对提取几何信息具有优势。边特征向量$\mathbf{f}_{ij}$由以下几个部分组成：
+ 
+\begin{equation}
+	\mathbf{f}_{ij} = [\Delta\mathbf{p}_{ij}, \alpha_{ij},  \boldsymbol{\kappa}] \in \mathbb{R}^8
+\end{equation}
+其中$\Delta\mathbf{p}_{ij} = \mathbf{p}_j - \mathbf{p}_i$是相对坐标向量(3维)，$\alpha_{ij}$是邻域统一法向量与相对位置向量的差值(3维)，$\boldsymbol{\kappa}$是两种曲率(2维)。
+再经过多层感知机之后我们通过累加所有邻边特征，再除以邻边数量的方式，实现了将边特征到点特征的均值聚合。对于点$p_i$,有聚合后的点特征$\mathbf{H}$。
+
+
+\textbf{几何特征增强与融合：}几何特征增强与融合模块包含基于双空间编码的交叉注意力机制，自适应门控融合，几何一致性约束三部分。
+
+\textbf{基于双空间编码的交叉注意力机制}：
+由于我们使用经z-order编码和Hilbert编码的序列化点云并行计算上述过程，因此每个点会分别得到特征$\mathbf{H}_{z}$以及$\mathbf{H}_{h}$。这两种编码方式产生了不同的空间邻域关系和节点排列顺序。Z-order编码由于其递归二进制分割特性，在局部尺度下具有很好的空间聚集性，能够有效检测几何边界和局部变化。Hilbert曲线具有更好的空间连续性保持特性，在序列化过程中能更好地维持几何结构的整体连贯性。参照\cite{attention}我们在每种编码序列内部生成$Q$,$K$,$V$进行自注意力计算，让节点能够关注到其在该编码下的邻域节点特征，Z-order编码序列和Hilbert编码分别生成结果$A_z$和$A_h$。然后在两种编码序列之间建立交叉注意力机制,分别生成${A}'_z$，${A}'_h$，使得同一个点的特征在两种不同空间排序下的表示能够相互增强。最终通过特征融合得到更加丰富和鲁棒的节点表示，具体融合方式见\cref{fig:ggam}。融合后得到双序列化增强后的特征 $\mathbf{H}''_z$ 和 $\mathbf{H}''_h$ 。
+
+
+\textbf{自适应门控融合：}在得到增强特征后，我们设计了最后的融合步骤。为了更智能地融合两种特征，我们设计了一个自适应门控单元。它接收拼接后的特征，并为每个特征流（Z-order和Hilbert）生成一个权重：
+\begin{equation}
+	[\alpha_z, \alpha_h] = \text{Softmax}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
+	\label{eq:adaptive_gate}
+\end{equation}
+其中$\|$为拼接操作。最终的融合特征 $\mathbf{H}_{fused}$ 通过加权求和得到：
+\begin{equation}
+	\mathbf{H}_{fused} = \alpha_z \odot \mathbf{H}''_z + \alpha_h \odot \mathbf{H}''_h
+	\label{eq:gated_fusion}
+\end{equation}
+其中 $\odot$ 表示逐元素相乘。
+
+
+\textbf{几何一致性约束：}由于我们方法计算的曲率与法向量以邻域为粒度，结果相比较于逐点计算不够精确。在引入双分支学习后，为了确保融合后的特征仍然符合物理世界的几何规律，我们引入了一个几何一致性模块。该模块学习一个一致性因子 $\boldsymbol{\gamma} \in [0, 1]$，并作用于融合特征上：
+\begin{gather}
+	\boldsymbol{\gamma} = \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h])) \label{eq:consistency_factor} \\
+	\mathbf{H}_{final} = \mathbf{H}_{fused} \odot \boldsymbol{\gamma} \label{eq:final_feature}
+\end{gather}
+其中 $\odot$ 表示逐元素相乘。这个约束可以看作是一个软性的过滤器，抑制了在融合过程中可能产生的几何上不合理的特征组合。最终，$\mathbf{H}_{final}$ 作为GGAM模块的输出，包含了丰富的几何感知特征。
+
+\subsection{编码器和SSExtract Block}
+\cref{fig:coder}为我们编码器的基本架构，包括池化层被用来进行上采样以及点云信息聚合，多个重复出现的Block被用来进行深层次的特征理解。我们将SSExtract Block融入到编码器与解码器，以获得对点云的高性能感知。与编码器不同的是，解码器使用上采样来替换Max Pooling，由于解码器也包含SSExtract Block，因此在上采样时能够学习到不同编码器得到的层次信息。\cref{fig:ss}为SSExtract Block的基本架构。我们使用SSExtract Block将序列化特征提取方案应用于点云任务，以此构建层次点云信息矩阵，以融合点云各层次信息。首先我们将点云进行窗口划分，之后为点云引入顺序化提示。由于在点云序列中，顺序靠前的点无法得到顺序靠后点的信息，这与点云的无序性不符，因此我们采用Vision Mamba\cite{VisionMamba}的双向特征学习策略来进行双向的特征融合。双向特征融合的具体策略见\cref{fig:bss} Bidirectional Mamba部分。最后我们将点云恢复为进入SSExtract Block前的序列状态，此时点云具有了的新的特征信息。在引入MSFFS算法后，SSExtract Block将变为并行操作多层次点云。
+
+\begin{figure}[htbp]
+	\centering 	
+
+	\subfigure[编码器] %第一张子图
+	{
+			\includegraphics[scale=0.7]{picture/coder.JPG}   %以pic.jpg的0.4倍大小输出
+			\label{fig:coder}
+	}
+		\subfigure[SSExtract Block] %第二张子图
+{
+	\includegraphics[scale=0.7]{picture/ssextract.png}   %以pic.jpg的0.4倍大小输出
+	\label{fig:ss}
+}
+	\caption{编码器与SSExtract Block架构。(a)编码器架构。(b)SSExtract Block架构。} 
+	%\label{fig:1}  %图片引用标记
+\end{figure}
+
+
+
+\textbf{Window Partitioning：}Padding and Patch Grouping两个过程共同为点云的序列化窗口划分进行服务。Padding部分主要作用为将点填充到Patch Size的整数倍，使得窗口能够被均匀划分。Patch Grouping则均匀地将Patch进行分组，其结果可用于后续Patch内点云邻域特征融合。正常情况下一组点云序列最后一个Patch可能会出现点数量不够分组的情况，此时我们采用滑动的方案，将其相邻Patch，也就是倒数第二个Patch的末位点填充到最后一个Patch。这样虽然会有重复的点，但能够可以保证最后一个Patch的点也是相邻的。
+
+\textbf{Order Prompt：}
+由于使用了多个序列化策略，为了帮助SSExtract更好地理解并利用点云的排列去捕获特征，我们引入了顺序提示这一简单有效的方案。该机制旨在告知模型当前正在处理的序列遵循哪种特定的排列规则，从而使模型能学习到与顺序相关的模式。
+
+具体来说，我们为每种序列化方法创建一组独特的可学习向量，作为该顺序的“标志”。在使用前，这些向量会通过一个线性层，将其维度映射到与当前网络层中点云特征的维度($C$)相匹配。然后，我们将这些提示向量插入到每个点云片（Patch）的开始和结束位置。通过这种方式，模型可以在处理序列之初就“读取”到顺序信息，并相应地调整其特征提取过程，这一思路借鉴了Vision Mamba\cite{VisionMamba}处理块状数据的思想。
+
+\subsection{MSFFS：}
+针对现有SSM方法在点云无序性和长序列处理方面的局限性，本研究在SSExtract Block整体架构之上提出了一种多尺度特征融合策略MSFFS，其可以简单理解为对多层尺度点云并行使用SSExtract Block的处理策略，最终融合特征。MSFFS的多尺度特征融合策略，可以使模型具有更强的多尺度学习能力，在长序列下有强大的上下文理解能力。在保证模型具有更强的高层次理解能力的同时，保留对点云细节的高精度处理。
+
+算法的伪代码如Algorithm1所示。我们以$E$层尺度为例对算法进行详细说明。对于一个SSExtract Block，在最低尺度时对点云$Points\in\mathbb{R}^{N\times{C}}$按照序列化的顺序进行特征提取，其窗口最小。其中$N$为点数量，$C$为点云特征大小。之后的更高尺度层则按照乱序对点云$Points$进行特征提取，且具有逐渐增大的窗口。
+
+\textbf{窗口划分}：在最底层也就是层号$i$为1时，Patch Size为$P$，此时扩大倍数$F_1$为1即不进行窗口扩增，因此窗口划分过后的点云为$Points_{1}\in\mathbb{R}^{\lceil N/P \rceil\times P \times C}$。在最底层，我们为点云引入\textbf{顺序提示}。在高尺度层，第i层相较于第一层的Patch Size具有$F_{i}$倍的扩大，此时Patch Size变为$P\times F_{i}$。窗口划分过后该层点云为$Points_{i}\in\mathbb{R}^{\lceil N/(P\times F_{i}) \rceil\times (P\times F_{i}) \times C}$。我们将$Points_{i}$中同一个Patch内的点云\textbf{打乱顺序}，使SSM能够尊重点云的无序性进行特征学习。此时的点云由于已经打乱了顺序，因此不需要加入顺序提示。
+
+特征提取：点云将进入\textbf{双向Mamba}进行特征提取。在进行特征学习过后的多层次特征$Points_{(1:n)}$采用拼接策略将多层特征进行融合。之后进入MLP以及线性层完成最终的特征映射以及特征学习，将特征的大小还原为初始大小，得到进行层次融合后的点云$Points'\in\mathbb{R}^{N\times{C}}$。
+
+
+
+	\begin{algorithm}[H]
+		\SetAlgoLined % 显示end
+		\caption{MSFFS} % 算法名字
+		\KwIn{输入点云:$Points$ ,多尺度层数:$E$ ,Patch Size:$P$ ,多尺度层窗口扩大倍数:F } % 输入参数
+		\KwOut{层次融合后点云$Points'$} % 输出
+		
+		$i \leftarrow 1$ \;
+		 $points\_list \leftarrow$ [ ]\;
+		
+		\tcp{遍历多尺度层}
+		\For{i = \textnormal{1}  \text{ to } E}{
+			\tcp{对点云进行窗口划分}
+			$Points_{i} \leftarrow padding\_and\_grouping(Points, P,F_{i})$\;
+			
+			\If{i ==  \textnormal{1}}{
+				\tcp{如果为第一层}
+				$Points_{i} \leftarrow order\_prompt(Points_{i})$\;
+			}
+			\Else{
+				$Points_{i} \leftarrow shuffle(Points_{i}$)\;
+			}
+			
+			$Points_{i} \leftarrow bidirectional\_mamba(Points_{i})$\;
+			$points\_list.add(Points_{i})$\;
+			
+		}
+		$Points' \leftarrow project(mlp(concat(points\_list)))$\;
+		\KwRet{$Points'$} % 返回new_point
+		
+	\end{algorithm}
+
+	如\cref{fig:bss}所示展示了三层尺度时的特征处理流程，即$E=3$。每个Patch间用虚线分隔。第二层和第三层的$F_{i}$分别为2和4，即相较于第一层，patch的大小分别扩大2倍和4倍。且图中详细展示了Bidirectional Mamba的工作原理，其主要包括前向和后向SSM，以及残差信息。对于MSFFS，可以看到我们会得到不同窗口的点云序列，并在其内部进行学习，之后将学习结果逐点进行拼接融合，最终使用线性层对层次融合结果进行学习，得到结合多层次的点云信息。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{picture/BSS.JPG}
+	\caption{MSFFS具体流程}
+	\label{fig:bss}
+\end{figure}
+
+
+
+
+
+
+
+\section{实验}
+\textbf{Implementation Details:}
+我们在室内数据集S3DIS和分类数据集ModelNet40上进行了点云分析的基准测试，所有实验都在Nvidia A6000 GPU上进行。网络训练中，我们使用 AdamW 优化器及 OneCycleLR 学习率调度策略，初始最大学习率设为 6e-3，并采用前期预热及后期余弦退火循环的调度机制。整个训练过程持续 3000 轮（epoch），批量大小为 6，并启用混合精度（AMP）加速以提高训练效率。在编码器中，channel大小设置为(32, 64, 128, 256, 512)。解码器中，channel大小设置为(64, 64, 128, 256)。Patch Size统一设置为1024。
+我们选择交叉熵损失函数作为损失判断依据。交叉熵损失是最常用的分类以及分割任务损失函数，广泛应用于语义分析问题。
+
+\textbf{数据增强：}数据增强主要包括点云坐标增强，点云颜色增强以及点云采样。数据增强的意义在于通过对点云的变换，增加训练数据的多样性，帮助模型更好地泛化。
+
+我们对点云坐标的数据增强策略主要包含中心平移、沿各坐标轴随机旋转、随机翻转、坐标抖动等。中心平移可以让模型学习到物体位置的不变性；沿各坐标轴的随机旋转和翻转则让模型能适应不同的视角；坐标抖动增加了微小扰动，有助于提高模型的鲁棒性，从而在点云分析中提升性能。我们对点云颜色增强策略主要包含修改对比度，颜色抖动等。我们对点云颜色进行直方图均衡化，将颜色的分布拉伸到更广的范围，以增强颜色对比度。我们使用体素化采样的策略进行点云采样。体素化采样的基本思路是：划分3D体素网格：将点云空间划分成固定大小的 3D 体素单元（我们设置体素大小为 0.02），每个体素代表一个立方区域。在每个体素内进行采样，如随机采样、中心点采样、最大点采样等。最终去除冗余点，只保留一个点代表该体素，形成降采样后的点云。
+
+
+\subsection{Benchmark}
+\textbf{S3DIS:}
+S3DIS 数据集是由斯坦福大学发布的，用于室内场景理解和点云处理的标准数据集之一。它包含了多个室内建筑的 3D 点云数据，主要用于点云语义分割任务。其包含6种大型建筑，涵盖了办公楼、休息区、会议室、大厅等多种室内环境。S3DIS包含 272 个房间，每个房间的 3D 点云数据均经过精细标注。数据集中每个点包含三维坐标和RGB颜色信息，同时包含每个点的语义类别。数据集共标注了13 个类别：如墙（wall）、地板（floor）、桌子（table）、椅子（chair）、窗户（window）、书架（bookshelf） 等。室内的各种环境被平均划分到了六个区域之中，我们选择区域五进行结果验证。
+
+
+\textbf{ModelNet40:}
+ModelNet40 是由 Princeton University 提供，旨在为 3D 对象分类和识别任务提供标准化的基准。其包括40 个物体类别，12,311 个 3D 对象样本。训练集包含8,156 个样本，测试集包含4,155 个样本。数据集中的每个对象都经过详细的分类，涵盖各种日常物品，如椅子、桌子、瓶子、飞机、汽车等。
+
+
+\textbf{mIoU:}mean Intersection over Union是语义分割等任务中常用的评估指标，用于衡量预测结果与真实标签之间的重叠程度。对每一个类别$c$，IoU（交并比）定义为：\begin{equation}\mathrm{IoU}_c=\frac{\mathrm{TP}_c}{\mathrm{TP}_c+\mathrm{FP}_c+\mathrm{FN}_c}\end{equation}
+$\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}$为假阴性。取所有类别的平均值，得到mIoU。其对类不均衡的数据更鲁棒，比Accuracy更常用于3D语义分割任务。因此我们选择mIoU为指标来评价在S3DIS上的点云语义分割任务。
+
+\textbf{OA:}Overall Accuracy，即模型在所有点云样本上预测正确的数量除以所有样本的总数。其简单直观，常用于分类任务的总体指标，因此我们选择OA为指标来评价在ModelNet40上的点云分类任务。
+
+\subsection{Experiment results on the S3DIS dataset}
+\cref{tab:s3dis}给出了S3DIS数据集上的语义分割结果，并与近几年其他有代表性的方法进行了比较。其中PTv3以及PCM为多次复现的最优的实验结果。在统一不使用预训练的情况下，在点云室内分割基准S3DIS中达到了73.6\%的mIoU，超过了之前的SOTA模型Swin3D和PTv3，分别为1.1\%mIoU和0.4\%mIoU，证明了多尺度的序列化点云特征学习模式能够对点云语义进行充分的理解，SSM模型用于点云分析具有发展潜力。并且PointSS以3.6的\%mIoU超过了效果最好的SSM模型PCM。因此可以证明PointSS相较于其他SSM模型，能够生成表达力更强的点云层次信息矩阵，且具有更强的几何特征构建能力。
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[htbp!]
+	\caption{在S3DIS上的性能对比}
+\label{tab:s3dis}
+	\begin{tabular}{@{}llll@{}}
+		\toprule
+		\textbf{出处}  & \textbf{模型}           & \textbf{架构} & \textbf{mIoU} \\ \midrule
+		NeurIPS22 & Point Transformer V2\cite{ptv2}  & Transformer & 72.6          \\
+		CVPR23     & PointMetaBase\cite{pmb}         & Transformer & 72.0          \\
+		ICCV23     & SuperpointTransformer\cite{spt} & Transformer & 68.1          \\
+		CVMJ23     & Swin3D\cite{Swin3D}                & Transformer & 72.5          \\
+		CVPR24     & PPT+SpareUNET\cite{ppt}         & Transformer & 72.7          \\
+		CVPR24     & OA-CNNs\cite{oacnn}               & CNN         & 71.1          \\
+		CVPR24     & OneFormer3D\cite{OneFormer3D}           & Transformer & 72.4          \\
+		CVPR24     & Point Transformer V3\cite{ptv3}           & Transformer & 73.2          \\
+		AAAI25    & PCM\cite{pcm}                   & SSM         & 69.8         \\
+		& PointSS               &SSM           & 73.6          \\ \bottomrule
+	\end{tabular}
+		\centering
+	
+
+\end{table}
+
+
+
+
+
+
+\subsection{Experiment results on the ModelNet40 dataset}
+\cref{tab:ModelNet}给出了ModelNet40数据集上的物体分类结果，并与近几年其他有代表性的方法进行了比较。在3D分类基准ModelNet40中分别以1.2\%和1.5\%的整体正确率(Overall Accuracy)超过了SOTA模型Point2Vec\cite{Point2Vec}和Point-FEMAE\cite{FEMAE} 。并且PointSS以1.9\%的整体正确率超过了效果最好的同类模型Mamba3D。Point2Vec和Point-FEMAE虽然引入了mask机制，但其输入点的位置信息本身就携带了几何信息，可能导致模型直接通过点的位置信息来进行语义分析，而忽略高层次的点云整体特征。相比较下PointSS加强了对不同层次点云特征的提取与几何信息融合，更能学习多层次信息。虽然Mamba3D 引入了 Local NormPooling（LNP）模块以增强局部特征提取，但该模块可能不足以捕捉复杂的局部几何结构，限制了模型在细粒度任务中的表现。相比较下PointSS在细粒度任务的表现则更好。
+
+
+\begin{table}[htbp!]
+	\centering
+	\caption{在ModelNet40上的性能对比}
+	\label{tab:ModelNet}
+	\begin{tabular}{@{}llll@{}}
+		\toprule
+		\textbf{出处}  & \textbf{模型}           & \textbf{架构} & \textbf{OA} \\ \midrule
+		NeurIPS22 & Point Transformer V2\cite{ptv2}  & Transformer & 94.2          \\
+		AAAI24    & Point-FEMAE\cite{FEMAE}        & Transformer & 94.5             \\
+		LNCS24      & Point2Vec\cite{Point2Vec}      & Transformer & 94.8          \\
+		ACM MM24     & Mamba3D\cite{Mamba3D}              & SSM & 94.1          \\
+		NIPS24    & PointMamba\cite{PointMamba}   & SSM         & 93.6         \\
+		TIP25     & OTMae3D\cite{OTMae3D}    & Transformer & 94.5          \\
+		AAAI25    & PCM\cite{pcm}     & SSM         & 93.4         \\
+		& PointSS               &SSM             & 96.0          \\ \bottomrule
+	\end{tabular}
+\end{table}
+
+\subsection{Qualitative results}
+我们在\cref{fig:vis}中可视化了S3DIS数据集上的检测结果。其中划圈的部分标注了不同模型的分割差异。可以看到，PointSS在需要大感受野支持的窗户以及房柱等的物体的分割具有更好的效果，证明了PointSS在感受野融合上的优势、其具有多层次的理解能力。此外PointSS在需要细粒度的分割如杂物的分割上也有良好的效果，证明了PointSS多尺度架构的有效性以及几何特征学习能力，能够保留模型对细节的理解。
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{picture/visualize.JPG}
+	\caption{分割结果可视化及对比}
+	\label{fig:vis}
+\end{figure}
+
+
+\subsection{Ablation study}
+S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要求，不同的方法在S3DIS上进行验证相较于ModelNet40有更大的性能波动，更容易观测。因此除了组合消融实验外其他消融实验统一在S3DIS数据集上进行。
+
+\label{subsec:Ablation}
+\textbf{Order prompts：}我们进行了消融实验来验证顺序提示的有效性，如\cref{fig:mIouOP}所示。当顺序提示数量为0时，代表不使用顺序提示。当顺序提示逐渐增加时，性能在提示数量在6到8的范围时达到顶峰，后续提高提示数量并不会取得更好的效果。但即使如此，使用顺序提示仍要比不使用顺序提示所取得的效果更好。
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.7\linewidth]{picture/mIouOP.JPG}
+	\caption{不同顺序提示数量的效果对比}
+	\label{fig:mIouOP}
+\end{figure}
+
+
+
+\textbf{SSExtract Block：}我们将SSExtract Block分别代替为Transformer和MLP的特征提取方案，来验证PointSS中SSExtract Block的有效性，我们通过不同的Batch大小以及Patch大小在真实环境中进行训练最终获得结果。并以比较不同方案的复杂度及其性能。实验结果如\cref{tab:SSExtract}，我们的PointSS采用Batch为6，Patch为1024为最终的训练方案，见表最后一行。可以看到由于Transformer平方复杂度，其在Batch和Patch较大的情况下会出现显存不足的情况，导致模型训练效率以及感受野扩充遭到影响，进而影响模型性能。在相同Batch和Patch的情况下，SSExtract Block相较于Transformer方案依然有更好的效果，在Batch为3和Patch为1024时，显存占用减少了53.2\%。相较于MLP的特征提取方案，PointSS有明显的性能优势。
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[htbp!]
+		\caption{SSExtract消融实验}
+	\label{tab:SSExtract}
+	\begin{tabular}{@{}llllll@{}}
+		\toprule
+		特征提取模块      & Batch & Patch\_size & Block Latecy(ms) & mIoU & Memory(GB) \\ \midrule
+		MLP         & 6     & 1024        & 0.11             & 66.2 & 34.2       \\
+		Transformer & 6     & 1024        & -                & -    & OOM        \\
+		Transformer & 6     & 128         & -                & -    & OOM        \\
+		Transformer & 3     & 128         & 7.55             & 71.8 & 37.7       \\
+		SSExtract   & 3     & 128         & 6.21             & 72.5 & 22.2       \\
+		SSExtract   & 6     & 1024        & 11.07            & 73.6 & 45.5       \\ \bottomrule
+	\end{tabular}
+\end{table}
+
+\textbf{GGAM：}我们对是否使用双序列化特征融合机制进行实验，分为只使用Z-order序列化信息，只使用Hilbert序列化信息，以及两种都用的三组实验进行对照。结果如\cref{tab:doubleSerial}所示。可以看到同时使用Z-order序列化信息和Hilbert序列化信息效果更好，这是因为通过这样的方式可以融合二者的优势，得到更加丰富和鲁棒的点表示。除此之外我们对是否使用交叉注意力机制、Adaptive Gated Fusion（AGF）、Geometric Consistency Constraint（GCC）三者进行组合消融实验。我们使用普通注意力机制代替交叉注意力机制，使用MLP代替Adaptive Gated Fusion和Geometric Consistency Constraint。结果如\cref{tab:ggamCombine}所示。可以看到各个模块对模型均有性能提升，证明了GGAM能够为模型提供丰富几何结构细节。
+\begin{table}[htbp!]
+	\centering  % 使整个表格（包括标题）居中
+	\caption{序列化特征融合实验}
+	\label{tab:doubleSerial}
+	\begin{tabular}{@{}llllll@{}}
+		\toprule
+		采用序列化方式 & mIoU \\ \midrule
+		Z-order & 73.0 \\
+		Hilbert & 73.2 \\
+		Z-order+Hilbert & 73.6 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\begin{table}[htbp!]
+	\centering
+	\caption{GGAM内部组合消融实验}
+	\label{tab:ggamCombine}
+	\begin{tabular}{@{}lllll@{}}
+		\toprule
+		交叉注意力机制 & AGF & GCC &mIoU \\ 
+		\midrule
+		$\times$       & $\times$ & $\times$ & 71.8       \\
+		$\times$       & $\times$ & $\checkmark$ & 72.3       \\
+		$\times$       & $\checkmark$ & $\times$ & 72.0       \\
+		$\times$       & $\checkmark$ & $\checkmark$ & 72.4       \\
+		$\checkmark$    & $\times$ & $\times$ & 72.5       \\
+		$\checkmark$    & $\times$ & $\checkmark$ & 73.0       \\
+		$\checkmark$    & $\checkmark$ & $\times$ & 73.2       \\
+		$\checkmark$    & $\checkmark$ & $\checkmark$ & 73.6       \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\textbf{MSFFS：}
+如\cref{tab:MSFFS}为使用多尺度特征融合策略MSFFS的消融实验。这里主要对多尺度层数E和多尺度层窗口扩大倍数$F$进行消融实验，$F\in \mathbb{R}^{E}$。例如当$F$为$(1,2,3)$时，代表尺度层从低到高Patch Size分别为$P\times 1$,$P\times 2$,$P\times 3$。最低层一般不进行窗口扩增。当点云尺度层数$E$为1时即不使用多尺度特征融合策略。可以看到使用多尺度特征融合策略要比不使用该策略有更好的效果，证明了尊重点云的无序性以及使用多尺度的策略是正确的选择。且过度地增加多尺度特征并不会使模型效果更好，可能是由于其稀释了顺序排列时的点云空间特征的信息。由于后期再增加Patch Size以及额外尺度获得的性能提升不大，在综合训练时间以及模型效果后，我们选择使用多尺度层数为3即使用额外两层的无顺序的点云尺度特征进行训练。两层Patch Size扩大倍数都为2，超参数设置如加粗位置所示。
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[htbp!]
+	\centering
+	\caption{MSFFS消融实验}
+	\label{tab:MSFFS}
+	\begin{tabular}{@{}lll@{}}
+		\toprule
+		点云多尺度层数量 $E$ & 窗口扩大倍数 $F_{k}$     & mIoU          \\ \midrule
+		1          & (1)              & 72.4          \\
+		2          & (1,1)              & 72.7          \\
+		2          & (1,3)              & 73.1          \\
+		2          & (1,5)              & 72.9          \\
+		3          & (1,1,2)          & 73.1          \\
+		\textbf{3} & \textbf{(1,2,2)} & \textbf{73.6} \\
+		3          & (1,2,3)          & 73.6          \\
+		4          & (1,2,2,3)        & 73.7          \\ \bottomrule
+	\end{tabular}
+\end{table}
+
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+
+\textbf{组合消融实验：}我们使用上述提到的方法在S3DIS和ModelNet40数据集上进行组合消融实验，通过不同的方法组合以证明各个方法的有效性。我们对是否采用SSExtract Block、及其内部是否采用GGAM、是否使用MSFFS三个方面进行组合消融实验。具体参数以及方案的选择需要在参照上面的模块消融实验，确保训练效率的情况下保证模型训练的准确度。SSExtract Block选择Batch大小为6，Patch大小为1024。MSFFS选择额外的两层尺度，且Patch大小为原始顺序点云序列的两倍。对于S3DIS和ModelNet40的详细的组合消融实验结果如\cref{tab:combine}所示。可以看到，文中提出的SSExtract Block、GGAM、MSFFS都提升了模型的点云分析性能，证明了模块设计的有效性。
+\begin{table}[htbp!]
+	\centering
+	\caption{组合消融实验}
+	\label{tab:combine}
+	\begin{tabular}{@{}lllll@{}}
+		\toprule
+		SSExtract Block & GGAM & MSFFS & S3DIS mIoU & ModelNet40 OA \\ 
+		\midrule
+		$\times$        & $\times$        & $\times$        & 69.3         & 92.5          \\
+		$\times$        & $\checkmark$    & $\times$        & 70.2         & 93.9          \\
+		$\checkmark$    & $\times$        & $\times$        & 70.5         & 93.2          \\
+		$\checkmark$    & $\checkmark$    & $\times$        & 71.4         & 94.1          \\
+		$\checkmark$    & $\times$        & $\checkmark$    & 71.8         & 94.7          \\
+		$\checkmark$    & $\checkmark$    & $\checkmark$    & 73.6         & 96.0          \\ 
+		\bottomrule
+	\end{tabular}
+\end{table}
+\section{结论}
+本文提出了PointSS，一种基于多尺度状态空间序列的点云分析算法，有效解决了现有基于Mamba的点云分析方法中存在的几何信息丢失和长序列下对点云细节分析不精确的问题。本文的核心创新包括：设计了全局几何感知机制(GGAM)，有效缓解了点云序列化导致的几何结构信息丢失问题；提出了SSExtract模块和多尺度特征融合策略(MSFFS)，在保持序列化优势的同时尊重点云的无序性，实现了不同层次特征的有效融合；PointSS为基于状态空间模型的点云分析提供了新的解决思路，在保持计算效率的同时显著提升了分析精度。未来工作可进一步探索更高效的序列化策略和多模态信息融合方法，以应对更大规模和更复杂的点云场景分析需求。
+%% The Appendices part is started with the command \appendix;
+%% appendix sections are then done as normal sections
+
+%% bibitems, please use
+%%
+%%  \bibliographystyle{elsarticle-num} 
+%%  \bibliography{<your bibdatabase>}
+
+%% else use the following coding to input the bibitems directly in the
+%% TeX file.
+
+%% Refer following link for more details about bibliography and citations.
+%% https://en.wikibooks.org/wiki/LaTeX/Bibliography_Management
+
+% \begin{thebibliography}{00}
+
+% %% For numbered reference style
+% %% \bibitem{label}
+% %% Text of bibliographic item
+
+% \bibitem{lamport94}
+%   Leslie Lamport,
+%   \textit{\LaTeX: a document preparation system},
+%   Addison Wesley, Massachusetts,
+%   2nd edition,
+%   1994.
+
+% \end{thebibliography}
+\bibliographystyle{unsrt}
+\bibliography{ref}
+\end{document}
+
+\endinput
+%%
+%% End of file `elsarticle-template-num.tex'.
