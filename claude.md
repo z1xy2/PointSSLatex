@@ -18,3 +18,6 @@ pointcept/models/utils/structure.py
 而且会议的字段名对于上述字段也要保持一致。同理适用于期刊
 inproceedings只需要有booktitle，不需要有title。
 
+#当前需求
+新添加了模块ASD-SSM，你帮我看看这个模块的公式和描述是否
+

@@ -343,7 +343,7 @@ MSFFS的核心是采用基于Mamba的双向状态空间模型进行特征提取�
 
 MSFFS的处理流程包括窗口划分、顺序提示、双向特征学习以及多尺度融合几个关键步骤。首先对点云进行窗口划分，之后为点云引入顺序化提示。由于在点云序列中，顺序靠前的点无法得到顺序靠后点的信息，这与点云的无序性不符，因此我们采用Vision Mamba\cite{VisionMamba}的双向特征学习策略来进行双向的特征融合。双向特征融合的具体策略见\cref{fig:bss} Bidirectional Mamba部分。
 
-算法的伪代码如Algorithm1所示。我们以$E$层尺度为例对算法进行详细说明。对于MSFFS，在最低尺度时对点云$Points\in\mathbb{R}^{N\times{C}}$按照序列化的顺序进行特征提取，其窗口最小。其中$N$为点数量，$C$为点云特征大小。之后的更高尺度层则按照乱序对点云$Points$进行特征提取，且具有逐渐增大的窗口。
+算法的伪代码如Algorithm1所示。我们以$S$层尺度为例对算法进行详细说明。对于MSFFS，在最低尺度时对点云$Points\in\mathbb{R}^{N\times{C}}$按照序列化的顺序进行特征提取，其窗口最小。其中$N$为点数量，$C$为点云特征大小。之后的更高尺度层则按照乱序对点云$Points$进行特征提取，且具有逐渐增大的窗口。
 
 \textbf{Window Partitioning（窗口划分）：}Padding and Patch Grouping两个过程共同为点云的序列化窗口划分进行服务。Padding部分主要作用为将点填充到Patch Size的整数倍，使得窗口能够被均匀划分。Patch Grouping则均匀地将Patch进行分组，其结果可用于后续Patch内点云邻域特征融合。正常情况下一组点云序列最后一个Patch可能会出现点数量不够分组的情况，此时我们采用滑动的方案，将其相邻Patch，也就是倒数第二个Patch的末位点填充到最后一个Patch。这样虽然会有重复的点，但能够保证最后一个Patch的点也是相邻的。
 
@@ -359,47 +359,75 @@ MSFFS的处理流程包括窗口划分、顺序提示、双向特征学习以及
 \textbf{特征提取与融合：}点云将进入双向Mamba进行特征提取。在进行特征学习过后的多层次特征$Points_{(1:n)}$采用拼接策略将多层特征进行融合。之后进入MLP以及线性层完成最终的特征映射以及特征学习，将特征的大小还原为初始大小，得到进行层次融合后的点云$Points'\in\mathbb{R}^{N\times{C}}$。
 
 \subsubsection{自适应尺度解耦状态空间模型（ASD-SSM）}
-现有多尺度特征提取方法在处理不同尺度点云时采用共享的状态空间参数，忽略了不同尺度对时序建模特性的差异化需求。粗尺度特征需要保持长时记忆以捕捉全局上下文，而细尺度特征需要快速状态更新以响应局部细节变化。为此，我们提出自适应尺度解耦状态空间模型（Adaptive Scale-Decoupled SSM, ASD-SSM），通过为不同尺度动态生成定制化的SSM参数，解决参数共享导致的建模能力受限问题。
+\textbf{符号说明：}在后续描述中，我们用$s \in \{1, 2, ..., S\}$
+表示多尺度层的尺度索引，其中$s=1$表示最细尺度（对应MSFFS中的第一层，
+窗口大小为$P$），$s=S$表示最粗尺度（窗口大小为$P \times F_E$）。
 
-传统SSM方法使用相同的状态转移矩阵$\overline{A}$、输入投影矩阵$\overline{B}$和输出投影矩阵$\overline{C}$处理所有尺度的特征。然而，状态转移矩阵$\overline{A}$控制着状态向量的衰减速度，其特征值接近1时实现慢衰减（长程记忆），接近0时实现快衰减（快速响应）。对于粗尺度特征，我们需要$\overline{A}$接近单位矩阵以保持长程依赖；对于细尺度特征，我们需要$\overline{A}$具有更快的衰减以捕捉高频细节变化。
+现有多尺度特征提取方法在处理不同尺度点云时采用共享的状态空间参数，忽略了不同尺度对时序建模特性的差异化需求。粗尺度特征需要保持长时记忆以捕捉全局上下文，而细尺度特征需要快速状态更新以响应局部细节变化。为此，我们提出自适应尺度解耦状态空间模型（Adaptive Scale-Decoupled SSM, ASD-SSM），通过为不同尺度动态生成定制化的SSM参数偏移量，解决参数共享导致的建模能力受限问题。
 
-ASD-SSM通过尺度感知参数生成器动态调整SSM参数。对于尺度$s$，我们首先通过全局自适应平均池化和多层感知机提取全局点云特征$\mathbf{f}_{global}$，并结合尺度嵌入向量$\mathbf{e}_s$：
+传统SSM方法使用相同的状态转移矩阵$\overline{A}$、输入投影矩阵$\overline{B}$和输出投影矩阵$\overline{C}$处理所有尺度的特征。然而，状态转移矩阵$\overline{A}$控制着状态向量的衰减速度：当$\overline{A}$的特征值接近1时实现慢衰减（长程记忆），接近0时实现快衰减（快速响应）。对于粗尺度特征，我们需要$\overline{A}$接近单位矩阵以保持长程依赖；对于细尺度特征，我们需要$\overline{A}$具有更快的衰减以捕捉高频细节变化。
+
+ASD-SSM通过尺度感知参数生成器（ParamGen）为不同尺度生成定制化的参数偏移量。该生成器是一个三层前馈神经网络，通过分析点云的全局特性和当前尺度信息，自适应地生成参数调制量$\Delta\overline{A}_s$、$\Delta\overline{B}_s$和$\Delta\overline{C}_s$，使得粗尺度保持慢衰减以捕捉长程依赖，细尺度保持快衰减以快速响应局部变化。
+
+对于尺度$s$，点云特征已按patch划分为$\mathbf{P}_s \in \mathbb{R}^{M \times P \times C}$，其中$M = \lceil N/P \rceil$为patch数量（$N$为总点数，$P$为patch大小），$C$为特征维度。我们首先对每个patch内的$P$个点进行全局自适应平均池化，得到每个patch的全局特征$\mathbf{f}_{global}^{(s)} \in \mathbb{R}^{M \times C}$。该特征捕捉每个patch内点云的整体几何特性（如局部结构复杂度、密度分布等）。同时，我们为每个尺度学习一个尺度嵌入向量$\mathbf{e}_s \in \mathbb{R}^{C/4}$，用于区分不同尺度的特性。首先通过MLP将全局特征降维：
 \begin{equation}
-\mathbf{c}_s = \text{MLP}([\mathbf{f}_{global} \| \mathbf{e}_s])
+	\mathbf{f}_{global}^{(s)} = \text{MLP}_{global}(\mathbf{f}_{global}^{(s)}) \in \mathbb{R}^{M \times C/4}
 \end{equation}
-其中$\|$表示拼接操作，$\mathbf{e}_s$是可学习的尺度特定嵌入向量。基于条件向量$\mathbf{c}_s$，参数生成器生成该尺度的参数偏移量：
+然后将降维后的全局特征与尺度嵌入拼接构成条件向量：
 \begin{equation}
-\Delta\overline{A}_s, \Delta\overline{B}_s, \Delta\overline{C}_s = \text{ParamGen}(\mathbf{c}_s)
+	\mathbf{c}_s = \text{MLP}([\mathbf{f}_{global}^{(s)} \| \mathbf{e}_s]) \in \mathbb{R}^{M \times C/2}
+\end{equation}
+其中$\|$表示拼接操作，$\mathbf{e}_s$被广播到与$\mathbf{f}_{global}^{(s)}$相同的batch维度。基于条件向量$\mathbf{c}_s$，参数生成器通过三层前馈网络为每个patch生成该尺度的参数偏移量：
+\begin{equation}
+	\Delta\overline{A}_s^{raw}, \Delta\overline{B}_s^{raw}, \Delta\overline{C}_s^{raw} = \text{ParamGen}(\mathbf{c}_s) \in \mathbb{R}^{M \times C}
 \end{equation}
 
-为确保不同尺度的状态转移矩阵满足特定约束，我们对$\Delta\overline{A}_s$引入尺度约束因子$\alpha_s$。该因子随尺度从粗到细递减（粗尺度$\alpha_1 \approx 0.9$，细尺度$\alpha_E \approx 0.3$），确保粗尺度保持更强的长程记忆能力：
+为确保不同尺度的状态转移特性满足我们的设计目标（粗尺度慢衰减、细尺度快衰减），我们对$\Delta\overline{A}_s$引入尺度约束因子$\alpha_s$。该因子随尺度从细到粗递增（细尺度$\alpha_1 \approx 0.3$，粗尺度$\alpha_E \approx 0.9$），确保粗尺度保持更强的长程记忆能力：
 \begin{equation}
-\Delta\overline{A}_s = \alpha_s \cdot \text{LayerNorm}(\Delta\overline{A}_s^{raw})
+	\Delta\overline{A}_s = \alpha_s \cdot \text{LayerNorm}(\Delta\overline{A}_s^{raw})
 \end{equation}
-其中$\text{LayerNorm}(\cdot)$表示层归一化操作，$\Delta\overline{A}_s^{raw}$为参数生成器的原始输出。对于输入投影偏移量$\Delta\overline{B}_s$和输出投影偏移量$\Delta\overline{C}_s$，我们仅使用层归一化进行规范化，允许模型根据数据自适应学习不同尺度的最优调制策略。这种设计在保证核心约束（状态衰减速度）的同时，赋予模型更大的学习灵活性。在工程实现中，直接修改Mamba内部参数矩阵较为复杂，因此我们采用等价的特征调制方式：通过$\Delta\overline{B}_s$调制输入特征，通过$\Delta\overline{A}_s$和$\Delta\overline{C}_s$调制输出特征，在效果上等价于动态调整SSM的状态空间参数。
+其中$\text{LayerNorm}(\cdot)$表示层归一化操作，用于稳定训练过程。对于输入投影偏移量$\Delta\overline{B}_s$和输出投影偏移量$\Delta\overline{C}_s$，我们仅使用层归一化进行规范化：
+\begin{equation}
+	\Delta\overline{B}_s = \text{LayerNorm}(\Delta\overline{B}_s^{raw}), \quad
+	\Delta\overline{C}_s = \text{LayerNorm}(\Delta\overline{C}_s^{raw})
+\end{equation}
+这种设计在保证核心约束（状态衰减速度的尺度差异）的同时，赋予模型根据数据自适应学习不同尺度的最优调制策略的灵活性。
 
-对于第$s$个尺度的点云特征$\mathbf{P}_s \in \mathbb{R}^{N_s \times C}$，其状态空间更新为：
+\textbf{参数偏移量的应用机制：}
+生成的参数偏移量通过以下方式作用于基础SSM参数，形成尺度特定的有效参数。对于第$m$个patch（$m = 1, 2, \ldots, M$），其对应的有效参数为：
 \begin{equation}
-\begin{aligned}
-\mathbf{h}_k^{(s)} &= \overline{A}_s \mathbf{h}_{k-1}^{(s)} + \overline{B}_s \mathbf{u}_k^{(s)} \\
-\mathbf{P}_s' &= \overline{C}_s \mathbf{h}_k^{(s)} + \overline{D}_s \mathbf{u}_k^{(s)}
-\end{aligned}
+	\begin{aligned}
+		\overline{A}_s^{(m)} &= \overline{A}_{base} + \lambda_A \cdot \Delta\overline{A}_s^{(m)} \\
+		\overline{B}_s^{(m)} &= \overline{B}_{base} + \lambda_B \cdot \Delta\overline{B}_s^{(m)} \\
+		\overline{C}_s^{(m)} &= \overline{C}_{base} + \lambda_C \cdot \Delta\overline{C}_s^{(m)}
+	\end{aligned}
+	\label{eq:param_modulation}
 \end{equation}
-其中$\mathbf{h}_k^{(s)}$是尺度$s$的状态向量，$\mathbf{u}_k^{(s)}$是输入向量。这种尺度解耦设计使得模型能够为不同尺度的点云特征提供定制化的时序建模策略：粗尺度的$\overline{A}_1$接近单位矩阵，保持长程记忆以捕捉全局语义；细尺度的$\overline{A}_E$衰减更快，专注于局部高频细节信息。通过这种方式，ASD-SSM在保持参数效率（参数增加约20\%）的同时，显著提升了多尺度特征建模能力。
+其中$\overline{A}_{base}$、$\overline{B}_{base}$、$\overline{C}_{base}$为所有尺度共享的基础状态空间参数，$\lambda_A$、$\lambda_B$、$\lambda_C$为调制强度系数（实验中设为0.1），用于控制偏移量的影响范围并防止参数变化过大导致训练不稳定。这种设计使得最终参数同时包含：（1）共享的基础状态转移能力（$\overline{A}_{base}$），（2）尺度特定的差异化特性（通过$\alpha_s$约束的$\Delta\overline{A}_s$），（3）内容自适应的动态调整（通过$\mathbf{f}_{global}^{(s)}$影响的偏移量，每个patch根据其局部内容获得定制化的参数）。
+
+对于第$s$个尺度的第$m$个patch内的点云特征序列，其状态空间更新为：
+\begin{equation}
+	\begin{aligned}
+		\mathbf{h}_k^{(s,m)} &= \overline{A}_s^{(m)} \mathbf{h}_{k-1}^{(s,m)} + \overline{B}_s^{(m)} \mathbf{u}_k^{(s,m)} \\
+		\mathbf{y}_k^{(s,m)} &= \overline{C}_s^{(m)} \mathbf{h}_k^{(s,m)} + \overline{D}_{base} \mathbf{u}_k^{(s,m)}
+	\end{aligned}
+	\label{eq:asd_ssm_update}
+\end{equation}
+其中$\mathbf{h}_k^{(s,m)}$是尺度$s$第$m$个patch的状态向量，$\mathbf{u}_k^{(s,m)} \in \mathbb{R}^C$是该patch内第$k$个点的输入向量（$k=1,2,\ldots,P$），$\overline{D}_{base}$为共享的直通连接参数。通过公式\ref{eq:param_modulation}和\ref{eq:asd_ssm_update}，ASD-SSM实现了尺度解耦的状态空间建模：最细尺度（$s=1$）的$\overline{A}_1^{(m)}$（受较小的$\alpha_1$约束）实现快速状态衰减，能够快速响应局部细节变化；最粗尺度（$s=S$）的$\overline{A}_E^{(m)}$（受较大的$\alpha_E$约束）接近单位矩阵，保持长程记忆以捕捉全局语义。此外，每个patch根据其局部内容（通过$\mathbf{f}_{global}^{(s)}$提取）获得定制化的参数调制，使得模型能够根据不同区域的几何复杂度自适应调整建模策略。通过这种方式，ASD-SSM在保持参数效率（参数增加约20\%）的同时，显著提升了多尺度特征建模能力。
 
 
 
 	\begin{algorithm}[H]
 		\SetAlgoLined % 显示end
 		\caption{MSFFS} % 算法名字
-		\KwIn{输入点云:$Points$ ,多尺度层数:$E$ ,Patch Size:$P$ ,多尺度层窗口扩大倍数:F } % 输入参数
+		\KwIn{输入点云:$Points$ ,多尺度层数:$S$ ,Patch Size:$P$ ,多尺度层窗口扩大倍数:F } % 输入参数
 		\KwOut{层次融合后点云$Points'$} % 输出
 		
 		$i \leftarrow 1$ \;
 		 $points\_list \leftarrow$ [ ]\;
 		
 		\tcp{遍历多尺度层}
-		\For{i = \textnormal{1}  \text{ to } E}{
+		\For{i = \textnormal{1}  \text{ to } S}{
 			\tcp{对点云进行窗口划分}
 			$Points_{i} \leftarrow padding\_and\_grouping(Points, P,F_{i})$\;
 			
@@ -420,7 +448,7 @@ ASD-SSM通过尺度感知参数生成器动态调整SSM参数。对于尺度$s$�
 		
 	\end{algorithm}
 
-	如\cref{fig:bss}所示展示了三层尺度时的特征处理流程，即$E=3$。每个Patch间用虚线分隔。第二层和第三层的$F_{i}$分别为2和4，即相较于第一层，patch的大小分别扩大2倍和4倍。且图中详细展示了Bidirectional Mamba的工作原理，其主要包括前向和后向SSM，以及残差信息。对于MSFFS，可以看到我们会得到不同窗口的点云序列，并在其内部进行学习，之后将学习结果逐点进行拼接融合，最终使用线性层对层次融合结果进行学习，得到结合多层次的点云信息。
+	如\cref{fig:bss}所示展示了三层尺度时的特征处理流程，即$S=3$。每个Patch间用虚线分隔。第二层和第三层的$F_{i}$分别为2和4，即相较于第一层，patch的大小分别扩大2倍和4倍。且图中详细展示了Bidirectional Mamba的工作原理，其主要包括前向和后向SSM，以及残差信息。对于MSFFS，可以看到我们会得到不同窗口的点云序列，并在其内部进行学习，之后将学习结果逐点进行拼接融合，最终使用线性层对层次融合结果进行学习，得到结合多层次的点云信息。
 
 \begin{figure}[htbp]
 	\centering
@@ -601,7 +629,7 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 \end{table}
 
 \textbf{MSFFS：}
-如\cref{tab:MSFFS}为使用多尺度特征融合策略MSFFS的消融实验。这里主要对多尺度层数E和多尺度层窗口扩大倍数$F$进行消融实验，$F\in \mathbb{R}^{E}$。例如当$F$为$(1,2,3)$时，代表尺度层从低到高Patch Size分别为$P\times 1$,$P\times 2$,$P\times 3$。最低层一般不进行窗口扩增。当点云尺度层数$E$为1时即不使用多尺度特征融合策略。可以看到使用多尺度特征融合策略要比不使用该策略有更好的效果，证明了尊重点云的无序性以及使用多尺度的策略是正确的选择。且过度地增加多尺度特征并不会使模型效果更好，可能是由于其稀释了顺序排列时的点云空间特征的信息。由于后期再增加Patch Size以及额外尺度获得的性能提升不大，在综合训练时间以及模型效果后，我们选择使用多尺度层数为3即使用额外两层的无顺序的点云尺度特征进行训练。两层Patch Size扩大倍数都为2，超参数设置如加粗位置所示。
+如\cref{tab:MSFFS}为使用多尺度特征融合策略MSFFS的消融实验。这里主要对多尺度层数E和多尺度层窗口扩大倍数$F$进行消融实验，$F\in \mathbb{R}^{S}$。例如当$F$为$(1,2,3)$时，代表尺度层从低到高Patch Size分别为$P\times 1$,$P\times 2$,$P\times 3$。最低层一般不进行窗口扩增。当点云尺度层数$S$为1时即不使用多尺度特征融合策略。可以看到使用多尺度特征融合策略要比不使用该策略有更好的效果，证明了尊重点云的无序性以及使用多尺度的策略是正确的选择。且过度地增加多尺度特征并不会使模型效果更好，可能是由于其稀释了顺序排列时的点云空间特征的信息。由于后期再增加Patch Size以及额外尺度获得的性能提升不大，在综合训练时间以及模型效果后，我们选择使用多尺度层数为3即使用额外两层的无顺序的点云尺度特征进行训练。两层Patch Size扩大倍数都为2，超参数设置如加粗位置所示。
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 \begin{table}[htbp!]
@@ -610,7 +638,7 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 	\label{tab:MSFFS}
 	\begin{tabular}{@{}lll@{}}
 		\toprule
-		点云多尺度层数量 $E$ & 窗口扩大倍数 $F_{k}$     & mIoU          \\ \midrule
+		点云多尺度层数量 $S$ & 窗口扩大倍数 $F_{k}$     & mIoU          \\ \midrule
 		1          & (1)              & 72.4          \\
 		2          & (1,1)              & 72.7          \\
 		2          & (1,3)              & 73.1          \\
@@ -626,7 +654,7 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 
-\textbf{ASD-SSM：}为验证自适应尺度解耦状态空间模型(ASD-SSM)的有效性，我们设计了对比实验。如\cref{tab:asdssm}所示，我们对比了三种参数化方案：共享SSM参数（所有尺度使用相同参数）、独立SSM参数（每个尺度完全独立的参数，参数量为共享方案的$E$倍）、以及我们提出的ASD-SSM（通过参数生成器动态生成参数偏移）。实验结果表明，ASD-SSM在仅增加约20\%参数量的情况下，相比共享参数方案提升了1.8\% mIoU，性能接近完全独立参数方案（仅低0.4\%），但参数效率显著更高。此外，我们对ASD-SSM的各组件进行了消融实验，包括尺度约束因子$\alpha_s$、全局特征调制。结果显示，移除任一组件都会导致性能下降，其中尺度约束因子对性能影响最大（下降0.8\% mIoU），证明了为不同尺度设置差异化的参数约束对于平衡粗尺度长程记忆和细尺度快速响应至关重要。
+\textbf{ASD-SSM：}为验证自适应尺度解耦状态空间模型(ASD-SSM)的有效性，我们设计了对比实验。如\cref{tab:asdssm}所示，我们对比了三种参数化方案：共享SSM参数（所有尺度使用相同参数）、独立SSM参数（每个尺度完全独立的参数，参数量为共享方案的$S$倍）、以及我们提出的ASD-SSM（通过参数生成器动态生成参数偏移）。实验结果表明，ASD-SSM在仅增加约20\%参数量的情况下，相比共享参数方案提升了1.8\% mIoU，性能接近完全独立参数方案（仅低0.4\%），但参数效率显著更高。此外，我们对ASD-SSM的各组件进行了消融实验，包括尺度约束因子$\alpha_s$、全局特征调制。结果显示，移除任一组件都会导致性能下降，其中尺度约束因子对性能影响最大（下降0.8\% mIoU），证明了为不同尺度设置差异化的参数约束对于平衡粗尺度长程记忆和细尺度快速响应至关重要。
 \begin{table}[htbp!]
 	\centering
 	\caption{ASD-SSM消融实验}
