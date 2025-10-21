@@ -332,12 +332,12 @@ y_{k} &= \overline{C}x_{k} + \overline{D}u_{k}
 	\label{fig:coder}
 \end{figure}
 
-\subsection{MSFFS：}
-针对现有SSM方法在点云无序性和长序列处理方面的局限性，本研究提出了一种多尺度特征融合策略MSFFS（Multi-Scale Feature Fusion Strategy）。MSFFS将序列化特征提取方案应用于点云任务，通过并行处理多层尺度点云来构建层次点云信息矩阵，融合点云各层次信息。该策略使模型具有更强的多尺度学习能力，在长序列下有强大的上下文理解能力，在保证模型具有更强的高层次理解能力的同时，保留对点云细节的高精度处理。
+\subsection{ASD-SSM：}
+现有多尺度特征提取方法在处理不同尺度点云时采用共享的状态空间参数，忽略了不同尺度对时序建模特性的差异化需求。粗尺度特征需要保持长时记忆以捕捉全局上下文,而细尺度特征需要快速状态更新以响应局部细节变化。针对这一问题以及SSM方法在点云无序性和长序列处理方面的局限性，我们提出自适应尺度解耦状态空间模型（Adaptive Scale-Decoupled SSM, ASD-SSM）。ASD-SSM通过为不同尺度动态生成定制化的SSM参数偏移量，解决参数共享导致的建模能力受限问题。该方法将序列化特征提取方案应用于点云任务，通过并行处理多层尺度点云来构建层次点云信息矩阵，融合各层次信息。这使得模型在长序列下具有强大的上下文理解能力，在保证高层次语义理解的同时，保留对点云局部细节的高精度处理。
 
-MSFFS的核心是采用基于Mamba的双向状态空间模型进行特征提取，相比传统的Transformer和MLP方法具有显著优势。Mamba通过选择性状态空间机制实现高效序列建模，其线性时间复杂度为大规模点云处理提供了理论基础。在MSFFS中，我们利用Mamba的离散化状态空间方程进行序列建模，通过状态向量$x_k$、输入向量$u_k$和输出向量$y_k$以及相应的系统矩阵$\overline{A}$、$\overline{B}$、$\overline{C}$、$\overline{D}$来描述系统的时序演化过程。这种方法在处理长序列点云时，能够以线性复杂度实现全局信息聚合，避免了Transformer的平方复杂度问题，同时相比简单的MLP方法，能够更好地捕捉序列间的依赖关系和上下文信息。
 
-MSFFS的处理流程包括窗口划分、顺序提示、双向特征学习以及多尺度融合几个关键步骤。首先对点云进行窗口划分，之后为点云引入顺序化提示。由于在点云序列中，顺序靠前的点无法得到顺序靠后点的信息，这与点云的无序性不符，因此我们采用Vision Mamba\cite{VisionMamba}的双向特征学习策略来进行双向的特征融合。双向特征融合的具体策略见\cref{fig:bss} Bidirectional Mamba部分。
+
+ASD-SSM的处理流程包括窗口划分、顺序提示、以及基于尺度自适应参数生成的多尺度特征建模几个步骤。其中多尺度特征学习与融合是算法的关键操作。首先对点云进行窗口划分，之后为点云引入顺序化提示。由于在点云序列中，顺序靠前的点无法得到顺序靠后点的信息，这与点云的无序性不符，因此我们采用Vision Mamba\cite{VisionMamba}的双向特征学习策略来进行双向的特征融合。双向特征融合的具体策略见\cref{fig:bss} Bidirectional Mamba部分。
 
 算法的伪代码如Algorithm1所示。我们以$S$层尺度为例对算法进行详细说明。对于MSFFS，在最低尺度时对点云$Points\in\mathbb{R}^{N\times{C}}$按照序列化的顺序进行特征提取，其窗口最小。其中$N$为点数量，$C$为点云特征大小。之后的更高尺度层则按照乱序对点云$Points$进行特征提取，且具有逐渐增大的窗口。
 
@@ -354,7 +354,7 @@ MSFFS的处理流程包括窗口划分、顺序提示、双向特征学习以及
 
 \textbf{特征提取与融合：}点云将进入双向Mamba进行特征提取。在进行特征学习过后的多层次特征$Points_{(1:n)}$采用拼接策略将多层特征进行融合。之后进入MLP以及线性层完成最终的特征映射以及特征学习，将特征的大小还原为初始大小，得到进行层次融合后的点云$Points'\in\mathbb{R}^{N\times{C}}$。
 
-\subsubsection{自适应尺度解耦状态空间模型（ASD-SSM）}
+\subsubsection{基于尺度自适应参数生成的多尺度特征建模}
 \textbf{符号说明：}在后续描述中，我们用$s \in \{1, 2, ..., S\}$
 表示多尺度层的尺度索引，其中$s=1$表示最细尺度（对应MSFFS中的第一层，
 窗口大小为$P$），$s=S$表示最粗尺度（窗口大小为$P \times F_E$）。
@@ -412,44 +412,12 @@ ASD-SSM通过尺度感知参数生成器（ParamGen）为不同尺度生成定�
 其中$\mathbf{h}_k^{(s,m)}$是尺度$s$第$m$个patch的状态向量，$\mathbf{u}_k^{(s,m)} \in \mathbb{R}^C$是该patch内第$k$个点的输入向量（$k=1,2,\ldots,P$），$\overline{D}_{base}$为共享的直通连接参数。通过公式\ref{eq:param_modulation}和\ref{eq:asd_ssm_update}，ASD-SSM实现了尺度解耦的状态空间建模：最细尺度（$s=1$）的$\overline{A}_1^{(m)}$（受较小的$\alpha_1$约束）实现快速状态衰减，能够快速响应局部细节变化；最粗尺度（$s=S$）的$\overline{A}_E^{(m)}$（受较大的$\alpha_E$约束）接近单位矩阵，保持长程记忆以捕捉全局语义。此外，每个patch根据其局部内容（通过$\mathbf{f}_{global}^{(s)}$提取）获得定制化的参数调制，使得模型能够根据不同区域的几何复杂度自适应调整建模策略。通过这种方式，ASD-SSM在保持参数效率（参数增加约20\%）的同时，显著提升了多尺度特征建模能力。
 
 
-
-	\begin{algorithm}[H]
-		\SetAlgoLined % 显示end
-		\caption{MSFFS} % 算法名字
-		\KwIn{输入点云:$Points$ ,多尺度层数:$S$ ,Patch Size:$P$ ,多尺度层窗口扩大倍数:F } % 输入参数
-		\KwOut{层次融合后点云$Points'$} % 输出
-		
-		$i \leftarrow 1$ \;
-		 $points\_list \leftarrow$ [ ]\;
-		
-		\tcp{遍历多尺度层}
-		\For{i = \textnormal{1}  \text{ to } S}{
-			\tcp{对点云进行窗口划分}
-			$Points_{i} \leftarrow padding\_and\_grouping(Points, P,F_{i})$\;
-			
-			\If{i ==  \textnormal{1}}{
-				\tcp{如果为第一层}
-				$Points_{i} \leftarrow order\_prompt(Points_{i})$\;
-			}
-			\Else{
-				$Points_{i} \leftarrow shuffle(Points_{i}$)\;
-			}
-			
-			$Points_{i} \leftarrow bidirectional\_mamba(Points_{i})$\;
-			$points\_list.add(Points_{i})$\;
-			
-		}
-		$Points' \leftarrow project(mlp(concat(points\_list)))$\;
-		\KwRet{$Points'$} % 返回new_point
-		
-	\end{algorithm}
-
 	如\cref{fig:bss}所示展示了三层尺度时的特征处理流程，即$S=3$。每个Patch间用虚线分隔。第二层和第三层的$F_{i}$分别为2和4，即相较于第一层，patch的大小分别扩大2倍和4倍。且图中详细展示了Bidirectional Mamba的工作原理，其主要包括前向和后向SSM，以及残差信息。对于MSFFS，可以看到我们会得到不同窗口的点云序列，并在其内部进行学习，之后将学习结果逐点进行拼接融合，最终使用线性层对层次融合结果进行学习，得到结合多层次的点云信息。
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{picture/BSS.JPG}
-	\caption{MSFFS具体流程}
+	\caption{ASD-SSM具体流程}
 	\label{fig:bss}
 \end{figure}
 
