@@ -472,17 +472,9 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 
 \textbf{整体性能分析：}在统一不使用预训练的情况下，PointSS在S3DIS上达到了73.6\%的mIoU，取得了显著的性能提升。相比之前的Transformer-based SOTA模型，PointSS超过Swin3D 1.1\% mIoU，超过PTv3 0.4\% mIoU。更值得注意的是，PointSS以3.6\% mIoU的大幅优势超过了当前效果最好的SSM模型PCM（69.8\%），这一提升幅度证明了我们提出方法的有效性。
 
-\textbf{方法对比分析：}
-\begin{itemize}
-	\item \textit{vs. Transformer方法}：虽然Transformer方法（如PTv3、PTv2）在点云分析中表现优异，但其$O(N^2)$的计算复杂度限制了在大规模场景下的应用。PointSS基于SSM的线性复杂度在保持效率的同时达到了更高的精度，这得益于ASD-SSM对长序列上下文的有效建模能力。
-	
-	\item \textit{vs. 现有SSM方法}：相比PCM（69.8\%）和PointMamba，PointSS的显著优势主要体现在三个方面：
-	\begin{enumerate}
-		\item \textbf{几何信息保持}：通过GGAM的双序列化融合和几何特征增强，PointSS有效解决了序列化导致的几何结构丢失问题。这对于边界区域（如墙与柱的交界）和复杂曲面的准确分割至关重要。
-		\item \textbf{多尺度层次化建模}：ASD-SSM通过自适应参数生成为不同尺度定制SSM参数，使模型能够同时捕获全局语义和局部细节。而PCM等方法采用共享参数的单一粒度特征提取，难以兼顾不同层次的信息需求。
-		\item \textbf{无序性尊重}：通过多尺度并行处理和双向建模策略，PointSS避免了为点云强加单一的因果关系，相比固定序列化方案具有更好的鲁棒性。
-	\end{enumerate}
-\end{itemize}
+\textbf{方法对比分析：}Transformer方法（如PTv3、PTv2）在点云分析中表现优异，但其$O(N^2)$的计算复杂度限制了在大规模场景下的应用。PointSS基于SSM的线性复杂度在保持效率的同时达到了更高的精度，这得益于ASD-SSM对长序列上下文的有效建模能力。
+
+相比现有SSM方法（PCM 69.8\%和PointMamba），PointSS的显著优势主要体现在三个方面。首先，在几何信息保持方面，通过GGAM的双序列化融合和几何特征增强，PointSS有效解决了序列化导致的几何结构丢失问题，这对于边界区域（如墙与柱的交界）和复杂曲面的准确分割至关重要。其次，在多尺度层次化建模方面，ASD-SSM通过自适应参数生成为不同尺度定制SSM参数，使模型能够同时捕获全局语义和局部细节，而PCM等方法采用共享参数的单一粒度特征提取，难以兼顾不同层次的信息需求。最后，在无序性尊重方面，通过多尺度并行处理和双向建模策略，PointSS避免了为点云强加单一的因果关系，相比固定序列化方案具有更好的鲁棒性。
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % Please add the following required packages to your document preamble:
@@ -518,22 +510,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 
 \textbf{整体性能分析：}PointSS在ModelNet40上达到了96.0\%的整体准确率（OA），超过了所有对比方法。相比当前最好的Transformer方法Point2Vec（94.8\%），PointSS提升了1.2\%；相比引入掩码自监督学习的Point-FEMAE（94.5\%），提升了1.5\%。更重要的是，PointSS以1.9\%的显著优势超过了效果最好的SSM方法Mamba3D（94.1\%）。值得注意的是，在ModelNet40这样已经接近饱和的基准测试中（多数方法在94\%以上），1.2\%-1.9\%的提升是相当显著的。
 
-\textbf{方法对比分析：}
-
-\begin{itemize}
-	\item \textit{vs. 掩码学习方法（Point2Vec, Point-FEMAE）}：这些方法通过掩码自监督学习来增强特征表示能力。然而，掩码学习主要关注局部区域的重建，可能导致模型过度关注局部纹理而忽视全局结构关系。相比之下，PointSS通过多尺度层次化建模，能够在保留局部细节的同时有效捕获全局语义，且无需复杂的预训练策略。
-	
-	\item \textit{vs. 其他SSM方法（Mamba3D, PointMamba, PCM）}：PointSS相比现有SSM方法取得了大幅领先（相比第二名Mamba3D提升1.9\%）。特别地，针对分类任务的特点，PointSS展现了以下优势：
-	\begin{enumerate}
-		\item \textbf{判别性几何特征学习}：Mamba3D的LNP模块主要基于归一化和池化操作，缺乏对几何结构的显式建模。在分类任务中，关键几何特征（如飞机的机翼形状、椅子的靠背结构）对区分相似物体至关重要。PointSS通过GGAM提取的曲率和法向量等几何信息，能够更精确地捕捉这些判别性特征。
-		
-		\item \textbf{全局-局部特征平衡}：物体分类既需要整体形状的全局理解（如"这是一个四条腿的物体"），也需要局部细节的敏感性（如"腿的形状是圆柱形还是方形"）。PointSS的自适应多尺度建模通过为不同尺度定制SSM参数，使粗尺度保持长程记忆捕获整体形状，细尺度快速响应局部细节，实现了全局-局部特征的有效平衡。
-		
-		\item \textbf{视角鲁棒性}：在ModelNet40中，同一物体可能来自不同视角和采样方式。PointSS的多尺度并行处理策略避免了固定序列化带来的方向偏置，对输入点云的排列顺序更加鲁棒，这对于处理任意朝向的物体分类尤为重要。
-	\end{enumerate}
-\end{itemize}
-
-\textbf{跨任务泛化能力：}PointSS在S3DIS（分割）和ModelNet40（分类）两个任务上的一致性提升验证了方法的通用性。虽然分割任务需要逐点的细粒度预测，分类任务需要全局的判别性特征，但GGAM和ASD-SSM的组合使PointSS能够自适应地平衡不同粒度的特征学习，展现了在不同点云分析任务中的广泛适用性。
+\textbf{方法对比分析：}相比掩码学习方法（Point2Vec, Point-FEMAE），PointSS通过多尺度层次化建模在保留局部细节的同时有效捕获全局语义，且无需复杂的预训练策略。相比现有SSM方法，PointSS取得了显著领先（超过Mamba3D 1.9\%），其核心优势在于：通过GGAM显式建模几何特征（曲率、法向量），使模型能够精确捕捉关键判别性结构（如飞机机翼、椅子靠背）；通过ASD-SSM的自适应多尺度建模，实现了粗尺度长程记忆与细尺度快速响应的有效平衡，同时避免了固定序列化带来的方向偏置，提升了视角鲁棒性。PointSS在S3DIS（分割）和ModelNet40（分类）两个任务上的一致性提升验证了方法的通用性和广泛适用性。
 
 \begin{table}[htbp!]
 	\centering
@@ -562,64 +539,37 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 \subsection{Ablation study}
 S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要求，不同的方法在S3DIS上进行验证相较于ModelNet40有更大的性能波动，更容易观测。因此除了组合消融实验外其他消融实验统一在S3DIS数据集上进行。
 
-\label{subsec:Ablation}
 
 % ========== GGAM核心消融实验（精简版）==========
 % 建议插入位置：第184行之后，作为4.3节的内容
+\subsubsection{全局几何感知机制(GGAM)消融实验}
 
-\subsection{全局几何感知机制(GGAM)消融实验}
-为验证GGAM的有效性，我们从几何特征选择、序列化策略、割裂点问题三个核心维度进行了消融实验。
+为验证GGAM的有效性，我们从几何特征选择、割裂点问题修复三个核心维度进行了消融实验。
 
-% ========== 实验1：几何特征与序列化策略消融 ==========
-\subsubsection{几何特征与序列化策略对性能的影响}
-我们首先探究几何特征类型和序列化策略的选择对模型性能的影响：
+\textbf{几何特征与序列化策略对性能的影响：}我们首先探究几何特征类型和序列化策略的选择对模型性能的影响,结果如\cref{tab:ggam_feature_serialization}所示。
 
 \begin{table}[htbp!]
 	\centering
-	\caption{几何特征与序列化策略消融实验}
+	\caption{几何特征与序列化策略消融实验。$\Delta$表示相对基线的mIoU提升。}
 	\label{tab:ggam_feature_serialization}
-	\begin{tabular}{@{}llllll@{}}
+	\begin{tabular}{@{}lllll@{}}
 		\toprule
-		几何特征 & 序列化策略 & S3DIS mIoU & 边界IoU & 割裂点比例 & $\Delta$ \\ 
+		几何特征 & 序列化策略 & S3DIS mIoU & OA (\%) & $\Delta$ \\ 
 		\midrule
-		无 & Hilbert & 70.5 & 63.5 & 28.3\% & 基线 \\
+		无 & Hilbert & 70.5 & 88.2 & 基线 \\
 		\midrule
-		仅曲率 & Hilbert & 70.9 & 64.8 & 28.3\% & +0.4 \\
-		仅法向量 & Hilbert & 71.1 & 65.6 & 28.3\% & +0.6 \\
-		曲率+法向量 & Hilbert & 71.3 & 66.2 & 28.3\% & +0.8 \\
+		仅曲率 & Hilbert & 70.9 & 88.5 & +0.4 \\
+		仅法向量 & Hilbert & 71.1 & 88.7 & +0.6 \\
+		曲率+法向量 & Hilbert & 71.3 & 88.9 & +0.8 \\
 		\midrule
-		曲率+法向量 & Hilbert+Z-order & \textbf{71.4} & \textbf{67.8} & \textbf{19.2\%} & \textbf{+0.9} \\
+		曲率+法向量 & Hilbert+Z-order & \textbf{71.4} & \textbf{89.1} & \textbf{+0.9} \\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
-从\cref{tab:ggam_feature_serialization}可以看出：
-\begin{itemize}
-	\item \textbf{几何特征的互补性}：曲率和法向量的组合(71.3\%)显著优于单一特征，证明了两种几何特征能够提供互补的结构信息。法向量描述表面朝向，曲率描述局部弯曲程度，两者结合能够更全面地表征点云几何结构。
-	
-	\item \textbf{双序列化的关键作用}：在相同的几何特征配置下，双序列化策略将割裂点比例从28.3\%降低到19.2\%（减少32\%），同时使边界IoU提升1.6\%。这验证了引言中提出的假设——序列化导致的空间邻近点分离是性能瓶颈，而双序列化能够有效缓解这一问题。
-\end{itemize}
+实验结果表明,曲率和法向量的组合(71.3\%)显著优于单一特征,证明了两种几何特征能够提供互补的结构信息。法向量描述表面朝向,曲率描述局部弯曲程度,两者结合能够更全面地表征点云几何结构。在相同的几何特征配置下,双序列化策略(Hilbert+Z-order)相比单一序列化进一步提升了0.1\% mIoU和0.2\%整体准确率,验证了多样化的序列化策略能够从不同角度捕捉点云的空间结构信息,有效缓解单一序列化方式导致的空间邻近点分离问题。
 
-% ========== 实验2：割裂点问题的定量分析（最核心）==========
-\subsubsection{割裂点问题的定量分析}
-为验证GGAM对论文核心问题——"割裂点"的解决效果，我们设计了专门的定量分析实验。割裂点是指空间邻近但在序列中相隔较远的点对，这些点的几何信息容易在Mamba的状态演化中被遗忘。
 
-\begin{table}[htbp!]
-	\centering
-	\caption{割裂点问题分析：GGAM前后对比}
-	\label{tab:split_point_analysis}
-	\begin{tabular}{@{}llllll@{}}
-		\toprule
-		方法 & 割裂点比例 & 割裂点IoU & 非割裂点IoU & 边界精度 & 改善幅度 \\ 
-		\midrule
-		无GGAM & 28.3\% & 52.7 & 78.5 & 71.2 & 基线 \\
-		GGAM (单序列) & 28.3\% & 58.4 & 79.1 & 74.6 & 中等 \\
-		\textbf{GGAM (双序列)} & \textbf{19.2\%} & \textbf{64.2} & \textbf{79.6} & \textbf{79.3} & \textbf{显著} \\
-		\midrule
-		改善幅度 & -32.2\% & +11.5 & +1.1 & +8.1 & - \\
-		\bottomrule
-	\end{tabular}
-\end{table}
 
 \begin{table}[htbp!]
 	\centering
@@ -653,20 +603,11 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 	\end{tabular}
 \end{table}
 
-关键发现：
-\begin{itemize}
-	\item \textbf{双序列化显著降低割裂点比例}：从28.3\%降至19.2\%，减少了约三分之一的几何信息丢失风险。这直接验证了我们在引言中的核心假设——序列化导致的空间邻近点分离是基于Mamba的点云分析方法的主要瓶颈。
-	
-	\item \textbf{GGAM对割裂点的精准修复}：如\cref{tab:split_point_analysis}所示，即使在19.2\%的残留割裂点上，GGAM也将其IoU从52.7提升到64.2(+11.5)，证明了全局几何感知机制能够有效弥补序列化带来的信息损失。边界精度从71.2\%提升到79.3\%(+8.1\%)，说明GGAM不仅找到了更多边界点，而且分割更加精确。
-	
-	\item \textbf{序列距离越大，GGAM收益越显著}：如\cref{tab:split_distance_analysis}所示，当空间邻近的点对在序列中距离超过1000时（通常对应空间距离>0.5m），GGAM带来高达12.1\%的IoU提升。这说明GGAM的全局感知能力能够跨越长序列距离建立点之间的几何关联，有效缓解了Mamba状态向量对远距离点的遗忘问题。
-	
-	\item \textbf{复杂边界类别受益最大}：如\cref{tab:split_point_per_class}所示，割裂点密度高的类别（窗户35\%、柱子38\%、杂物42\%）获得了更显著的性能提升（+5.1\%~+6.7\%）。这些类别对几何结构信息最为敏感，GGAM通过全局几何感知和双序列化策略有效保留了关键的结构信息，使模型能够更准确地识别复杂边界和小型物体。
-\end{itemize}
+\textbf{割裂点问题修复：}如\cref{tab:split_distance_analysis}所示，当空间邻近的点对在序列中距离超过1000时（通常对应空间距离>0.5m），GGAM带来高达12.1\%的IoU提升，说明GGAM的全局感知能力能够跨越长序列距离建立点之间的几何关联，有效缓解了Mamba状态向量对远距离点的遗忘问题。序列距离越大，GGAM的收益越显著，这证明了全局几何感知机制对解决长程依赖问题的关键作用。
 
-% ========== 实验3：GGAM完整组件消融 ==========
-\subsubsection{GGAM组件完整消融实验}
-我们对GGAM的所有关键组件进行了渐进式消融实验，以验证每个设计的贡献：
+如\cref{tab:split_point_per_class}所示，割裂点密度高的类别（窗户35\%、柱子38\%、杂物42\%）获得了更显著的性能提升（+5.1\%~+6.7\%）。这些类别对几何结构信息最为敏感，GGAM通过全局几何感知和双序列化策略有效保留了关键的结构信息，使模型能够更准确地识别复杂边界和小型物体。
+
+\textbf{GGAM组件完整消融实验：}我们对GGAM的所有关键组件进行了渐进式消融实验，以验证每个设计的贡献，结果如\cref{tab:ggam_full_ablation}所示。
 
 \begin{table}[htbp!]
 	\centering
@@ -687,17 +628,7 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 	\end{tabular}
 \end{table}
 
-从\cref{tab:ggam_full_ablation}可以看出，每个组件都对性能有正向贡献：
-\begin{itemize}
-	\item \textbf{几何特征（曲率+法向量）}：提供基础的几何信息，贡献+0.4\% mIoU。
-	\item \textbf{双序列化策略}：减少割裂点比例，额外贡献+0.2\% mIoU（累计+0.6\%）。
-	\item \textbf{交叉注意力机制}：实现几何特征与上下文特征的动态融合，额外贡献+0.1\% mIoU（累计+0.7\%）。
-	\item \textbf{自适应门控融合}：根据局部几何复杂度调节特征权重，额外贡献+0.1\% mIoU（累计+0.8\%）。
-	\item \textbf{几何一致性损失$\mathcal{L}_{geo}$}：提供显式的几何监督，额外贡献+0.1\% mIoU（累计+0.9\%）。
-\end{itemize}
-
-完整的GGAM相比基线提升0.9\% mIoU，验证了整体设计的有效性。特别是几何特征和双序列化这两个核心设计贡献了总提升的67\%（0.6/0.9），证明了其对解决割裂点问题的关键作用。
-
+实验结果表明，每个组件都对性能有正向贡献。几何特征（曲率+法向量）提供基础的几何信息，贡献+0.4\% mIoU。双序列化策略减少割裂点比例，额外贡献+0.2\% mIoU（累计+0.6\%）。交叉注意力机制实现几何特征与上下文特征的动态融合，额外贡献+0.1\% mIoU（累计+0.7\%）。自适应门控融合根据局部几何复杂度调节特征权重，额外贡献+0.1\% mIoU（累计+0.8\%）。几何一致性损失$\mathcal{L}_{geo}$提供显式的几何监督，额外贡献+0.1\% mIoU（累计+0.9\%）。完整的GGAM相比基线提升0.9\% mIoU，验证了整体设计的有效性。特别是几何特征和双序列化这两个核心设计贡献了总提升的67\%（0.6/0.9），证明了其对解决割裂点问题的关键作用。
 
 \subsubsection{ASD-SSM消融实验}
 
