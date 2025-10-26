@@ -3,7 +3,7 @@
 [elsarticle-template-num.tex](elsarticle-template-num.tex)是主要的论文文档，我主要写作在这里
 [picture](picture) 存储了所有论文图片
 [ref.bib](ref.bib)存储了所有引用
-
+[mamba.pdf](mamba.pdf) mamba原文
 # 代码
 原代码仓库在本地的
 D:\PointSS下

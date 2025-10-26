@@ -403,19 +403,29 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数偏移量，解决�
 	\overline{A}_s = \overline{A}_{base} + \lambda_A \cdot \Delta\overline{A}_s
 	\label{eq:param_modulation}
 \end{equation}
-其中$\overline{A}_{base} \in \mathbb{R}^{D}$为所有尺度和Patch共享的基础状态转移参数向量（对角矩阵的对角元素），$\lambda_A$为调制强度系数（实验中设为0.1）。由于每个Patch内的SSM操作相互独立，为简化表示，后续公式中省略Patch索引。
+其中$\overline{A}_{base} \in \mathbb{R}^{D}$为所有尺度和Patch共享的基础状态转移参数向量（对角矩阵的对角元素），$\lambda_A$为调制强度系数（实验中设为0.1）。需要强调的是，虽然为简化表示公式中省略了Patch索引，但每个Patch $m$会根据其内容特征生成专属的参数偏移量$\Delta\overline{A}_s^{(m)}$，即完整形式为$\overline{A}_s^{(m)} = \overline{A}_{base} + \lambda_A \cdot \Delta\overline{A}_s^{(m)}$。
+
+\textbf{Patch间状态传递策略：}为了充分利用序列化后的点云顺序信息同时保持对无序性的尊重，ASD-SSM采用Patch间状态传递策略。对于所有尺度$s$，同一batch内相邻Patch间传递隐状态：当处理第$m$个Patch时，其初始状态通过门控机制融合前一Patch的最终状态$\mathbf{h}_P^{(s,m-1)}$，即$\mathbf{h}_0^{(s,m)} = \text{Gate}(\mathbf{h}_P^{(s,m-1)}, \mathbf{u}_1^{(s,m)})$，动态吸收前序Patch的上下文信息。值得强调的是，该策略并未违背点云的无序性原则：在最底层（$s=1$）序列化后，我们对点云进行了有序化处理以构建空间邻接关系；而在更高尺度层（$s>1$），Patch内的点云被随机打乱，SSM在无序点集上进行特征学习，这一设计充分尊重了点云的无序特性。通过这种方式，模型既能利用序列化带来的空间邻接信息建立Patch间的连续性，又能在Patch内部保持对无序性的适应能力。全局上下文信息通过参数生成器中的全局特征提取（公式中的$\mathbf{f}_{global}^{(s)}$）、Patch间状态传递以及后续的多尺度特征融合共同保证。
 
 这种设计使得ASD-SSM实现了尺度解耦的状态空间建模：（1）\textit{共享的基础记忆}——通过$\overline{A}_{base}$为所有尺度提供统一的状态转移基础；（2）\textit{尺度特定的记忆特性}——通过$\alpha_s$约束的$\Delta\overline{A}_s$实现粗尺度慢衰减（长程记忆）、细尺度快衰减（快速响应）的差异化建模，这是ASD-SSM的核心创新；（3）\textit{选择性信息流动}——通过Mamba的标准选择性机制\cite{Mamba}，$\overline{B}_s$和$\overline{C}_s$根据输入内容动态调整信息的选择性流入和流出。
 
 \textbf{状态空间更新：}对于第$s$个尺度的每个Patch内的点云特征序列，状态空间更新遵循标准的离散化SSM形式\cite{Mamba}：
 \begin{equation}
 	\begin{aligned}
-		\mathbf{h}_k^{(s)} &= \overline{A}_s \mathbf{h}_{k-1}^{(s)} + \overline{B}_s \mathbf{u}_k^{(s)} \\
-		\mathbf{y}_k^{(s)} &= \overline{C}_s \mathbf{h}_k^{(s)} + \overline{D} \mathbf{u}_k^{(s)}
+		\mathbf{h}_k^{(s,m)} &= \overline{A}_s \mathbf{h}_{k-1}^{(s,m)} + \overline{B}_s \mathbf{u}_k^{(s,m)} \\
+		\mathbf{y}_k^{(s,m)} &= \overline{C}_s \mathbf{h}_k^{(s,m)} + \overline{D} \mathbf{u}_k^{(s,m)}
 	\end{aligned}
 	\label{eq:asd_ssm_update}
 \end{equation}
-其中$\mathbf{h}_k^{(s)}$是尺度$s$的隐状态向量，$\mathbf{u}_k^{(s)}$是Patch内第$k$个点的输入向量（$k=1,2,\ldots,P$），$\overline{D}$为直通连接参数。参数$\overline{A}_s, \overline{B}_s, \overline{C}_s$的具体维度和离散化细节遵循Mamba论文\cite{Mamba}的标准实现。值得强调的是，ASD-SSM的创新点在于$\overline{A}_s$的尺度自适应生成，而不是对SSM基本形式的改变。
+其中$\mathbf{h}_k^{(s,m)}$是尺度$s$、Patch $m$的隐状态向量，$\mathbf{u}_k^{(s,m)}$是Patch内第$k$个点的输入向量（$k=1,2,\ldots,P$），$\overline{D}$为直通连接参数。对于所有尺度，第$m$个Patch的初始状态通过门控机制融合前一Patch的信息：
+\begin{equation}
+	\begin{aligned}
+		\mathbf{g}^{(s,m)} &= \sigma(\text{MLP}([\mathbf{u}_1^{(s,m)} \| \text{Proj}(\mathbf{h}_P^{(s,m-1)})])) \\
+		\mathbf{h}_0^{(s,m)} &= \mathbf{g}^{(s,m)} \odot \text{Proj}(\mathbf{h}_P^{(s,m-1)})
+	\end{aligned}
+	\label{eq:state_gate}
+\end{equation}
+其中$\sigma$为Sigmoid函数，$\mathbf{g}^{(s,m)}$为门控权重，$\text{Proj}(\cdot)$为状态投影层，$\|$表示拼接操作，$\odot$表示逐元素相乘。门控权重$\mathbf{g}^{(s,m)}$基于当前Patch的首个输入$\mathbf{u}_1^{(s,m)}$和前一Patch的最终状态$\mathbf{h}_P^{(s,m-1)}$动态计算，自适应地决定保留多少前序上下文信息。这种设计使得模型能够根据当前输入和历史状态的相关性，自动调节状态传递的强度，避免了盲目累积不相关的历史信息。参数$\overline{A}_s, \overline{B}_s, \overline{C}_s$的具体维度和离散化细节遵循Mamba论文\cite{Mamba}的标准实现。值得强调的是，ASD-SSM的创新点在于$\overline{A}_s$的尺度自适应生成以及门控状态传递策略，而不是对SSM基本形式的改变。
 
 \textbf{双向特征学习与融合：}如\cref{fig:bss}所示，每个尺度内部采用Vision Mamba\cite{VisionMamba}的双向特征学习策略。由于在点云序列中，顺序靠前的点无法获得顺序靠后点的信息，这与点云的无序性不符。因此，我们为每个尺度$s$构建前向SSM和后向SSM，分别处理正向和反向序列。
 
