@@ -381,9 +381,9 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数偏移量，解决�
 
 \subsubsection{基于尺度自适应参数生成的多尺度特征建模}
 
-这是ASD-SSM的核心模块。传统SSM方法使用相同的状态转移矩阵$\overline{A}$、输入投影矩阵$\overline{B}$和输出投影矩阵$\overline{C}$处理所有尺度的特征，忽略了不同尺度对时序建模特性的差异化需求。状态转移矩阵$\overline{A}$控制着状态向量的衰减速度：当$\overline{A}$的特征值接近1时实现慢衰减（长程记忆），接近0时实现快衰减（快速响应）。对于粗尺度特征，我们需要$\overline{A}$接近单位矩阵以保持长程依赖；对于细尺度特征，我们需要$\overline{A}$具有更快的衰减以捕捉高频细节变化。
+这是ASD-SSM的核心模块。传统SSM方法使用相同的状态转移参数$\overline{A}$、输入投影参数$\overline{B}$和输出投影参数$\overline{C}$处理所有尺度的特征，忽略了不同尺度对时序建模特性的差异化需求。状态转移参数$\overline{A}$（对角矩阵的对角元素）控制着状态向量的衰减速度：当$\overline{A}$的元素接近1时实现慢衰减（长程记忆），接近0时实现快衰减（快速响应）。对于粗尺度特征，我们需要$\overline{A}$接近全1向量以保持长程依赖；对于细尺度特征，我们需要$\overline{A}$具有更小的值以快速响应局部细节变化。
 
-\textbf{尺度感知参数生成器：}ASD-SSM通过尺度感知参数生成器（ParamGen）为不同尺度生成定制化的参数偏移量。对于尺度$s$，点云特征已按Patch划分为$\mathbf{P}_s \in \mathbb{R}^{M \times P \times C}$，其中$M = \lceil N/P \rceil$为Patch数量。值得注意的是，参数生成过程对每个Patch独立进行，即以Patch为维度不同的SSM参数偏移量。
+\textbf{尺度感知参数生成器：}ASD-SSM的核心创新在于为不同尺度自适应生成差异化的状态转移参数$\overline{A}_s$。对于尺度$s$，点云特征已按Patch划分为$\mathbf{P}_s \in \mathbb{R}^{M \times P \times C}$，其中$M = \lceil N/P \rceil$为Patch数量。参数生成过程对每个Patch独立进行，每个Patch生成其专属的$\Delta\overline{A}_s$（状态转移偏移量）。
 
 具体而言，我们首先对每个Patch内的$P$个点进行全局自适应平均池化，得到该Patch的全局特征$\mathbf{f}_{global}^{(s)} \in \mathbb{R}^{C}$，该特征捕捉Patch内点云的整体几何特性（如局部结构复杂度、密度分布等）。同时，我们为每个尺度学习一个尺度嵌入向量$\mathbf{e}_s \in \mathbb{R}^{C/4}$，用于区分不同尺度的特性。对于单个Patch，参数生成过程如下：
 \begin{equation}
@@ -392,50 +392,36 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数偏移量，解决�
 \begin{equation}
 	\mathbf{c}_s = \text{MLP}([\mathbf{f}_{global}^{(s)} \| \mathbf{e}_s]) \in \mathbb{R}^{C/2}
 \end{equation}
-其中$\|$表示拼接操作。基于条件向量$\mathbf{c}_s$，参数生成器通过三层前馈网络生成该Patch的SSM参数偏移量：
-\begin{equation}
-	\Delta\overline{A}_s^{raw}, \Delta\overline{B}_s^{raw}, \Delta\overline{C}_s^{raw} = \text{ParamGen}(\mathbf{c}_s) \in \mathbb{R}^{D}
-\end{equation}
-其中$D$为SSM的状态空间维度（在我们的实现中$D=C$）。需要强调的是，上述参数生成过程对$M$个Patch独立并行执行，每个Patch都拥有其定制化的参数偏移量。这种设计使得模型能够根据不同Patch的局部几何特性自适应调整状态转移行为，在全局共享SSM架构的同时实现局部内容感知的参数调制。
+其中$\|$表示拼接操作。基于条件向量$\mathbf{c}_s$，参数生成器通过轻量级前馈网络生成该Patch的状态转移偏移量$\Delta\overline{A}_s^{raw} \in \mathbb{R}^{D}$（$D$为SSM的状态空间维度）。对于选择性参数$\overline{B}_s$和$\overline{C}_s$，我们沿用Mamba论文\cite{Mamba}的标准选择性机制，通过线性投影从输入内容动态生成，此处不再赘述。
 
-\textbf{尺度约束机制：}为确保不同尺度的状态转移特性满足我们的设计目标（粗尺度慢衰减、细尺度快衰减），我们对$\Delta\overline{A}_s$引入尺度约束因子$\alpha_s$。该因子随尺度从细到粗递增（细尺度$\alpha_1 \approx 0.3$，粗尺度$\alpha_S \approx 0.9$），确保粗尺度保持更强的长程记忆能力：
+\textbf{尺度约束机制：}ASD-SSM的核心创新在于通过尺度约束因子$\alpha_s$实现差异化的状态转移特性。该因子随尺度从细到粗递增（细尺度$\alpha_1 \approx 0.3$，粗尺度$\alpha_S \approx 0.9$），确保粗尺度保持更强的长程记忆能力，细尺度实现快速响应：
 \begin{equation}
 	\Delta\overline{A}_s = \alpha_s \cdot \text{LayerNorm}(\Delta\overline{A}_s^{raw})
 \end{equation}
-其中$\text{LayerNorm}(\cdot)$表示层归一化操作，用于稳定训练过程。对于输入投影偏移量$\Delta\overline{B}_s$和输出投影偏移量$\Delta\overline{C}_s$，我们仅使用层归一化进行规范化：
+其中$\text{LayerNorm}(\cdot)$表示层归一化操作，用于稳定训练过程。最终的尺度特定状态转移参数通过向量加法获得：
 \begin{equation}
-	\Delta\overline{B}_s = \text{LayerNorm}(\Delta\overline{B}_s^{raw}), \quad
-	\Delta\overline{C}_s = \text{LayerNorm}(\Delta\overline{C}_s^{raw})
-\end{equation}
-
-\textbf{参数偏移量的应用：}生成的参数偏移量$\Delta\overline{A}_s, \Delta\overline{B}_s, \Delta\overline{C}_s \in \mathbb{R}^{D}$通过行广播（row-wise broadcasting）机制作用于基础SSM参数矩阵。对于第$s$个尺度的单个Patch，其有效参数为：
-\begin{equation}
-	\begin{aligned}
-		\overline{A}_s &= \overline{A}_{base} \oplus \lambda_A \cdot \Delta\overline{A}_s \\
-		\overline{B}_s &= \overline{B}_{base} \oplus \lambda_B \cdot \Delta\overline{B}_s \\
-		\overline{C}_s &= \overline{C}_{base} \oplus \lambda_C \cdot \Delta\overline{C}_s
-	\end{aligned}
+	\overline{A}_s = \overline{A}_{base} + \lambda_A \cdot \Delta\overline{A}_s
 	\label{eq:param_modulation}
 \end{equation}
-其中$\oplus$表示按行广播加法（row-wise broadcast addition），即矩阵$\overline{A}_{base} \in \mathbb{R}^{D \times D}$的每一行均加上偏移向量$\lambda_A \cdot \Delta\overline{A}_s \in \mathbb{R}^{D}$。$\overline{A}_{base}, \overline{B}_{base}, \overline{C}_{base} \in \mathbb{R}^{D \times D}$为所有尺度和Patch共享的基础SSM参数矩阵，$\lambda_A$、$\lambda_B$、$\lambda_C$为调制强度系数（实验中设为0.1）。这种设计在保持参数效率（偏移量参数量为$O(D)$）的同时，允许偏移向量同时调制参数矩阵的所有行，从而更灵活地适应不同尺度的状态转移需求。由于每个Patch内的SSM操作相互独立，为简化表示，后续公式中省略Patch索引。
+其中$\overline{A}_{base} \in \mathbb{R}^{D}$为所有尺度和Patch共享的基础状态转移参数向量（对角矩阵的对角元素），$\lambda_A$为调制强度系数（实验中设为0.1）。由于每个Patch内的SSM操作相互独立，为简化表示，后续公式中省略Patch索引。
 
-这种设计使得最终参数同时包含三个层次的信息：（1）\textit{共享的基础能力}——通过$\overline{A}_{base}$提供基本的状态转移能力；（2）\textit{尺度特定特性}——通过$\alpha_s$约束的$\Delta\overline{A}_s$实现粗尺度慢衰减、细尺度快衰减的差异化建模；（3）\textit{内容自适应调整}——通过$\mathbf{f}_{global}^{(s)}$影响的偏移量，使每个Patch根据其局部内容（如几何复杂度）获得定制化的参数。
+这种设计使得ASD-SSM实现了尺度解耦的状态空间建模：（1）\textit{共享的基础记忆}——通过$\overline{A}_{base}$为所有尺度提供统一的状态转移基础；（2）\textit{尺度特定的记忆特性}——通过$\alpha_s$约束的$\Delta\overline{A}_s$实现粗尺度慢衰减（长程记忆）、细尺度快衰减（快速响应）的差异化建模，这是ASD-SSM的核心创新；（3）\textit{选择性信息流动}——通过Mamba的标准选择性机制\cite{Mamba}，$\overline{B}_s$和$\overline{C}_s$根据输入内容动态调整信息的选择性流入和流出。
 
-\textbf{状态空间更新：}对于第$s$个尺度的每个Patch内的点云特征序列，其状态空间更新遵循标准SSM形式：
+\textbf{状态空间更新：}对于第$s$个尺度的每个Patch内的点云特征序列，状态空间更新遵循标准的离散化SSM形式\cite{Mamba}：
 \begin{equation}
 	\begin{aligned}
 		\mathbf{h}_k^{(s)} &= \overline{A}_s \mathbf{h}_{k-1}^{(s)} + \overline{B}_s \mathbf{u}_k^{(s)} \\
-		\mathbf{y}_k^{(s)} &= \overline{C}_s \mathbf{h}_k^{(s)} + \overline{D}_{base} \mathbf{u}_k^{(s)}
+		\mathbf{y}_k^{(s)} &= \overline{C}_s \mathbf{h}_k^{(s)} + \overline{D} \mathbf{u}_k^{(s)}
 	\end{aligned}
 	\label{eq:asd_ssm_update}
 \end{equation}
-其中$\mathbf{h}_k^{(s)} \in \mathbb{R}^{D}$是尺度$s$的隐状态向量，$\mathbf{u}_k^{(s)} \in \mathbb{R}^{D}$是Patch内第$k$个点的输入向量（$k=1,2,\ldots,P$），$\overline{D}_{base} \in \mathbb{R}^{D \times D}$为共享的直通连接参数矩阵。由于$\overline{A}_s, \overline{B}_s, \overline{C}_s, \overline{D}_{base}$均为对角矩阵，矩阵-向量乘法可高效实现为逐元素乘法，计算复杂度为$O(D)$而非一般矩阵乘法的$O(D^2)$。
+其中$\mathbf{h}_k^{(s)}$是尺度$s$的隐状态向量，$\mathbf{u}_k^{(s)}$是Patch内第$k$个点的输入向量（$k=1,2,\ldots,P$），$\overline{D}$为直通连接参数。参数$\overline{A}_s, \overline{B}_s, \overline{C}_s$的具体维度和离散化细节遵循Mamba论文\cite{Mamba}的标准实现。值得强调的是，ASD-SSM的创新点在于$\overline{A}_s$的尺度自适应生成，而不是对SSM基本形式的改变。
 
 \textbf{双向特征学习与融合：}如\cref{fig:bss}所示，每个尺度内部采用Vision Mamba\cite{VisionMamba}的双向特征学习策略。由于在点云序列中，顺序靠前的点无法获得顺序靠后点的信息，这与点云的无序性不符。因此，我们为每个尺度$s$构建前向SSM和后向SSM，分别处理正向和反向序列。
 
-为保证双向建模的一致性和参数效率，前向SSM和后向SSM共享同一组通过参数生成器生成的尺度特定参数$\{\overline{A}_s, \overline{B}_s, \overline{C}_s\}$。前向SSM从第1个点到第$P$个点依次处理，后向SSM从第$P$个点到第1个点反向处理，最后通过残差连接融合双向特征。这种设计使得每个点都能同时获得前后文的上下文信息，同时保持了参数生成器为该尺度定制的状态转移特性——例如，粗尺度的$\overline{A}_s$（大的$\alpha_s$）在前向和后向传播中均保持长程记忆，而细尺度的$\overline{A}_s$（小的$\alpha_s$）在两个方向上都能快速响应局部变化。
+为保证双向建模的一致性和参数效率，前向SSM和后向SSM共享同一组尺度特定的状态转移参数$\overline{A}_s$。前向SSM从第1个点到第$P$个点依次处理，后向SSM从第$P$个点到第1个点反向处理，最后通过残差连接融合双向特征。这种设计使得每个点都能同时获得前后文的上下文信息，同时保持了尺度自适应的状态转移特性——例如，粗尺度的$\overline{A}_s$（大的$\alpha_s$）在前向和后向传播中均保持长程记忆，而细尺度的$\overline{A}_s$（小的$\alpha_s$）在两个方向上都能快速响应局部变化。
 
-通过公式\ref{eq:param_modulation}和\ref{eq:asd_ssm_update}，ASD-SSM实现了尺度解耦的状态空间建模：最细尺度（$s=1$）的$\overline{A}_1$（受较小的$\alpha_1$约束）实现快速状态衰减，能够快速响应局部细节变化；最粗尺度（$s=S$）的$\overline{A}_S$（受较大的$\alpha_S$约束）接近单位矩阵，保持长程记忆以捕捉全局语义。多层尺度特征提取完成后，我们采用拼接策略将不同尺度的特征$Points_{1:S}$进行逐点融合，最后通过MLP和线性层完成特征映射，将特征维度还原为初始大小$C$，得到融合多层次信息的点云表示$Points'\in\mathbb{R}^{N\times C}$。
+通过公式\ref{eq:param_modulation}和\ref{eq:asd_ssm_update}，ASD-SSM实现了尺度解耦的状态空间建模：最细尺度（$s=1$）的$\overline{A}_1$（受较小的$\alpha_1$约束）实现快速状态衰减，能够快速响应局部细节变化；最粗尺度（$s=S$）的$\overline{A}_S$（受较大的$\alpha_S$约束）元素接近1（对应对角矩阵接近单位矩阵），保持长程记忆以捕捉全局语义。多层尺度特征提取完成后，我们采用拼接策略将不同尺度的特征$Points_{1:S}$进行逐点融合，最后通过MLP和线性层完成特征映射，将特征维度还原为初始大小$C$，得到融合多层次信息的点云表示$Points'\in\mathbb{R}^{N\times C}$。
 
 通过这种方式，ASD-SSM在保持参数效率（参数量仅增加约20\%）的同时，显著提升了多尺度特征建模能力，实现了细尺度快速响应与粗尺度长程记忆的有机统一。
 
@@ -714,7 +700,7 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 	\end{tabular}
 \end{table}
 
-从\cref{tab:paramgen_design}可以看出，仅使用尺度嵌入时性能提升0.7\% mIoU，证明了为不同尺度赋予独特标识的重要性。仅使用全局特征时提升0.9\% mIoU，说明内容自适应的参数调制更为关键。同时使用两者的提升（+1.8\%）大于单独使用之和（+0.7\% + +0.9\% = +1.6\%），展现出明显的协同效应。调制强度方面，$\lambda=0.1$时达到最优平衡，过小（0.05）导致参数偏移不足，过大（0.2, 0.3）则引入过多扰动，影响训练稳定性。
+从\cref{tab:paramgen_design}可以看出，仅使用尺度嵌入时性能提升0.7\% mIoU，证明了为不同尺度赋予独特标识的重要性。仅使用全局特征时提升0.9\% mIoU，说明内容自适应的参数生成更为关键。同时使用两者的提升（+1.8\%）大于单独使用之和（+0.7\% + +0.9\% = +1.6\%），展现出明显的协同效应。调制强度方面，$\lambda=0.1$时达到最优平衡，过小（0.05）导致$\overline{A}$的尺度差异化不足，过大（0.2, 0.3）则引入过多扰动，影响训练稳定性。
 
 \textbf{不同参数化方法对比：}我们将ASD-SSM与多种参数化策略进行了全面对比，包括参数共享、完全独立参数、参数插值、LoRA风格低秩适配等方法。参数插值通过参数插值仅训练粗、细两组参数，中间尺度通过线性插值生成。
 LoRA适配借鉴自然语言处理领域的低秩适配思想\cite{lora}，通过低秩矩阵分解为每个尺度添加参数偏移，相较于独立参数显著减少了参数量。
