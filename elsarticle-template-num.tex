@@ -455,7 +455,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 
 \textbf{整体性能分析：}在统一不使用预训练的情况下，PointSS在S3DIS上达到了75.2\%的mIoU，取得了显著的性能提升。相比之前的Transformer-based SOTA模型，PointSS超过Swin3D 2.7\% mIoU，超过PTv3 2.0\% mIoU。更值得注意的是，PointSS以5.4\% mIoU的大幅优势超过了当前效果最好的SSM模型PCM（69.8\%），这一提升幅度证明了我们提出方法的有效性。
 
-\textbf{方法对比分析：}Transformer方法（如PTv3、PTv2）在点云分析中表现优异，但其$O(N^2)$的计算复杂度限制了在大规模场景下的应用。PointSS基于SSM的线性复杂度在保持效率的同时达到了更高的精度，这得益于ASD-SSM对长序列上下文的有效建模能力。
+\textbf{方法对比分析：}Transformer方法（如PTv3、PTv2）在点云分析中表现优异。PointSS通过ASD-SSM的尺度解耦建模和GGAM的全局几何感知，在同等实验设置下达到了更高的精度（75.2\% vs PTv3的73.2\%）。作为SSM架构的附加优势，PointSS继承了状态空间模型的线性时间复杂度特性，如\cref{tab:parameterization_comparison}所示，不同参数化方案的推理时间增加均不显著（<7\%），展现了良好的可扩展性潜力。
 
 相比现有SSM方法（PCM 69.8\%和PointMamba），PointSS的显著优势主要体现在三个方面。首先，在几何信息保持方面，通过GGAM的双序列化融合和几何特征增强，PointSS有效解决了序列化导致的几何结构丢失问题，这对于边界区域（如墙与柱的交界）和复杂曲面的准确分割至关重要。其次，在多尺度层次化建模方面，ASD-SSM通过自适应参数生成为不同尺度定制SSM参数，使模型能够同时捕获全局语义和局部细节，而PCM等方法采用共享参数的单一粒度特征提取，难以兼顾不同层次的信息需求。最后，在无序性尊重方面，通过多尺度并行处理和双向建模策略，PointSS避免了为点云强加单一的因果关系，相比固定序列化方案具有更好的鲁棒性。
 % Please add the following required packages to your document preamble:
