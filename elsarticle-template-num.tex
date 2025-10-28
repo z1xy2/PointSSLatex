@@ -535,19 +535,20 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 	\centering
 	\caption{模块渐进式性能提升路径（S3DIS数据集）}
 	\label{tab:progressive_improvement}
-	\begin{tabular}{@{}llll@{}}
+	\begin{tabular}{@{}lll@{}}
 		\toprule
-		\textbf{模型配置} & \textbf{mIoU (\%)} & \textbf{提升} & \textbf{模块贡献} \\
+		\textbf{模型配置} & \textbf{mIoU (\%)} & \textbf{提升} \\
 		\midrule
-		纯Mamba基线 & 70.3 & - & - \\
-		基线 + GGAM & 72.5 & +2.2 & GGAM \\
-		基线 + GGAM + 共享参数ASD-SSM & 73.4 & +0.9 & 多尺度特征 \\
-		基线 + GGAM + 完整ASD-SSM（PointSS） & \textbf{75.2} & +1.8 & 自适应参数生成 \\
+		纯Mamba基线 & 70.3 & - \\
+		基线 + GGAM & 72.5 & +2.2 \\
+		基线 + GGAM + 共享参数ASD-SSM & 73.4 & +0.9 \\
+		基线 + GGAM + 完整ASD-SSM（PointSS） & \textbf{75.2} & +1.8 \\
 		\midrule
-		\multicolumn{2}{l}{\textbf{总提升}} & \textbf{+4.9} & - \\
+		\multicolumn{2}{l}{\textbf{总提升}} & \textbf{+4.9} \\
 		\bottomrule
 	\end{tabular}
 \end{table}
+
 
 实验结果表明，GGAM模块贡献+2.2\% mIoU，解决了序列化几何信息丢失问题；ASD-SSM模块在GGAM基础上进一步贡献+2.7\% mIoU（其中多尺度特征贡献+0.9\%，自适应参数生成贡献+1.8\%），实现了层次化的多尺度特征学习。
 
@@ -645,17 +646,17 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 	\centering
 	\caption{GGAM核心组件渐进式消融实验}
 	\label{tab:ggam_full_ablation}
-	\begin{tabular}{@{}llllllll@{}}
+	\begin{tabular}{@{}lllllll@{}}
 		\toprule
-		几何特征 & 双序列化 & Cross-attn & 门控融合 & $\mathcal{L}_{geo}$ & S3DIS mIoU & $\Delta$ & 说明 \\ 
+		几何特征 & 双序列化 & Cross-attn & 门控融合 & $\mathcal{L}_{geo}$ & S3DIS mIoU & $\Delta$ \\ 
 		\midrule
-		$\times$ & $\times$ & $\times$ & $\times$ & $\times$ & 70.3 & 基线 & 单尺度双向Mamba \\
+		$\times$ & $\times$ & $\times$ & $\times$ & $\times$ & 70.3 & 基线 \\
 		\midrule
-		$\checkmark$ & $\times$ & $\times$ & $\times$ & $\times$ & 71.1 & +0.8 & 添加几何特征 \\
-		$\checkmark$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & 71.4 & +1.1 & 双序列化 \\
-		$\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & 71.8 & +1.5 & 交叉注意力 \\
-		$\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & 72.1 & +1.8 & 门控融合 \\
-		$\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & 72.5 & +2.2 & 完整GGAM \\
+		$\checkmark$ & $\times$ & $\times$ & $\times$ & $\times$ & 71.1 & +0.8 \\
+		$\checkmark$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & 71.4 & +1.1 \\
+		$\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & 71.8 & +1.5 \\
+		$\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & 72.1 & +1.8 \\
+		$\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & 72.5 & +2.2 \\
 		\bottomrule
 	\end{tabular}
 \end{table}
@@ -670,21 +671,21 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 	\centering
 	\caption{尺度约束因子$\alpha_s$消融实验（3尺度配置）}
 	\label{tab:alpha_ablation}
-	\begin{tabular}{@{}lllll@{}}
+	\begin{tabular}{@{}llll@{}}
 		\toprule
-		$\alpha_1$ & $\alpha_2$ & $\alpha_3$ & mIoU & 说明 \\ 
+		$\alpha_1$ & $\alpha_2$ & $\alpha_3$ & mIoU \\
 		\midrule
-		0.3 & 0.3 & 0.3 & 73.8 & 所有尺度快速响应 \\
-		0.7 & 0.7 & 0.7 & 74.1 & 所有尺度慢衰减 \\
-		0.5 & 0.5 & 0.5 & 74.3 & 所有尺度中等衰减 \\
+		0.3 & 0.3 & 0.3 & 73.8 \\
+		0.7 & 0.7 & 0.7 & 74.1 \\
+		0.5 & 0.5 & 0.5 & 74.3 \\
 		\midrule
-		0.3 & 0.5 & 0.7 & 75.0 & 线性递增 \\
-		\textbf{0.3} & \textbf{0.6} & \textbf{0.9} & \textbf{75.2} & 非线性递增（最优） \\
-		0.3 & 0.7 & 0.9 & 75.2 & 中间层更慢 \\
-		0.2 & 0.6 & 0.9 & 75.1 & 细尺度更快 \\
-		0.4 & 0.6 & 0.9 & 75.0 & 细尺度较慢 \\
+		0.3 & 0.5 & 0.7 & 75.0 \\
+		\textbf{0.3} & \textbf{0.6} & \textbf{0.9} & \textbf{75.2} \\
+		0.3 & 0.7 & 0.9 & 75.2 \\
+		0.2 & 0.6 & 0.9 & 75.1 \\
+		0.4 & 0.6 & 0.9 & 75.0 \\
 		\midrule
-		0.9 & 0.6 & 0.3 & 72.9 & 反向配置（性能下降） \\
+		0.9 & 0.6 & 0.3 & 72.9 \\
 		\bottomrule
 	\end{tabular}
 \end{table}
@@ -695,7 +696,7 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 
 \begin{table}[htbp!]
 	\centering
-	\caption{参数生成器设计消融实验（基线为GGAM+共享参数ASD-SSM）}
+	\caption{参数生成器设计消融实验}
 	\label{tab:paramgen_design}
 	\begin{tabular}{@{}llllll@{}}
 		\toprule
@@ -722,16 +723,16 @@ LoRA适配借鉴自然语言处理领域的低秩适配思想\cite{lora}，通�
 	\centering
 	\caption{不同参数化方法的性能与效率对比}
 	\label{tab:parameterization_comparison}
-	\begin{tabular}{@{}llllll@{}}
+	\begin{tabular}{@{}lllll@{}}
 		\toprule
-		参数化方法 & 参数量 & 推理时间 & 显存 & mIoU & 说明 \\ 
+		参数化方法 & 参数量 & 推理时间 & 显存 & mIoU \\
 		\midrule
-		共享参数 & 1.0$\times$ & 11.2ms & 45.5GB & 73.4 & 基线 \\
+		共享参数 & 1.0$\times$ & 11.2ms & 45.5GB & 73.4 \\
 		\midrule
-		独立参数 & 3.0$\times$ & 12.1ms & 51.3GB & 75.8 & 每尺度独立 \\
-		参数插值 & 2.0$\times$ & 11.5ms & 46.8GB & 74.2 & 线性插值 \\
-		LoRA适配 & 1.15$\times$ & 11.8ms & 47.2GB & 74.6 & 低秩分解 \\
-		\textbf{ASD-SSM} & \textbf{1.2$\times$} & \textbf{11.9ms} & \textbf{47.8GB} & \textbf{75.2} & 参数生成器 \\
+		独立参数 & 3.0$\times$ & 12.1ms & 51.3GB & 75.8 \\
+		参数插值 & 2.0$\times$ & 11.5ms & 46.8GB & 74.2 \\
+		LoRA适配 & 1.15$\times$ & 11.8ms & 47.2GB & 74.6 \\
+		\textbf{ASD-SSM} & \textbf{1.2$\times$} & \textbf{11.9ms} & \textbf{47.8GB} & \textbf{75.2} \\
 		\bottomrule
 	\end{tabular}
 \end{table}
@@ -742,26 +743,26 @@ LoRA适配借鉴自然语言处理领域的低秩适配思想\cite{lora}，通�
 
 \begin{table}[htbp!]
 	\centering
-	\caption{尺度数量与配置的详细消融实验（基线为GGAM+单尺度ASD-SSM）}
+	\caption{尺度数量与配置的详细消融实验}
 	\label{tab:scale_number}
-	\begin{tabular}{@{}llllll@{}}
+	\begin{tabular}{@{}lllll@{}}
 		\toprule
-		$S$ & $F$ & 参数量 & 训练时间 & mIoU & 说明 \\ 
+		$S$ & $F$ & 参数量 & 训练时间 & mIoU \\
 		\midrule
-		1 & (1) & 1.0$\times$ & 3.2h & 72.4 & 单尺度基线 \\
+		1 & (1) & 1.0$\times$ & 3.2h & 72.4 \\
 		\midrule
-		2 & (1,2) & 1.13$\times$ & 3.8h & 73.5 & +两倍窗口 \\
-		2 & (1,3) & 1.13$\times$ & 3.9h & 73.8 & +三倍窗口 \\
-		2 & (1,4) & 1.13$\times$ & 4.0h & 73.6 & 窗口过大 \\
+		2 & (1,2) & 1.13$\times$ & 3.8h & 73.5 \\
+		2 & (1,3) & 1.13$\times$ & 3.9h & 73.8 \\
+		2 & (1,4) & 1.13$\times$ & 4.0h & 73.6 \\
 		\midrule
-		\textbf{3} & \textbf{(1,2,2)} & \textbf{1.20$\times$} & \textbf{4.5h} & \textbf{75.2} & 性价比最优 \\
-		3 & (1,2,3) & 1.20$\times$ & 4.6h & 75.3 & 等差增长 \\
-		3 & (1,2,4) & 1.20$\times$ & 4.8h & 75.0 & 最粗尺度过大 \\
-		3 & (1,3,3) & 1.20$\times$ & 4.7h & 74.8 & 中间层跳跃 \\
+		\textbf{3} & \textbf{(1,2,2)} & \textbf{1.20$\times$} & \textbf{4.5h} & \textbf{75.2} \\
+		3 & (1,2,3) & 1.20$\times$ & 4.6h & 75.3 \\
+		3 & (1,2,4) & 1.20$\times$ & 4.8h & 75.0 \\
+		3 & (1,3,3) & 1.20$\times$ & 4.7h & 74.8 \\
 		\midrule
-		4 & (1,2,2,2) & 1.27$\times$ & 5.3h & 75.5 & 边际提升小 \\
-		4 & (1,2,2,3) & 1.27$\times$ & 5.4h & 75.6 & 性价比下降 \\
-		5 & (1,2,2,2,3) & 1.33$\times$ & 6.1h & 75.5 & 性能饱和 \\
+		4 & (1,2,2,2) & 1.27$\times$ & 5.3h & 75.5 \\
+		4 & (1,2,2,3) & 1.27$\times$ & 5.4h & 75.6 \\
+		5 & (1,2,2,2,3) & 1.33$\times$ & 6.1h & 75.5 \\
 		\bottomrule
 	\end{tabular}
 \end{table}
