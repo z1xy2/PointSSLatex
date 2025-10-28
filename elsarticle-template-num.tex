@@ -341,9 +341,9 @@ y_{k} &= \overline{C}x_{k} + \overline{D}u_{k}
 
 现有多尺度特征提取方法在处理不同尺度点云时采用共享的状态空间参数，忽略了不同尺度对时序建模特性的差异化需求。粗尺度特征需要保持长时记忆以捕捉全局上下文，而细尺度特征需要快速状态更新以响应局部细节变化。针对这一问题以及SSM方法在点云无序性和长序列处理方面的局限性，我们提出自适应尺度解耦状态空间模型（Adaptive Scale-Decoupled SSM, ASD-SSM）。
 
-ASD-SSM通过为不同尺度动态生成定制化的SSM参数偏移量，解决参数共享导致的建模能力受限问题。该方法将序列化特征提取方案应用于点云任务，通过并行处理多层尺度点云来构建层次点云信息矩阵，融合各层次信息。这使得模型在长序列下具有强大的上下文理解能力，在保证高层次语义理解的同时，保留对点云局部细节的高精度处理。
+ASD-SSM通过为不同尺度动态生成定制化的SSM参数，解决参数共享导致的建模能力受限问题。该方法将序列化特征提取方案应用于点云任务，通过并行处理多层尺度点云来构建层次点云信息矩阵，融合各层次信息。这使得模型在长序列下具有强大的上下文理解能力，在保证高层次语义理解的同时，保留对点云局部细节的高精度处理。
 
-\textbf{整体处理流程：}如\cref{fig:bss}所示，ASD-SSM的完整处理流程包括三个核心步骤：（1）窗口划分，将点云按不同尺度划分为Patch；（2）顺序提示，为序列化点云注入位置信息；（3）基于尺度自适应参数生成的多尺度特征建模，通过参数生成器为不同尺度动态调制SSM参数。图中展示了$S=3$层尺度的特征处理流程，每个Patch间用虚线分隔。第一层（最细尺度）使用基础窗口大小$P$进行序列化处理，第二层和第三层的窗口扩大倍数$F_i$分别为2和4，即Patch大小分别扩大为$2P$和$4P$。每层内部采用自适应参数生成Mamba进行特征提取，包括前向SSM、后向SSM以及残差连接。不同尺度的特征提取完成后，采用拼接策略将多层特征逐点融合，最终通过MLP和线性层完成特征映射，得到融合多层次信息的点云表示$Points'\in\mathbb{R}^{N\times C}$。
+\textbf{整体处理流程：}如\cref{fig:bss}所示，ASD-SSM的完整处理流程包括三个核心步骤：（1）窗口划分，将点云按不同尺度划分为Patch；（2）顺序提示，为序列化点云注入位置信息；（3）基于尺度自适应参数生成的多尺度特征建模，通过参数生成器为不同尺度动态调制SSM参数。图中展示了$S=3$层尺度的特征处理流程，每个Patch间用虚线分隔。第一层（最细尺度）使用基础窗口大小$P$进行序列化处理，第二层和第三层的窗口扩大倍数$F_s$分别为2和4，即Patch大小分别扩大为$2P$和$4P$。每层内部采用自适应参数生成Mamba进行特征提取，包括前向SSM、后向SSM以及残差连接。不同尺度的特征提取完成后，采用拼接策略将多层特征逐点融合，最终通过MLP和线性层完成特征映射，得到融合多层次信息的点云表示$Points'\in\mathbb{R}^{N\times C}$。
 
 \begin{figure}[htbp]
 	\centering
@@ -353,7 +353,7 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数偏移量，解决�
 \end{figure}
 
 
-\textbf{符号说明：}在后续描述中，我们用$s \in \{1, 2, ..., S\}$表示多尺度层的尺度索引，其中$s=1$表示最细尺度（对应第一层，窗口大小为$P$），$s=S$表示最粗尺度（窗口大小为$P \times F_S$）。$N$为点数量，$C$为点云特征维度。
+\textbf{符号说明：}在后续描述中，我们用$s \in \{1, 2, ..., S\}$表示多尺度层的尺度索引，其中$s=1$表示最细尺度（对应第一层，窗口大小为$P$），$s=S$表示最粗尺度（窗口大小为$P \times F_s$）。$N$为点数量，$C$为点云特征维度。
 
 
 \subsubsection{窗口划分（Window Partitioning）}
@@ -393,7 +393,7 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数偏移量，解决�
 \end{equation}
 其中$\|$表示拼接操作。对于选择性参数$\overline{B}_s$和$\overline{C}_s$，我们沿用Mamba论文\cite{Mamba}的标准选择性机制，通过线性投影从输入内容动态生成，此处不再赘述。
 
-\textbf{尺度约束机制：}ASD-SSM的核心创新在于通过尺度约束因子$\alpha_s$显式控制状态转移矩阵$\overline{A}_s$的值域，从而实现差异化的状态衰减特性。在离散状态空间模型中，状态更新遵循$\mathbf{h}_k = \overline{A}_s \mathbf{h}_{k-1} + \overline{B}_s \mathbf{u}_k$，其中$\overline{A}_s$的对角元素决定了状态的衰减速度：元素值接近1时实现慢衰减（长程记忆），接近0时实现快衰减（快速响应）。
+\textbf{尺度约束机制：}为实现差异化的状态衰减特性，我们通过尺度约束因子$\alpha_s$显式控制状态转移矩阵$\overline{A}_s$的值域。在离散状态空间模型中，状态更新遵循$\mathbf{h}_k = \overline{A}_s \mathbf{h}_{k-1} + \overline{B}_s \mathbf{u}_k$，其中$\overline{A}_s$的对角元素决定了状态的衰减速度：元素值接近1时实现慢衰减（长程记忆），接近0时实现快衰减（快速响应）。
 
 为直接约束$\overline{A}_s$的特征值范围，我们首先通过sigmoid函数将参数生成器的输出映射到$[0,1]$区间：
 \begin{equation}
@@ -405,9 +405,9 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数偏移量，解决�
 	\overline{A}_s = \alpha_s \cdot \Delta\overline{A}_s^{norm}
 	\label{eq:param_modulation}
 \end{equation}
-通过设置$\alpha_s$从细尺度到粗尺度递增（$\alpha_1=0.3 \rightarrow \alpha_S=0.9$），我们显式地约束：细尺度$\overline{A}_1 \in [0, 0.3]$实现快速响应局部变化，粗尺度$\overline{A}_S \in [0, 0.9]$保持长程记忆以捕获全局上下文。需要强调的是，虽然为简化表示公式中省略了Patch索引，但每个Patch会根据其内容特征生成专属的参数$\overline{A}_s^{(m)}$，$m$为Patch编号。即完整形式为$\overline{A}_s^{(m)} = \alpha_s \cdot \sigma(\lambda \cdot \text{MLP}([\mathbf{f}_{global}^{(s,m)} \| \mathbf{e}_s]))$。
+通过设置$\alpha_s$从细尺度到粗尺度递增（$\alpha_1=0.3 \rightarrow \alpha_S=0.9$），我们显式地约束：细尺度$\overline{A}_1 \in [0, 0.3]$实现快速响应局部变化，粗尺度$\overline{A}_S \in [0, 0.9]$保持长程记忆以捕获全局上下文。需要强调的是，虽然为简化表示公式中省略了Patch索引，但每个Patch会根据其内容特征生成专属的参数$\overline{A}_s^{(m)}$，$m$为Patch编号。即$\overline{A}_s^{(m)} = \alpha_s \cdot \Delta\overline{A}_s^{norm,(m)}$，其中$\Delta\overline{A}_s^{norm,(m)} = \sigma(\lambda \cdot \text{MLP}([\mathbf{f}_{global}^{(s,m)} \| \mathbf{e}_s]))$。
 
-\textbf{Patch间状态传递策略：}为充分利用序列化的顺序信息，ASD-SSM在同一batch内相邻Patch间直接传递隐状态。处理第$m$个Patch时，将前一Patch的最终状态$\mathbf{h}_P^{(s,m-1)}$直接作为初始状态$\mathbf{h}_0^{(s,m)}$，通过标准的SSM更新公式自然地吸收前序上下文。在底层（$s=1$）利用序列化的空间邻接性，而在高层尺度（$s>1$）通过随机打乱Patch内点云保持对无序性的尊重。
+\textbf{Patch间状态传递策略：}为充分利用序列化的顺序信息，ASD-SSM在同一序列内相邻Patch间直接传递隐状态。处理第$m$个Patch时，将前一Patch的最终状态$\mathbf{h}_P^{(s,m-1)}$直接作为初始状态$\mathbf{h}_0^{(s,m)}$，通过标准的SSM更新公式自然地吸收前序上下文。在底层（$s=1$）利用序列化的空间邻接性，而在高层尺度（$s>1$）通过随机打乱Patch内点云保持对无序性的尊重。
 
 \textbf{状态空间更新：}对于第$s$个尺度的每个Patch内的点云特征序列，状态空间更新遵循标准的离散化SSM形式\cite{Mamba}：
 \begin{equation}
@@ -529,15 +529,27 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 
 \textbf{基线实现细节：}我们的基线模型采用普通单尺度双向Mamba架构，不使用GGAM的几何感知机制。具体而言，基线模型在每个编码器层采用前向和后向两个SSM分支，使用共享的单一状态转移参数（$\overline{A}$值固定），并通过残差连接融合双向特征。该基线保持了与完整PointSS相同的网络深度和通道配置，但缺少GGAM的双序列化几何先验和ASD-SSM的尺度解耦机制。
 
-完整模型的性能提升路径为：
-\begin{itemize}
-	\item 纯Mamba基线（单尺度双向Mamba，无GGAM）：70.3\% mIoU
-	\item 基线 + GGAM：72.5\% mIoU (+2.2\%)
-	\item 基线 + GGAM + 共享参数ASD-SSM：73.4\% mIoU (+0.9\%)
-	\item 基线 + GGAM + 完整参数生成器ASD-SSM（完整PointSS）：75.2\% mIoU (+1.8\%)
-	\item \textbf{总提升：+4.9\%}
-\end{itemize}
-其中GGAM模块贡献+2.2\% mIoU，ASD-SSM模块在GGAM基础上进一步贡献+2.7\% mIoU。
+\textbf{完整模型的性能提升路径：}为清晰展示各模块的边际贡献，我们提供了渐进式的性能提升路径，如\cref{tab:progressive_improvement}所示。
+
+\begin{table}[htbp!]
+	\centering
+	\caption{模块渐进式性能提升路径（S3DIS数据集）}
+	\label{tab:progressive_improvement}
+	\begin{tabular}{@{}llll@{}}
+		\toprule
+		\textbf{模型配置} & \textbf{mIoU (\%)} & \textbf{提升} & \textbf{模块贡献} \\
+		\midrule
+		纯Mamba基线 & 70.3 & - & - \\
+		基线 + GGAM & 72.5 & +2.2 & GGAM \\
+		基线 + GGAM + 共享参数ASD-SSM & 73.4 & +0.9 & 多尺度特征 \\
+		基线 + GGAM + 完整ASD-SSM（PointSS） & \textbf{75.2} & +1.8 & 自适应参数生成 \\
+		\midrule
+		\multicolumn{2}{l}{\textbf{总提升}} & \textbf{+4.9} & - \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+实验结果表明，GGAM模块贡献+2.2\% mIoU，解决了序列化几何信息丢失问题；ASD-SSM模块在GGAM基础上进一步贡献+2.7\% mIoU（其中多尺度特征贡献+0.9\%，自适应参数生成贡献+1.8\%），实现了层次化的多尺度特征学习。
 
 
 % ========== GGAM核心消融实验（精简版）==========
