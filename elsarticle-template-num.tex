@@ -527,9 +527,13 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 \subsection{Ablation study}
 S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要求，不同的方法在S3DIS上进行验证相较于ModelNet40有更大的性能波动，更容易观测。因此除了组合消融实验外其他消融实验统一在S3DIS数据集上进行。
 
-\textbf{实验设计与基线说明：}PointSS的完整模型由GGAM和ASD-SSM两个核心模块组成。为系统验证各模块的独立贡献，我们采用渐进式消融策略：首先验证GGAM在解决序列化几何信息丢失问题上的效果（\cref{tab:split_and_repair}-\cref{tab:ggam_full_ablation}），然后在GGAM的基础上验证ASD-SSM的设计选择（\cref{tab:alpha_ablation}-\cref{tab:scale_number}）。这种渐进式设计避免了模块间的交互干扰，能更清晰地展示每个模块的边际贡献。完整模型的性能提升路径为：
+\textbf{实验设计与基线说明：}PointSS的完整模型由GGAM和ASD-SSM两个核心模块组成。为系统验证各模块的独立贡献，我们采用渐进式消融策略：首先验证GGAM在解决序列化几何信息丢失问题上的效果（\cref{tab:split_and_repair}-\cref{tab:ggam_full_ablation}），然后在GGAM的基础上验证ASD-SSM的设计选择（\cref{tab:alpha_ablation}-\cref{tab:scale_number}）。这种渐进式设计避免了模块间的交互干扰，能更清晰地展示每个模块的边际贡献。
+
+\textbf{基线实现细节：}我们的基线模型采用普通单尺度双向Mamba架构，不使用GGAM的几何感知机制。具体而言，基线模型在每个编码器层采用前向和后向两个SSM分支，使用共享的单一状态转移参数（$\overline{A}$值固定），并通过残差连接融合双向特征。该基线保持了与完整PointSS相同的网络深度和通道配置，但缺少GGAM的双序列化几何先验和ASD-SSM的尺度解耦机制。
+
+完整模型的性能提升路径为：
 \begin{itemize}
-	\item 纯Mamba基线：70.3\% mIoU
+	\item 纯Mamba基线（单尺度双向Mamba，无GGAM）：70.3\% mIoU
 	\item 基线 + GGAM：72.5\% mIoU (+2.2\%)
 	\item 基线 + GGAM + 共享参数ASD-SSM：73.4\% mIoU (+0.9\%)
 	\item 基线 + GGAM + 完整参数生成器ASD-SSM（完整PointSS）：75.2\% mIoU (+1.8\%)
@@ -635,7 +639,7 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 		\toprule
 		几何特征 & 双序列化 & Cross-attn & 门控融合 & $\mathcal{L}_{geo}$ & S3DIS mIoU & $\Delta$ & 说明 \\ 
 		\midrule
-		$\times$ & $\times$ & $\times$ & $\times$ & $\times$ & 70.3 & 基线 & Mamba基线 \\
+		$\times$ & $\times$ & $\times$ & $\times$ & $\times$ & 70.3 & 基线 & 单尺度双向Mamba \\
 		\midrule
 		$\checkmark$ & $\times$ & $\times$ & $\times$ & $\times$ & 71.1 & +0.8 & 添加几何特征 \\
 		$\checkmark$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & 71.4 & +1.1 & 双序列化 \\
@@ -768,7 +772,7 @@ LoRA适配借鉴自然语言处理领域的低秩适配思想\cite{lora}，通�
 
 
 \section{结论}
-本文针对现有基于Mamba的点云分析方法存在的几何信息丢失和长序列特征粒度单一等问题,提出了PointSS。通过全局几何感知机制(GGAM)和自适应尺度解耦状态空间模型(ASD-SSM)两个核心模块,PointSS有效解决了点云序列化导致的几何结构断裂问题,并实现了层次化的多尺度特征学习。在S3DIS数据集上的系统消融实验表明：GGAM通过双序列化策略、交叉注意力机制和几何一致性约束,相比纯Mamba基线（70.3\% mIoU）提升2.2个百分点至72.5\%；ASD-SSM通过轻量级参数生成器为不同尺度动态生成定制化参数,在GGAM基础上进一步贡献2.7个百分点的提升,使完整PointSS达到75.2\% mIoU，相比基线总提升4.9个百分点。值得注意的是,ASD-SSM在仅增加约20\%参数量的情况下,实现了接近完全独立参数方案的性能,展现出卓越的参数效率。消融实验和可视化分析验证了PointSS在复杂边界、大感受野物体和小目标分割等场景的优势。未来工作可进一步探索自适应序列化策略、多模态信息融合以及面向大规模场景的轻量化设计,以应对更复杂的实际应用需求。
+本文针对现有基于Mamba的点云分析方法存在的几何信息丢失和长序列特征粒度单一等问题,提出了PointSS。通过全局几何感知机制(GGAM)和自适应尺度解耦状态空间模型(ASD-SSM)两个核心模块,PointSS有效解决了点云序列化导致的几何结构断裂问题,并实现了层次化的多尺度特征学习。在S3DIS数据集上的系统消融实验表明：GGAM通过双序列化策略、交叉注意力机制和几何一致性约束,相比单尺度双向Mamba基线（70.3\% mIoU）提升2.2个百分点至72.5\%；ASD-SSM通过轻量级参数生成器为不同尺度动态生成定制化参数,在GGAM基础上进一步贡献2.7个百分点的提升,使完整PointSS达到75.2\% mIoU，相比基线总提升4.9个百分点。值得注意的是,ASD-SSM在仅增加约20\%参数量的情况下,实现了接近完全独立参数方案的性能,展现出卓越的参数效率。消融实验和可视化分析验证了PointSS在复杂边界、大感受野物体和小目标分割等场景的优势。未来工作可进一步探索自适应序列化策略、多模态信息融合以及面向大规模场景的轻量化设计,以应对更复杂的实际应用需求。
 %% The Appendices part is started with the command \appendix;
 %% appendix sections are then done as normal sections
 
