@@ -405,7 +405,7 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数偏移量，解决�
 	\overline{A}_s = \alpha_s \cdot \Delta\overline{A}_s^{norm}
 	\label{eq:param_modulation}
 \end{equation}
-通过设置$\alpha_s$从细尺度到粗尺度递增（$\alpha_1=0.3 \rightarrow \alpha_S=0.9$），我们显式地约束：细尺度$\overline{A}_1 \in [0, 0.3]$实现快速响应局部变化，粗尺度$\overline{A}_S \in [0, 0.9]$保持长程记忆以捕获全局上下文。需要强调的是，虽然为简化表示公式中省略了Patch索引，但每个Patch $m$会根据其内容特征生成专属的参数$\overline{A}_s^{(m)}$，即完整形式为$\overline{A}_s^{(m)} = \alpha_s \cdot \sigma(\lambda \cdot \text{MLP}([\mathbf{f}_{global}^{(s,m)} \| \mathbf{e}_s]))$。
+通过设置$\alpha_s$从细尺度到粗尺度递增（$\alpha_1=0.3 \rightarrow \alpha_S=0.9$），我们显式地约束：细尺度$\overline{A}_1 \in [0, 0.3]$实现快速响应局部变化，粗尺度$\overline{A}_S \in [0, 0.9]$保持长程记忆以捕获全局上下文。需要强调的是，虽然为简化表示公式中省略了Patch索引，但每个Patch会根据其内容特征生成专属的参数$\overline{A}_s^{(m)}$，$m$为Patch编号。即完整形式为$\overline{A}_s^{(m)} = \alpha_s \cdot \sigma(\lambda \cdot \text{MLP}([\mathbf{f}_{global}^{(s,m)} \| \mathbf{e}_s]))$。
 
 \textbf{Patch间状态传递策略：}为充分利用序列化的顺序信息，ASD-SSM在同一batch内相邻Patch间直接传递隐状态。处理第$m$个Patch时，将前一Patch的最终状态$\mathbf{h}_P^{(s,m-1)}$直接作为初始状态$\mathbf{h}_0^{(s,m)}$，通过标准的SSM更新公式自然地吸收前序上下文。在底层（$s=1$）利用序列化的空间邻接性，而在高层尺度（$s>1$）通过随机打乱Patch内点云保持对无序性的尊重。
 
@@ -432,9 +432,7 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数偏移量，解决�
 为公平评估本文提出的架构创新（GGAM和ASD-SSM）
 的独立贡献，我们采用与当前Mamba-based方法一致的从头训练设置。这一
 选择使得性能提升完全归因于架构改进，避免了预训练策略多样性带来的
-混淆因素。值得注意的是，PointSS在从头训练时已超越使用预训练的
-PCM和PointMamba（见\cref{{tab:s3dis}}），充分证明了良好的架构
-设计的价值。
+混淆因素。
 
 
 \subsection{Benchmark}
