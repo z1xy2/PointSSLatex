@@ -32,4 +32,5 @@ Yu, Xumin and Tang, Lulu and Rao, Yongming and Huang, Tiejun and Zhou, Jie and L
 ## 页码
 要是pages = {106141 - 106151},这种格式
 
-
+对于标题和会议名/期刊名，要遵循实词首字母大写，一些特数词比如ShapeNets，看需要大写，LORA大写，
+像这个LORA: LOW-RANK ADAPTATION OF LARGE LANGUAGE MODELS完全都大写的肯定是不对的
