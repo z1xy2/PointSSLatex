@@ -32,5 +32,18 @@ Yu, Xumin and Tang, Lulu and Rao, Yongming and Huang, Tiejun and Zhou, Jie and L
 ## 页码
 要是pages = {106141 - 106151},这种格式
 
+## 不需要的字段
+这几个字段出现的话需要删除，是多余字段
+  - ✓ language = {English} - 0 个剩余
+  - ✓ copyright = {...} - 0 个剩余
+  - ✓ address = {...} - 0 个剩余
+  - ✓ key = {...} - 0 个剩余
+  - ✓ keywords = {...} - 0 个剩余
+  - ✓ note = {...} - 0 个剩余
+
+## 其他
 对于标题和会议名/期刊名，要遵循实词首字母大写，一些特数词比如ShapeNets，看需要大写，LORA大写，
 像这个LORA: LOW-RANK ADAPTATION OF LARGE LANGUAGE MODELS完全都大写的肯定是不对的
+
+下面是我的调试命令，你不必理会：
+我在ref.bib添加了@inproceedings{pcm ,的引用，参照claude.md的格式统一部分帮我修正一下格式
