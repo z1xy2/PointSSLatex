@@ -14,10 +14,22 @@ pointcept/models/utils/structure.py
 
 # 格式统一
 我的引用中会议或期刊必须要有姓名，且姓名格式要统一。
-一定要有会议名或期刊名。卷名，页码，年份。页码必须是起始页到终止页。
-而且会议的字段名对于上述字段也要保持一致。同理适用于期刊
-inproceedings只需要有booktitle，不需要有title。
+一定要有标题会议名或期刊名。卷名，页码，年份。页码必须是起始页到终止页。
 
-#当前需求
-新添加了模块ASD-SSM，你帮我看看这个模块的公式和描述是否
+## 标题：
+统一用字段：title，注意标题要套两个括号
+title = {{3D ShapeNets: A Deep Representation for Volumetric Shapes}},
+
+## 会议名/期刊名
+会议用booktitle
+booktitle = {Proceedings of the IEEE International Conference on Computer Vision},
+期刊用journal字段
+
+## 作者
+姓在前，名在后，名要写全名
+Yu, Xumin and Tang, Lulu and Rao, Yongming and Huang, Tiejun and Zhou, Jie and Lu, Jiwen
+
+## 页码
+要是pages = {106141 - 106151},这种格式
+
 
