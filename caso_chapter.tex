@@ -2,29 +2,11 @@
 
 \section{引言}
 
-在将Mamba等选择性状态空间模型应用于三维点云处理时，点云序列化是一个关键但常被忽视的问题。现有方法\cite{wu2024point,wang2022ocnn}普遍采用固定的空间填充曲线（如Z-order曲线、Hilbert曲线）将无序点云转换为有序序列，然而这种固定策略存在显著局限性：
+在将Mamba等选择性状态空间模型应用于三维点云处理时，点云序列化是一个关键但常被忽视的问题。现有方法\cite{wu2024point,wang2022ocnn}普遍采用固定的空间填充曲线（如Z-order曲线、Hilbert曲线）将无序点云转换为有序序列，然而这种固定策略存在显著局限性：（1）\textbf{场景无关性}——同一种扫描顺序被应用于所有场景，无法适应不同场景的几何特性和语义结构；（2）\textbf{重要性忽视}——固定曲线无法优先处理几何上或语义上更重要的区域（如物体边界、关键结构）；（3）\textbf{全局次优性}——对于复杂场景，固定的局部邻域遍历可能导致全局信息传播效率低下。
 
-\begin{itemize}
-    \item \textbf{场景无关性：}同一种扫描顺序被应用于所有场景，无法适应不同场景的几何特性和语义结构；
-    \item \textbf{重要性忽视：}固定曲线无法优先处理几何上或语义上更重要的区域（如物体边界、关键结构）；
-    \item \textbf{全局次优性：}对于复杂场景，固定的局部邻域遍历可能导致全局信息传播效率低下。
-\end{itemize}
+Mamba模型的核心优势在于其选择机制（selection mechanism）——模型能够根据输入内容动态决定"选择什么信息"进行记忆和传播\cite{gu2023mamba}。然而，现有工作仅在特征层面实现选择性，而忽略了序列化顺序本身对信息流动的深刻影响。受自然语言处理中自适应计算\cite{graves2016adaptive}和神经路由\cite{seo2018neural}的启发，我们提出一个根本性问题：能否让扫描顺序本身也成为可学习的、依赖于场景内容的动态策略？
 
-Mamba模型的核心优势在于其选择机制（selection mechanism）——模型能够根据输入内容动态决定"选择什么信息"进行记忆和传播\cite{gu2023mamba}。然而，现有工作仅在特征层面实现选择性，而忽略了序列化顺序本身对信息流动的深刻影响。受自然语言处理中自适应计算\cite{graves2016adaptive}和神经路由\cite{seo2018neural}的启发，我们提出一个根本性问题：
-
-\begin{center}
-\textit{能否让扫描顺序本身也成为可学习的、依赖于场景内容的动态策略？}
-\end{center}
-
-本章提出\textbf{上下文自适应扫描顺序}（Contextual Adaptive Scan Order, CASO）机制，通过端到端学习为不同点云场景生成最优的遍历路径。如图\ref{fig:caso_overview}所示，CASO由三个核心模块组成：
-
-\begin{enumerate}
-    \item \textbf{重要性场预测器}：为每个点预测其在当前场景中的语义和几何重要性；
-    \item \textbf{可微分路径生成器}：基于重要性分布生成优化的扫描顺序；
-    \item \textbf{顺序感知选择性SSM}：在自适应顺序下进行高效的状态空间建模。
-\end{enumerate}
-
-CASO将Mamba的选择机制从\textit{特征选择}（selecting features）扩展到\textit{顺序选择}（selecting order），在理论上统一了"选择什么"与"如何选择"两个维度。
+本章提出\textbf{上下文自适应扫描顺序}（Contextual Adaptive Scan Order, CASO）机制，通过端到端学习为不同点云场景生成最优的遍历路径。如图\ref{fig:caso_overview}所示，CASO由三个核心模块组成：（1）\textbf{重要性场预测器}，为每个点预测其在当前场景中的语义和几何重要性；（2）\textbf{可微分路径生成器}，基于重要性分布生成优化的扫描顺序；（3）\textbf{顺序感知选择性SSM}，在自适应顺序下进行高效的状态空间建模。CASO将Mamba的选择机制从\textit{特征选择}（selecting features）扩展到\textit{顺序选择}（selecting order），在理论上统一了"选择什么"与"如何选择"两个维度。
 
 \section{方法}
 
@@ -54,13 +36,7 @@ CASO将Mamba的选择机制从\textit{特征选择}（selecting features）扩�
 s_i^{\text{geom}} = \text{MLP}_{\text{geom}}\left(\left[c_i, n_i, \kappa_i^{(1)}, \kappa_i^{(2)}, d_i\right]\right)
 \end{equation}
 
-其中：
-\begin{itemize}
-    \item $c_i$：局部曲率（主曲率之和）
-    \item $n_i$：法向量
-    \item $\kappa_i^{(1)}, \kappa_i^{(2)}$：高斯曲率和平均曲率
-    \item $d_i$：局部点密度（$k$近邻范围内的点数）
-\end{itemize}
+其中$c_i$为局部曲率（主曲率之和），$n_i$为法向量，$\kappa_i^{(1)}$和$\kappa_i^{(2)}$分别为高斯曲率和平均曲率，$d_i$为局部点密度（$k$近邻范围内的点数）。
 
 \subsubsection{语义重要性估计}
 
@@ -100,13 +76,7 @@ a_{t,j} &= \begin{cases}
 \end{aligned}
 \end{equation}
 
-其中：
-\begin{itemize}
-    \item $u_t$：解码器隐状态
-    \item $e_i$：点$i$的编码表示（融合坐标、特征和重要性分数）
-    \item $a_{t,j}$：在时间步$t$选择点$j$的概率
-    \item $W_a$：可学习的注意力参数
-\end{itemize}
+其中$u_t$为解码器隐状态，$e_i$为点$i$的编码表示（融合坐标、特征和重要性分数），$a_{t,j}$为在时间步$t$选择点$j$的概率，$W_a$为可学习的注意力参数。
 
 \subsubsection{重要性引导的注意力偏置}
 
@@ -160,11 +130,7 @@ C_i &= \text{Linear}_C(\tilde{f}_i)
 \end{aligned}
 \end{equation}
 
-通过将重要性分数$s_{\pi_i}$和归一化位置$i/N$编码到选择性参数中，SSM能够自适应地调整信息传播速率：
-\begin{itemize}
-    \item 重要区域（高$s_{\pi_i}$）：小$\Delta_i$，精细建模
-    \item 次要区域（低$s_{\pi_i}$）：大$\Delta_i$，快速跳过
-\end{itemize}
+通过将重要性分数$s_{\pi_i}$和归一化位置$i/N$编码到选择性参数中，SSM能够自适应地调整信息传播速率：在重要区域（高$s_{\pi_i}$）采用小$\Delta_i$进行精细建模，而在次要区域（低$s_{\pi_i}$）采用大$\Delta_i$快速跳过。
 
 \subsection{理论分析}
 
@@ -201,27 +167,16 @@ N_{\text{state}}^{\text{CASO}} \leq \gamma \cdot N_{\text{state}}^{\text{fixed}}
 \subsection{实验设置}
 
 \subsubsection{数据集}
-\begin{itemize}
-    \item \textbf{S3DIS}：室内场景语义分割，包含6个大型区域，13类语义标签
-    \item \textbf{ScanNet V2}：室内场景分割，20类物体
-    \item \textbf{SemanticKITTI}：室外激光雷达点云，19类道路场景
-\end{itemize}
+
+我们在三个基准数据集上进行评估：（1）\textbf{S3DIS}，室内场景语义分割数据集，包含6个大型区域，13类语义标签；（2）\textbf{ScanNet V2}，室内场景分割数据集，包含20类物体；（3）\textbf{SemanticKITTI}，室外激光雷达点云数据集，包含19类道路场景。
 
 \subsubsection{基线方法}
-\begin{itemize}
-    \item \textbf{PTv3-Fixed}：使用固定Z-order曲线的Point Transformer V3
-    \item \textbf{PTv3-Hilbert}：使用Hilbert曲线
-    \item \textbf{PTv3-Random}：每次训练随机打乱点顺序
-    \item \textbf{Octree}：基于八叉树的层次化序列化
-\end{itemize}
+
+对比的基线方法包括：（1）\textbf{PTv3-Fixed}，使用固定Z-order曲线的Point Transformer V3；（2）\textbf{PTv3-Hilbert}，使用Hilbert曲线；（3）\textbf{PTv3-Random}，每次训练随机打乱点顺序；（4）\textbf{Octree}，基于八叉树的层次化序列化方法。
 
 \subsubsection{实现细节}
-\begin{itemize}
-    \item 重要性场预测器：3层MLP，隐藏维度128
-    \item 路径生成器：单层LSTM，隐藏状态256维
-    \item 训练：分两阶段，第一阶段冻结路径生成器训练SSM（20 epochs），第二阶段端到端联合训练（10 epochs）
-    \item 超参数：$\lambda_1=0.01$, $\lambda_2=0.001$, $\beta=2.0$
-\end{itemize}
+
+重要性场预测器采用3层MLP，隐藏维度128；路径生成器使用单层LSTM，隐藏状态256维。训练分两阶段进行：第一阶段冻结路径生成器训练SSM（20 epochs），第二阶段端到端联合训练（10 epochs）。超参数设置为：$\lambda_1=0.01$、$\lambda_2=0.001$、$\beta=2.0$。
 
 \subsection{主要结果}
 
@@ -248,24 +203,13 @@ Octree & 71.5 & 72.0 & 62.9 \\
 \end{tabular}
 \end{table}
 
-关键观察：
-\begin{itemize}
-    \item \textbf{随机顺序性能最差}，说明序列化顺序的确重要
-    \item \textbf{Hilbert略优于Z-order}，但差距不显著（$<0.3\%$）
-    \item \textbf{CASO显著优于所有固定顺序}，验证了自适应性的价值
-    \item 消融实验显示所有组件（重要性偏置、平滑损失）均有贡献
-\end{itemize}
+\textbf{关键观察}：从实验结果可以得出以下几点观察：（1）随机顺序性能最差，说明序列化顺序的确重要；（2）Hilbert略优于Z-order，但差距不显著（$<0.3\%$）；（3）CASO显著优于所有固定顺序，验证了自适应性的价值；（4）消融实验显示所有组件（重要性偏置、平滑损失）均有贡献。
 
 \subsection{消融实验}
 
 \subsubsection{重要性预测模块的有效性}
 
-我们对比了不同重要性特征的组合（表\ref{tab:ablation_importance}）。结果表明：
-\begin{itemize}
-    \item 仅使用几何特征（曲率、法向量）已能带来$+0.9\%$提升
-    \item 加入语义特征（自注意力）进一步提升$+0.6\%$
-    \item 自适应融合门控额外带来$+0.4\%$增益
-\end{itemize}
+我们对比了不同重要性特征的组合（表\ref{tab:ablation_importance}）。结果表明：仅使用几何特征（曲率、法向量）已能带来$+0.9\%$提升；加入语义特征（自注意力）进一步提升$+0.6\%$；自适应融合门控额外带来$+0.4\%$增益。
 
 \begin{table}[h]
 \centering
@@ -306,23 +250,13 @@ Transformer Decoder & 73.6 & 0.71 & 89 \\
 
 \subsubsection{状态维度与顺序的关系}
 
-图\ref{fig:state_dim_order}展示了在不同SSM状态维度下，CASO相比固定顺序的性能增益。有趣的发现：
-\begin{itemize}
-    \item 当状态维度较小（$N_{\text{state}} < 32$）时，CASO的优势更显著（$+2.3\%$）
-    \item 状态维度增大时，固定顺序也能达到较好性能，但CASO仍保持领先
-    \item 这验证了命题2：自适应顺序能减少所需状态维度
-\end{itemize}
+图\ref{fig:state_dim_order}展示了在不同SSM状态维度下，CASO相比固定顺序的性能增益。有趣的发现：当状态维度较小（$N_{\text{state}} < 32$）时，CASO的优势更显著（$+2.3\%$）；状态维度增大时，固定顺序也能达到较好性能，但CASO仍保持领先；这验证了命题2，即自适应顺序能减少所需状态维度。
 
 \subsection{可视化分析}
 
 \subsubsection{重要性场可视化}
 
-图\ref{fig:importance_field}展示了预测的重要性场。模型学会了高亮以下区域：
-\begin{itemize}
-    \item \textbf{物体边界}：桌子边缘、椅子靠背等高曲率区域
-    \item \textbf{语义边界}：不同物体的交界处（如桌子与地面）
-    \item \textbf{稀有类别}：窗户、门等在训练集中较少出现的类别
-\end{itemize}
+图\ref{fig:importance_field}展示了预测的重要性场。模型学会了高亮以下区域：（1）\textbf{物体边界}，如桌子边缘、椅子靠背等高曲率区域；（2）\textbf{语义边界}，不同物体的交界处（如桌子与地面）；（3）\textbf{稀有类别}，窗户、门等在训练集中较少出现的类别。
 
 \subsubsection{扫描路径可视化}
 
@@ -360,13 +294,6 @@ CASO (Ours) & \textbf{73.8} & \textbf{72.6} & \textbf{72.0} \\
 
 本章提出了上下文自适应扫描顺序（CASO）机制，首次将选择性状态空间模型的选择机制从特征层面扩展到序列化顺序层面。通过重要性场预测和可微分路径生成，CASO能够为不同点云场景生成最优遍历路径，在三个基准数据集上显著优于固定空间填充曲线。
 
-主要贡献包括：
-\begin{enumerate}
-    \item 提出内容自适应的点云序列化框架，突破传统固定顺序的局限；
-    \item 设计多尺度重要性预测模块，融合几何与语义信息；
-    \item 基于Pointer Network实现可微分路径生成，支持端到端训练；
-    \item 理论分析证明自适应顺序在信息传播效率和模型容量上的优势；
-    \item 大规模实验验证了CASO在多个数据集和场景下的有效性与泛化性。
-\end{enumerate}
+主要贡献包括：（1）提出内容自适应的点云序列化框架，突破传统固定顺序的局限；（2）设计多尺度重要性预测模块，融合几何与语义信息；（3）基于Pointer Network实现可微分路径生成，支持端到端训练；（4）理论分析证明自适应顺序在信息传播效率和模型容量上的优势；（5）大规模实验验证了CASO在多个数据集和场景下的有效性与泛化性。
 
 未来工作可以探索：（1）更高效的路径生成算法，降低推理开销；（2）将CASO扩展到动态点云序列；（3）结合多任务学习，为不同任务学习专用扫描顺序。
