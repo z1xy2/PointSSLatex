@@ -29,6 +29,9 @@ pointcept/models/point_transformer_v3/point_transformer_v3m1_base.py
 用于训练的数据结构在
 pointcept/models/utils/structure.py
 
+毕设相较于小论文，新加了创新点：masa，分支在masa-implementation
+小论文用的分支是feature/asd-ssm
+
 # 格式统一
 我的引用中会议或期刊必须要有姓名，且姓名格式要统一。
 一定要有标题会议名或期刊名。卷名，页码，年份。页码必须是起始页到终止页。
