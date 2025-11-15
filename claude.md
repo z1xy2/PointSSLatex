@@ -6,6 +6,7 @@
 [picture](picture) 存储了所有论文图片
 [ref.bib](ref.bib)存储了所有引用
 [mamba.pdf](mamba.pdf) mamba原文
+[IEEE-Transactions-LaTeX2e-templates-and-instructions](IEEE-Transactions-LaTeX2e-templates-and-instructions) 我要发表的期刊的tex文件夹
 
 # 毕设
 该部分的提示词仅用于[bishe.tex](bishe.tex)
@@ -70,3 +71,5 @@ Yu, Xumin and Tang, Lulu and Rao, Yongming and Huang, Tiejun and Zhou, Jie and L
 
 下面是我的调试命令，你不必理会：
 我在ref.bib添加了@inproceedings{pcm ,的引用，参照claude.md的格式统一部分帮我修正一下格式
+
+我当前的内容写在elsarticle-template-num.tex，但是我现在要投其他期刊IEEE-Transactions-LaTeX2e-templates-and-instructions，其tex文件在[IEEE-Transactions-LaTeX2e-templates-and-instructions](IEEE-Transactions-LaTeX2e-templates-and-instructions)，你帮我把东西腾过去，并翻译为英文，注意要符合点云的专业术语表述
