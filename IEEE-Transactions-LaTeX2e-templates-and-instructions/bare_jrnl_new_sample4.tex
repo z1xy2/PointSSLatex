@@ -59,7 +59,7 @@ The core reason for the geometric loss problem lies in the contradiction between
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/analysis.JPG}
-\caption{Visualization of geometric structure loss after serialization.}
+\caption{Visualization of geometric structure loss after serialization in wall-column boundary segmentation. The red point represents the center point to be predicted. Green points indicate spatially and sequentially adjacent neighbors whose geometric information can be effectively learned through Mamba's state propagation mechanism. Orange points represent fragmented neighbors that are spatially close but sequentially distant (separated by hundreds or thousands of positions in the serialized sequence), whose geometric information has decayed during state propagation when the model reaches the center point. This fragmentation prevents Mamba from integrating complete geometric structural features from all spatial neighbors, leading to degraded segmentation performance at complex boundaries.}
 \label{fig:analysis}
 \end{figure}
 
@@ -114,7 +114,7 @@ Multi-scale feature fusion plays an important role in point cloud analysis, but 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/architecture.jpg}
-\caption{Overall architecture of PointSS.}
+\caption{Overall architecture of the proposed PointSS model for point cloud semantic segmentation. The framework consists of three main stages: (1) Data processing with augmentation and one-time point cloud serialization using PTv3's approach; (2) GGAM module for global geometric feature perception through dual serialization and cross-attention mechanisms; (3) U-shaped encoder-decoder architecture with ASD-SSM modules for hierarchical feature learning. The encoder performs downsampling through pooling layers (orange boxes indicate repeated points for uniform window division), while the decoder uses upsampling for feature reconstruction. Skip connections link encoder and decoder at each resolution level. The model outputs final semantic predictions based on maximum predicted probability of labels. Compared to prior methods, this architecture requires only one-time serialization and achieves efficient downsampling through pooling rather than multiple KNN-based serializations.}
 \label{fig:architecture}
 \end{figure}
 
@@ -134,7 +134,7 @@ Therefore, we design the Global Geometry-Aware Mechanism (GGAM), which explicitl
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/ggam.jpg}
-\caption{Structure of GGAM.}
+\caption{Structure of the Global Geometry-Aware Mechanism (GGAM). The module operates on dual serialization paths (Z-order and Hilbert encoding) to compensate for geometric information loss in Mamba-based methods. For each serialization path, windowed neighborhoods are constructed with $O(N)$ complexity to extract 8-dimensional geometric features including relative coordinates ($\Delta\mathbf{p}_{ij}$), directional relationships ($\alpha_{ij}$), and curvature ($\boldsymbol{\kappa}$). Edge features are aggregated to node features $\mathbf{H}_z$ and $\mathbf{H}_h$ through mean pooling. The dual paths undergo self-attention and cross-attention to generate complementary enhanced features $\mathbf{H}''_z$ and $\mathbf{H}''_h$, which are then adaptively fused through a gating mechanism (\cref{eq:adaptive_gate}, \cref{eq:gated_fusion}). Finally, a geometric consistency constraint (\cref{eq:consistency_factor}) ensures the fused features $\mathbf{H}_{final}$ conform to physical geometric laws. This explicit geometric prior injection enables effective global associations between spatially adjacent but sequentially fragmented points.}
 \label{fig:ggam}
 \end{figure}
 
@@ -199,7 +199,7 @@ where $\odot$ denotes element-wise multiplication. This constraint acts as a sof
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/coder.JPG}
-\caption{Encoder architecture.}
+\caption{Encoder architecture with hierarchical ASD-SSM modules. The encoder employs a point-wise feature extraction strategy with progressive downsampling through max pooling layers. At each resolution level, multiple repeated ASD-SSM blocks perform deep feature understanding through adaptive scale-decoupled state space modeling. Channel dimensions expand progressively (32, 64, 128, 256, 512) to capture increasingly abstract semantic representations. The decoder (not shown) mirrors this architecture but uses upsampling instead of pooling and operates with channel sizes (64, 64, 128, 256). Both encoder and decoder integrate ASD-SSM modules, enabling the decoder to learn hierarchical multi-scale information from different encoder stages during feature reconstruction. This U-shaped design with skip connections ensures effective information flow between encoding and decoding paths for dense prediction tasks.}
 \label{fig:coder}
 \end{figure}
 
@@ -216,7 +216,7 @@ ASD-SSM addresses the modeling capability limitations caused by parameter sharin
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/BSS.JPG}
-\caption{Detailed flow of ASD-SSM.}
+\caption{Detailed processing flow of the Adaptive Scale-Decoupled State Space Model (ASD-SSM) with $S=3$ scale layers. The framework consists of three core stages: (1) Window partitioning divides the serialized point cloud into patches of different sizes, with window expansion factors $F_s \in \{1, 2, 4\}$ producing patch sizes $\{P, 2P, 4P\}$ (dashed lines separate patches); (2) Order prompting injects learnable position vectors at the finest scale ($s=1$) while shuffling points within patches at higher scales ($s>1$) to respect point cloud disorder; (3) Multi-scale feature modeling where each scale independently processes features through bidirectional SSMs (forward and backward) with scale-adaptive parameters $\overline{A}_s$ dynamically generated by a lightweight parameter generator (\cref{eq:param_modulation}). The scale constraint factors $\alpha_s \in \{0.3, 0.6, 0.9\}$ enforce differentiated state decay characteristics: fine scales achieve rapid response ($\overline{A}_1 \in [0,0.3]$) while coarse scales maintain long-term memory ($\overline{A}_3 \in [0,0.9]$). Multi-scale features are point-wise concatenated and mapped through MLP and linear layers to produce the final representation $Points' \in \mathbb{R}^{N \times C}$ integrating hierarchical information across all scales.}
 \label{fig:bss}
 \end{figure}
 
@@ -595,7 +595,7 @@ We visualize detection results on the S3DIS dataset in \cref{fig:vis}. The circl
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/visualize.JPG}
-\caption{Visualization and comparison of segmentation results.}
+\caption{Qualitative comparison of semantic segmentation results on S3DIS dataset. The figure shows ground truth annotations alongside predictions from baseline methods and the proposed PointSS model. Circled regions highlight segmentation differences between methods, particularly for challenging categories. PointSS demonstrates superior performance on objects requiring large receptive fields (windows, columns) and complex boundary regions (wall-column junctions), validating the effectiveness of GGAM's global geometric awareness and ASD-SSM's multi-scale feature fusion. Additionally, PointSS achieves better fine-grained segmentation for small and geometrically complex objects (clutter, furniture parts), proving the model's capability to simultaneously capture global context and preserve local detail information through hierarchical multi-scale architecture and explicit geometric feature learning.}
 \label{fig:vis}
 \end{figure}
 
