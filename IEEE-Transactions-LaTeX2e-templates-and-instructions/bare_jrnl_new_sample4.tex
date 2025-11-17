@@ -23,7 +23,7 @@
 
 \title{PointSS: A Geometry-Aware Multi-Scale State Space Model for Point Cloud Analysis}
 
-\author{Xinyuan Zhang$^{1,2,3}$, Xin Wang$^{1,2,3}$
+\author{Xin Wang$^{1,2,3}$,Xinyuan Zhang $^{1,2,3}$
 \thanks{$^{1}$School of Software, Jilin University, Changchun, China.}
 \thanks{$^{2}$School of Computer Science and Technology, Jilin University, Changchun, China.}
 \thanks{$^{3}$Key Laboratory of Symbolic Computation and Knowledge Engineering of Ministry of Education, Jilin University, Changchun, China.}
@@ -54,12 +54,12 @@ Point cloud analysis initially relied on methods like PointNet \cite{pointnet,Po
 
 Current Mamba-based point cloud analysis methods face two critical issues. First, although serialization methods can maintain spatial proximity within local windows, Mamba's linear state propagation mechanism cannot effectively associate spatially adjacent but sequentially distant points (fragmented points), making it difficult for the model to integrate geometric information from all spatial neighbors, thereby affecting accurate learning of complex shapes. We refer to this situation as "geometric loss." Second, current models have single-granularity feature extraction in long sequences and impose causal relationships on point clouds, unable to simultaneously capture feature information at different hierarchical levels, leading to poor point cloud analysis performance.
 
-The core reason for the geometric loss problem lies in the contradiction between Mamba's linear state propagation mechanism and point cloud spatial characteristics. Although spatial filling curve-based serialization methods (such as Z-order and Hilbert encoding) can better maintain spatial proximity within local windows, they cannot guarantee that all spatially adjacent points are also adjacent in the sequence. Mamba propagates temporal information through state vectors, and during sequential feature extraction, the state vector gradually updates to absorb information from new points. The key issue is: geometric information from fragmented points gradually decays during state propagation; when the model processes a certain point, information from spatially nearby but sequentially distant neighbors has been lost, making it difficult for the model to \textbf{implicitly learn} complete geometric structural features. Since point cloud geometric structure information (such as surface normals and edge curvature) is typically defined by spatially adjacent point sets, the existence of fragmented points prevents Mamba from integrating information from all spatial neighbors for geometric learning, thereby affecting accurate segmentation of complex shapes (such as wall-column boundaries and curved surface transition regions). For example, two points only 0.1m apart in 3D space may be serialized to positions thousands of points apart due to x-coordinate differences, causing their k-nearest neighbor sets to be fragmented in the sequence. Mamba cannot effectively associate these fragmented points, ultimately leading to poor segmentation performance. As shown in \cref{fig:analysis}, we visualize using the wall-column boundary segmentation as an example: red points represent the center point to be predicted, green points represent spatially and sequentially adjacent points (whose geometric information can be normally learned through Mamba state propagation), and orange points represent fragmented points (spatially adjacent but sequentially distant, whose geometric information has been forgotten when reaching the center point).
+The core reason for the geometric loss problem lies in the contradiction between Mamba's linear state propagation mechanism and point cloud spatial characteristics. Although spatial filling curve-based serialization methods (such as Z-order and Hilbert encoding) can better maintain spatial proximity within local windows, they cannot guarantee that all spatially adjacent points are also adjacent in the sequence. Mamba propagates temporal information through state vectors, and during sequential feature extraction, the state vector gradually updates to absorb information from new points. The key issue is: geometric information from fragmented points gradually decays during state propagation; when the model processes a certain point, information from spatially nearby but sequentially distant neighbors has been lost, making it difficult for the model to implicitly learn complete geometric structural features. Since point cloud geometric structure information (such as surface normals and edge curvature) is typically defined by spatially adjacent point sets, the existence of fragmented points prevents Mamba from integrating information from all spatial neighbors for geometric learning, thereby affecting accurate segmentation of complex shapes (such as wall-column boundaries and curved surface transition regions). For example, two points only 0.1m apart in 3D space may be serialized to positions thousands of points apart due to x-coordinate differences, causing their k-nearest neighbor sets to be fragmented in the sequence. Mamba cannot effectively associate these fragmented points, ultimately leading to poor segmentation performance. As shown in \cref{fig:analysis}, we visualize using the wall-column boundary segmentation as an example: red points represent the center point to be predicted, green points represent spatially and sequentially adjacent points (whose geometric information can be normally learned through Mamba state propagation), and orange points represent fragmented points (spatially adjacent but sequentially distant, whose geometric information has been forgotten when reaching the center point).
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/analysis.JPG}
-\caption{Visualization of geometric structure loss after serialization in wall-column boundary segmentation. The red point represents the center point to be predicted. Green points indicate spatially and sequentially adjacent neighbors whose geometric information can be effectively learned through Mamba's state propagation. Orange points represent fragmented neighbors that are spatially close but sequentially distant, whose geometric information has decayed when reaching the center point, leading to degraded segmentation performance at complex boundaries.}
+\caption{Visualization of geometric structure loss after serialization. Red point: center point to be predicted. Green points: spatially and sequentially adjacent neighbors. Orange points: fragmented neighbors that are spatially close but sequentially distant, causing geometric information loss.}
 \label{fig:analysis}
 \end{figure}
 
@@ -114,7 +114,7 @@ Multi-scale feature fusion plays an important role in point cloud analysis, but 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/architecture.jpg}
-\caption{Overall architecture of the proposed PointSS model. The framework consists of data processing with one-time serialization, GGAM module for global geometric feature perception, and U-shaped encoder-decoder architecture with ASD-SSM modules for hierarchical feature learning. Orange boxes indicate repeated points for uniform window division. The encoder performs downsampling through pooling layers while the decoder uses upsampling. Skip connections link encoder and decoder at each resolution level.}
+\caption{Overall architecture of PointSS. The framework includes data processing with one-time serialization, GGAM for geometric feature perception, and U-shaped encoder-decoder with ASD-SSM modules. Skip connections link encoder and decoder at each level.}
 \label{fig:architecture}
 \end{figure}
 
@@ -134,7 +134,7 @@ Therefore, we design the Global Geometry-Aware Mechanism (GGAM), which explicitl
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/ggam.jpg}
-\caption{Structure of the Global Geometry-Aware Mechanism (GGAM). The module operates on dual serialization paths (Z-order and Hilbert encoding) to extract 8-dimensional geometric features including relative coordinates ($\Delta\mathbf{p}_{ij}$), directional relationships ($\alpha_{ij}$), and curvature ($\boldsymbol{\kappa}$). Edge features are aggregated to node features $\mathbf{H}_z$ and $\mathbf{H}_h$. The dual paths undergo self-attention and cross-attention to generate enhanced features, which are adaptively fused through a gating mechanism and geometric consistency constraint to produce final features $\mathbf{H}_{final}$.}
+\caption{Structure of GGAM. Dual serialization paths (Z-order and Hilbert) extract geometric features ($\Delta\mathbf{p}_{ij}$, $\alpha_{ij}$, $\boldsymbol{\kappa}$), which are aggregated and enhanced through self-attention and cross-attention, then adaptively fused to produce final features $\mathbf{H}_{final}$.}
 \label{fig:ggam}
 \end{figure}
 
@@ -199,7 +199,7 @@ where $\odot$ denotes element-wise multiplication. This constraint acts as a sof
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/coder.JPG}
-\caption{Encoder architecture with hierarchical ASD-SSM modules. The encoder employs progressive downsampling through max pooling layers, with channel dimensions expanding as (32, 64, 128, 256, 512). At each resolution level, multiple ASD-SSM blocks perform deep feature understanding through adaptive scale-decoupled state space modeling. The decoder mirrors this architecture but uses upsampling instead of pooling with channel sizes (64, 64, 128, 256), learning hierarchical information from different encoder stages.}
+\caption{Encoder architecture with ASD-SSM modules. Progressive downsampling through max pooling with channel dimensions (32, 64, 128, 256, 512). The decoder uses upsampling with channel sizes (64, 64, 128, 256).}
 \label{fig:coder}
 \end{figure}
 
@@ -216,7 +216,7 @@ ASD-SSM addresses the modeling capability limitations caused by parameter sharin
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/BSS.JPG}
-\caption{Detailed processing flow of ASD-SSM with $S=3$ scale layers. Window partitioning divides the point cloud into patches with expansion factors $F_s \in \{1, 2, 4\}$ producing sizes $\{P, 2P, 4P\}$ (dashed lines separate patches). Order prompting injects position information at the finest scale while shuffling points at higher scales. Each scale processes features through bidirectional SSMs with adaptive parameters $\overline{A}_s$ generated by a lightweight parameter generator. Scale constraint factors $\alpha_s \in \{0.3, 0.6, 0.9\}$ enable fine scales for rapid response and coarse scales for long-term memory. Multi-scale features are concatenated and mapped to produce final representation $Points' \in \mathbb{R}^{N \times C}$.}
+\caption{Processing flow of ASD-SSM with $S=3$ scales. Window partitioning with expansion factors $F_s \in \{1, 2, 4\}$. Each scale uses bidirectional SSMs with adaptive parameters $\overline{A}_s$. Scale constraints $\alpha_s \in \{0.3, 0.6, 0.9\}$ enable differentiated state decay.}
 \label{fig:bss}
 \end{figure}
 
@@ -595,7 +595,7 @@ We visualize detection results on the S3DIS dataset in \cref{fig:vis}. The circl
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.5in]{../picture/visualize.JPG}
-\caption{Qualitative comparison of semantic segmentation results on S3DIS dataset. The figure shows ground truth annotations alongside predictions from baseline methods and PointSS. Circled regions highlight segmentation differences. PointSS demonstrates superior performance on objects requiring large receptive fields (windows, columns) and complex boundary regions (wall-column junctions), as well as better fine-grained segmentation for small objects (clutter, furniture parts), validating the effectiveness of GGAM's global geometric awareness and ASD-SSM's multi-scale feature fusion.}
+\caption{Qualitative comparison on S3DIS. Circled regions show segmentation differences. PointSS demonstrates superior performance on large receptive field objects (windows, columns), complex boundaries (wall-column junctions), and fine-grained small objects (clutter).}
 \label{fig:vis}
 \end{figure}
 
