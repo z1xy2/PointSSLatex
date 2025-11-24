@@ -165,7 +165,7 @@ Based on the constructed windowed neighborhoods, an 8-dimensional feature vector
 \begin{equation}
 \mathbf{f}_{ij} = [\Delta\mathbf{p}_{ij}, \alpha_{ij}, \boldsymbol{\kappa}] \in \mathbb{R}^8
 \end{equation}
-where $\Delta\mathbf{p}_{ij} = \mathbf{p}_j - \mathbf{p}_i$ is the relative coordinate vector (3D), $\alpha_{ij}$ is the directional relationship feature (3D), computed as the difference between the average normal within the window and the normalized relative position vector to characterize edge direction deviation relative to the local surface normal, and $\boldsymbol{\kappa}$ represents two types of curvature (2D).
+where $\Delta\mathbf{p}_{ij} = \mathbf{p}_j - \mathbf{p}_i$ is the relative coordinate vector (3D), $\alpha_{ij}$ is the directional relationship feature (3D), computed as the difference between the average normal within the window and the normalized relative position vector to characterize edge direction deviation relative to the local surface normal, and $\boldsymbol{\kappa} = [\kappa_{norm}, \kappa_G]$ represents two types of curvature (2D): a normalized curvature measure $\kappa_{norm}$ (minimum eigenvalue-to-trace ratio) and Gaussian curvature $\kappa_G$ (product of two smallest eigenvalues).
 
 After passing through multilayer perceptrons, mean aggregation from edge features to point features is achieved by accumulating all neighbor edge features and dividing by the number of neighbor edges. For point $p_i$, aggregated point feature $\mathbf{H}$ is obtained.
 
