@@ -294,11 +294,13 @@ Through the above mechanisms, ASD-SSM achieves scale-decoupled state space model
 
 For fair evaluation of the independent contributions of our proposed architectural innovations (GGAM and ASD-SSM), the same training-from-scratch setting as current Mamba-based methods is adopted. This choice ensures performance improvements are entirely attributable to architectural improvements, avoiding confounding factors from diverse pre-training strategies.
 
-\subsection{Benchmark}
+\subsection{Datasets}
 
 \textbf{S3DIS}: The S3DIS dataset is one of the standard datasets for indoor scene understanding and point cloud processing released by Stanford University. It contains 3D point cloud data of multiple indoor buildings, mainly used for point cloud semantic segmentation tasks. It includes 6 large buildings covering various indoor environments such as offices, lounges, conference rooms, and halls. S3DIS contains 272 rooms, with each room's 3D point cloud data meticulously annotated. Each point in the dataset includes 3D coordinates and RGB color information, along with semantic categories for each point. The dataset has 13 annotated categories such as wall, floor, table, chair, window, and bookshelf. Various indoor environments are evenly distributed across six areas, and Area 5 is selected for result validation.
 
 \textbf{ModelNet40}: ModelNet40 is provided by Princeton University, aiming to provide a standardized benchmark for 3D object classification and recognition tasks. It includes 40 object categories with 12,311 3D object samples. The training set contains 8,156 samples, and the test set contains 4,155 samples. Each object in the dataset is meticulously classified, covering various everyday items such as chairs, tables, bottles, airplanes, and cars.
+
+\subsection{Evaluation Metrics}
 
 \textbf{mIoU}: Mean Intersection over Union is a commonly used evaluation metric for semantic segmentation tasks, measuring the overlap between prediction results and ground truth labels. For each category $c$, IoU is defined as:
 \begin{equation}
