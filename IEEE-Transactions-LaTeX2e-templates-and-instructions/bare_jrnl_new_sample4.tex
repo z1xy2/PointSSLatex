@@ -23,7 +23,7 @@
 
 \title{PointSS: A Geometry-Aware Multi-Scale State Space Model for Point Cloud Analysis}
 
-\author{Xin Wang$^{1,2,3}$,Xinyuan Zhang $^{1,2,3}$
+\author{Xin Wang$^{1,2,3}$,Xinyuan Zhang $^{1}$
 \thanks{$^{1}$School of Software, Jilin University, Changchun, China.}
 \thanks{$^{2}$School of Computer Science and Technology, Jilin University, Changchun, China.}
 \thanks{$^{3}$Key Laboratory of Symbolic Computation and Knowledge Engineering of Ministry of Education, Jilin University, Changchun, China.}
@@ -383,16 +383,16 @@ S3DIS has rich scenes and large-scale point clouds, placing stronger performance
 
 \begin{table}[!t]
 \centering
-\caption{Progressive Performance Improvement Path of Modules (S3DIS Dataset)}
+\caption{Progressive Performance Improvement Path of Modules on S3DIS. + denotes adding modules to Mamba Baseline}
 \label{tab:progressive_improvement}
 \begin{tabular}{@{}lll@{}}
 \toprule
-\textbf{Model Configuration} & \textbf{mIoU (\%)} & \textbf{Improvement} \\
+\textbf{Model Configuration} & \textbf{mIoU (\%)} & \textbf{Improvement (\%)} \\
 \midrule
-Pure Mamba Baseline & 70.3 & - \\
-Baseline + GGAM & 72.5 & +2.2 \\
-Baseline + GGAM + Shared-param ASD-SSM & 73.4 & +0.9 \\
-Baseline + GGAM + Full ASD-SSM (PointSS) & \textbf{75.2} & +1.8 \\
+Mamba Baseline & 70.3 & - \\
++ GGAM & 72.5 & +2.2 \\
++ GGAM + Shared-param ASD-SSM & 73.4 & +0.9 \\
++ GGAM + Full ASD-SSM (PointSS) & \textbf{75.2} & +1.8 \\
 \midrule
 \multicolumn{2}{l}{\textbf{Total Improvement}} & \textbf{+4.9} \\
 \bottomrule
