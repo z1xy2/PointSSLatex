@@ -34,6 +34,7 @@ pointcept/models/point_transformer_v3/point_transformer_v3m1_base.py
 pointcept/models/utils/structure.py
 
 毕设相较于小论文，新加了创新点：masa，分支在masa-implementation
+注意：masa（第五章）是我在毕设里新加的创新点，和ASD-SSM不是一个东西，不要搞混。
 小论文用的分支是feature/asd-ssm
 
 # 引用格式统一
