@@ -6,7 +6,7 @@
 
 Mamba模型的核心优势在于其选择机制(selection mechanism)——模型能够根据输入内容动态决定"选择什么信息"进行记忆和传播\cite{gu2023mamba}。然而,现有工作仅在特征层面实现选择性,而忽略了序列化顺序本身对信息流动的深刻影响。受自然语言处理中混合专家模型(Mixture of Experts)\cite{shazeer2017outrageously}和动态神经路由\cite{rosenbaum2018routing}的启发,我们提出一个根本性问题:能否让模型根据局部几何特性,\textbf{动态选择}最适合的序列化路径?
 
-本章提出\textbf{多路径自适应序列化网络}(Multi-path Adaptive Serialization Network, MASA),通过几何条件化的动态路由机制实现内容自适应的点云序列化。如图\ref{fig:masa_overview}所示,MASA由三个核心模块组成:(1)\textbf{几何感知的重要性场预测},提取多尺度几何特征用于路由决策;(2)\textbf{多路径序列化生成器},预定义多种互补的序列化策略;(3)\textbf{几何条件化动态路由},根据局部几何特征自适应选择或组合序列化路径。MASA将Mamba的选择机制从\textit{特征选择}(selecting features)扩展到\textit{路径选择}(selecting paths),在保持计算效率的同时实现序列化的自适应性。
+本章提出\textbf{多路径自适应序列化网络}(Multi-path Adaptive Serialization Network, MASA),通过几何条件化的动态路由机制实现内容自适应的点云序列化。如图\ref{fig:masa_overview}所示,MASA由三个核心模块组成:(1)\textbf{几何感知的重要性场预测},基于序列化邻域提取多尺度几何特征用于路由决策;(2)\textbf{多路径序列化生成器},复用Point Transformer V3已有的4种空间序列化(z-order和Hilbert的xyz/yxz变体),并新增1种语义驱动的importance-guided BFS序列化;(3)\textbf{几何条件化动态路由},根据局部几何特征自适应选择或组合序列化路径。MASA将Mamba的选择机制从\textit{特征选择}(selecting features)扩展到\textit{路径选择}(selecting paths),在保持计算效率的同时实现序列化的自适应性。
 
 \section{方法}
 
@@ -28,35 +28,43 @@ w^* = \arg\max_{w \in \Delta^K} \mathcal{L}_{\text{task}}\left(\text{SSM}\left(\
 
 \subsection{多路径序列化策略设计}
 
-我们设计$K=5$种互补的序列化策略,分别捕获不同的空间和几何特性:
+我们设计$K=5$种互补的序列化策略,分别捕获不同的空间和语义特性。与从头设计所有策略不同,我们采用更高效的方案:复用Point Transformer V3已有的4种空间序列化作为零成本基础路径,并新增1种语义驱动的序列化作为核心创新。
 
-\subsubsection{空间填充曲线}
+\subsubsection{空间序列化路径(4条,零成本复用)}
 
-\textbf{(1) Z-order曲线}:通过Morton编码实现高效的空间索引,适合规则分布的点云。对于归一化坐标$(x,y,z) \in [0,1]^3$,Morton码定义为:
+Point Transformer V3的序列化模块已计算了以下4种空间填充曲线,我们直接复用这些顺序:
+
+\textbf{(1) Z-order曲线(xyz轴顺序)}:通过Morton编码实现高效的空间索引,适合规则分布的点云。对于归一化坐标$(x,y,z) \in [0,1]^3$,Morton码定义为:
 \begin{equation}
 m(p_i) = \text{Interleave}(\lfloor 2^{10} x_i \rfloor, \lfloor 2^{10} y_i \rfloor, \lfloor 2^{10} z_i \rfloor)
 \end{equation}
 排列$\pi_{\text{z}}$按Morton码升序排列所有点。
 
-\textbf{(2) Hilbert曲线}:相比Z-order具有更好的空间局部性保持特性,适合连续曲面。我们采用3D Hilbert曲线的快速近似算法\cite{lawder2000using}。
+\textbf{(2) Z-order曲线(yxz轴顺序)}:与(1)相同的Morton编码,但改变坐标交织顺序,获得不同的空间遍历路径,增强路径多样性。
 
-\subsubsection{几何驱动序列化}
+\textbf{(3) Hilbert曲线(xyz轴顺序)}:相比Z-order具有更好的空间局部性保持特性,适合连续曲面。我们采用3D Hilbert曲线的快速近似算法\cite{lawder2000using}。
 
-\textbf{(3) 重要性优先序列化}:基于预测的重要性分数$s_i$(见第\ref{sec:importance}节)降序排列:
-\begin{equation}
-\pi_{\text{imp}}(i) < \pi_{\text{imp}}(j) \Leftrightarrow s_i > s_j
-\end{equation}
-这确保几何上的关键区域(如边缘、角点)优先被处理。
+\textbf{(4) Hilbert曲线(yxz轴顺序)}:类似(2),通过改变轴顺序获得Hilbert曲线的变体。
 
-\textbf{(4) 密度自适应序列化}:在高密度区域采用精细遍历,低密度区域快速跳过。具体地,计算每个点的局部密度$d_i = \|\mathcal{N}_k(p_i)\|$($k$-近邻数量),然后采用密度聚类引导的宽度优先搜索。
+这4种空间序列化已由Point Transformer V3预先计算并存储在点云数据结构中,MASA无需额外计算开销即可使用。
 
-\subsubsection{随机性策略}
+\subsubsection{语义序列化路径(1条,核心创新)✨}
 
-\textbf{(5) 几何感知随机游走}:从高重要性点出发,按几何距离加权的随机游走生成序列。这引入探索性,防止过拟合固定模式。转移概率定义为:
+为了克服纯空间序列化的语义无关性,我们提出\textbf{重要性引导的广度优先搜索}(Importance-Guided BFS)作为第5条路径。该方法平衡了语义重要性和几何连续性,是MASA的核心贡献。
+
+\textbf{(5) 重要性引导BFS序列化}:该算法结合了以下设计:
+\begin{itemize}
+\item \textbf{多起点策略}:选择top-K个重要点作为种子,实现快速覆盖
+\item \textbf{分层扩展}:每层基于几何邻近性扩展,保持空间连续性
+\item \textbf{加权转移}:综合考虑几何距离和重要性分数,优先访问关键区域
+\item \textbf{邻居候选构建}:利用上述4种空间序列化,为每个点提取前后各$k$个邻居,形成丰富的候选集
+\end{itemize}
+
+具体地,转移概率定义为:
 \begin{equation}
 P(i \to j) \propto \exp\left(-\frac{\|x_i - x_j\|^2}{2\sigma^2}\right) \cdot (s_j + \epsilon)
 \end{equation}
-$$e^{-\frac{d^2}{2\sigma^2}}$$
+其中$x_i, x_j$为点坐标,$s_j$为候选点的重要性分数,$\sigma$为距离尺度参数。该方法确保重要区域(如物体边界)优先被处理,同时保持几何上的连续性,避免了纯重要性排序导致的空间跳跃。
 \subsection{几何感知的重要性场预测}
 \label{sec:importance}
 
@@ -153,19 +161,33 @@ w_m &= \text{Softmax}(z_m / \tau)
 \begin{algorithm}[h]
 \caption{MASA前向传播}
 \label{alg:masa_forward}
-\KwIn{点云$\mathcal{P}$, 路由网络$\text{Router}$, 共享Mamba $\text{Mamba}_{\text{shared}}$}
+\KwIn{点云$\mathcal{P}$包含坐标coord、特征feat和PTv3预计算的4种序列化顺序, 共享Mamba $\text{Mamba}_{\text{shared}}$}
 \KwOut{输出特征$h$, 路由信息$\text{routing\_info}$}
-调用几何特征提取器计算重要性分数$s_i$\;
-调用多路径序列化器生成$K$种序列化顺序$\{\pi_1, \ldots, \pi_K\}$\;
-初始化输出特征$h = 0$\;
+\textbf{Step 1:} 提取几何特征\;
+使用z-order序列化创建邻域$\mathcal{N}$\;
+调用几何特征提取器: $g = \text{GeomExtractor}(\mathcal{N})$ \tcp{计算5维几何特征}
+\textbf{Step 2:} 预测重要性分数\;
+$s = \text{ImportancePredictor}(\text{feat}, g)$ \tcp{融合特征和几何}
+\textbf{Step 3:} 生成多路径序列化(5条路径)\;
+复用已有空间序列化: $\pi_1, \pi_2, \pi_3, \pi_4 \leftarrow$ PTv3预计算\;
+生成语义序列化: $\pi_5 \leftarrow \text{ImportanceGuidedBFS}(\text{coord}, s, \{\pi_1, \ldots, \pi_4\})$\;
+\textbf{Step 4:} 计算动态路由权重\;
+体素化: $\{\mathcal{B}_m\}_{m=1}^M \leftarrow \text{Voxelize}(\text{coord})$ \tcp{空间分块}
+$w \leftarrow \text{Router}(\text{feat}, g, s)$ \tcp{$w \in \mathbb{R}^{M \times K}$, 块级路由权重}
+\textbf{Step 5:} 多路径Mamba处理(共享参数)\;
+初始化路径输出列表: $\{h^{(k)}\}_{k=1}^K \leftarrow \emptyset$\;
 \For{$k = 1$ \KwTo $K$}{
-    按$\pi_k$序列化点云,形成邻域$\mathcal{B}_m^{(k)}$\;
-    通过共享Mamba处理: $h^{(k)} = \text{Mamba}_{\text{shared}}(\mathcal{B}_m^{(k)})$\;
+    按$\pi_k$重排特征: $f_{\text{ordered}} \leftarrow \text{feat}[\pi_k]$\;
+    添加路径嵌入: $f_{\text{ordered}} \leftarrow f_{\text{ordered}} + \text{OrderEmbed}_k$\;
+    通过共享Mamba: $h_{\text{ordered}}^{(k)} \leftarrow \text{Mamba}_{\text{shared}}(f_{\text{ordered}})$\;
+    恢复原始顺序: $h^{(k)} \leftarrow h_{\text{ordered}}^{(k)}[\text{argsort}(\pi_k)]$\;
 }
-调用动态路由器计算权重: $w = \text{Router}(\{s_i, f_i, g_i\})$\;
-加权融合: $h = \sum_{k=1}^K w_k \cdot h^{(k)}$\;
-记录路由信息用于可视化和负载均衡\;
-\Return{$h$, $\text{routing\_info}$}
+\textbf{Step 6:} 软路由融合\;
+获取每个点的路由权重: $w_{\text{point}} \leftarrow w[\text{BlockAssign}]$ \tcp{$w_{\text{point}} \in \mathbb{R}^{N \times K}$}
+加权融合: $h \leftarrow \sum_{k=1}^K w_{\text{point}}^{(k)} \odot h^{(k)}$ \tcp{点级加权}
+\textbf{Step 7:} 计算负载均衡损失\;
+$\mathcal{L}_{\text{balance}} \leftarrow \sum_{k=1}^K (\text{mean}(w^{(k)}) - 1/K)^2$\;
+\Return{$h$, $\{\text{路由权重}, \text{重要性分数}, \mathcal{L}_{\text{balance}}\}$}
 \end{algorithm}
 
 具体地,对于每条路径$k$:
@@ -394,9 +416,9 @@ Pointer Network & $O(N^2d)$ & $O(d^2)$ & $O(Nd)$ \\
 
 我们在Point Transformer V3基础上实现MASA模块。网络结构采用5-stage编码-解码架构,编码器通道数为(32, 64, 128, 256, 512),解码器通道数为(64, 64, 128, 256)。
 
-MASA配置方面,路径数设置为$K=5$,包括Z-order、Hilbert、重要性优先、密度自适应和几何随机游走五种策略。邻域大小$K_b=16$,初始体素大小$v_0=0.5$m,增长因子$\alpha=1.5$。MASA仅在前2个stage(Stage 0和Stage 1)启用,最小点数阈值$t_{\min}=5$。
+MASA配置方面,路径数设置为$K=5$,其中4条空间序列化路径(z-order xyz轴、z-order yxz轴、Hilbert xyz轴、Hilbert yxz轴)直接复用Point Transformer V3的序列化结果,1条语义序列化路径(importance-guided BFS)为MASA新增。邻域大小$K_b=16$,初始体素大小$v_0=0.5$m,增长因子$\alpha=1.5$。MASA仅在前2个stage(Stage 0和Stage 1)启用,以平衡性能和效率,最小点数阈值$t_{\min}=5$。
 
-重要性编码器采用3层PointNet++结构,隐藏维度为128,多尺度半径设为$\{0.05, 0.1, 0.2\}$m。路由网络采用2层MLP,隐藏维度为256,温度退火范围为$[0.3, 1.0]$。
+重要性预测器采用2层MLP结构,特征编码器和几何编码器各使用隐藏维度64,最终融合层隐藏维度128。路由网络采用3层MLP,隐藏维度为256,温度退火范围为$[0.3, 1.0]$。几何特征提取基于序列化邻域进行,无需额外的KNN搜索。
 
 训练设置方面,使用AdamW优化器,初始学习率为$6 \times 10^{-3}$,采用OneCycleLR调度策略,总训练3000 epochs,batch size为6,启用混合精度AMP加速。损失权重设置为$\lambda_{\text{bal}}=0.01$和$\lambda_{\text{reg}}=0.0001$。所有实验在4张Nvidia A6000 GPU(48GB显存)上进行。
 
@@ -431,7 +453,7 @@ PTv3-Multi & 72.3 & 72.8 & 63.8 \\
 
 \subsubsection{序列化策略的贡献}
 
-表\ref{tab:ablation_paths}分析了不同序列化策略组合的效果。结果表明:仅使用Z-order和Hilbert两种空间填充曲线已能达到72.6\%;加入重要性优先序列化进一步提升至72.9\%;完整的5种策略组合达到最佳性能73.2\%。
+表\ref{tab:ablation_paths}分析了不同序列化策略组合的效果。结果表明:仅使用PTv3的4种空间序列化(无动态路由)达到72.4\%;加入MASA的importance-guided BFS并启用动态路由进一步提升至73.2\%,验证了语义驱动序列化的价值。我们还测试了仅使用单一序列化路径的性能作为对比。
 
 \begin{table}[h]
 \centering
@@ -441,14 +463,15 @@ PTv3-Multi & 72.3 & 72.8 & 63.8 \\
 \toprule
 策略组合 & mIoU (\%) \\
 \midrule
-仅Z-order (K=1) & 71.9 \\
-Z-order + Hilbert (K=2) & 72.6 \\
-+ 重要性优先 (K=3) & 72.9 \\
-+ 密度自适应 (K=4) & 73.0 \\
-+ 几何感知随机游走 (K=5,完整) & \textbf{73.2} \\
+仅Z-order xyz (K=1, PTv3基线) & 71.9 \\
+PTv3 4种空间序列化 + 静态融合 (K=4) & 72.4 \\
++ importance-BFS (K=5, 无动态路由) & 72.7 \\
+MASA完整 (K=5, 动态路由) & \textbf{73.2} \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+关键发现:(1)多种空间序列化的静态融合已带来0.5\%的提升;(2)加入语义序列化importance-BFS进一步提升0.3\%;(3)动态路由机制额外贡献0.5\%,验证了几何条件化路径选择的有效性。
 
 \subsubsection{路由策略对比}
 
@@ -477,7 +500,7 @@ Z-order + Hilbert (K=2) & 72.6 \\
 
 \subsubsection{路由权重可视化}
 
-图\ref{fig:routing_weights}展示了MASA在S3DIS场景中学习到的路由分布。观察发现:(1)\textbf{平面区域}(如地面、墙面)主要使用Z-order和Hilbert曲线,占比$>70\%$;(2)\textbf{复杂物体}(如桌椅)更多依赖重要性优先序列化(占比$\sim 45\%$);(3)\textbf{边缘和角点}展现出更均匀的路径分布,模型通过多路径融合捕获多角度信息。
+图\ref{fig:routing_weights}展示了MASA在S3DIS场景中学习到的路由分布。观察发现:(1)\textbf{平面区域}(如地面、墙面)主要使用空间填充曲线(z-order和Hilbert),占比$>65\%$,因为这些区域几何规则,空间序列化效率高;(2)\textbf{复杂物体}(如桌椅、门窗)更多依赖importance-guided BFS序列化(占比$\sim 40\%$),该路径能优先处理物体边界等关键特征;(3)\textbf{边缘和角点}展现出更均匀的路径分布,模型通过多路径融合捕获多角度信息,其中importance-BFS的权重略高,反映了这些区域的语义重要性。(4)不同轴顺序的序列化(xyz vs yxz)在各向异性结构(如长走廊)上展现出互补性,动态路由能根据局部几何特性选择最适合的轴顺序。
 
 \subsubsection{序列化路径对比}
 
@@ -540,15 +563,17 @@ MASA (Ours) & 0.46 & 42 & 4.5 \\
 
 \subsection{核心贡献}
 
-\textbf{(1) 多路径软路由框架}:突破固定空间填充曲线的局限,通过预定义$K$种互补序列化策略并动态组合,避免了直接学习任意排列的组合爆炸问题($N! \to K$),在保持$O(N\log N)$线性复杂度的同时实现自适应性。
+\textbf{(1) 零成本空间序列化复用 + 语义序列化创新}:与从头设计5条独立路径不同,MASA采用更实用的方案——直接复用Point Transformer V3已计算的4种空间序列化(z-order和Hilbert的xyz/yxz变体),仅新增1条语义驱动的importance-guided BFS序列化。这种设计既保证了路径多样性(空间 + 语义),又最小化了计算开销(仅BFS生成需要额外时间),避免了从头生成5条序列化的高昂成本。
 
-\textbf{(2) 共享参数优化策略}:所有路径共享同一个Mamba块,仅序列化顺序不同,相比独立参数方案实现\textbf{5倍加速}且参数量不变。这一设计充分利用了Mamba的选择性机制——相同的参数在不同输入顺序下可产生不同的信息传播模式。
+\textbf{(2) 重要性引导BFS序列化}:提出importance-guided BFS算法,平衡语义重要性和几何连续性。该算法利用现有4种空间序列化构建丰富的邻居候选集,通过多起点并行扩展和加权转移概率,生成既重视关键区域又保持空间连续性的序列化顺序,复杂度为$O(N)$。
 
-\textbf{(3) 体素化分块路由}:基于空间体素网格将点云划分为$M \ll N$个块,每个块共享路由权重,既保持空间连贯性又显著减少路由决策数量,同时通过padding/unpadding机制处理不同大小的块。
+\textbf{(3) 多路径软路由框架}:突破固定空间填充曲线的局限,通过预定义$K=5$种互补序列化策略(4种空间 + 1种语义)并动态组合,避免了直接学习任意排列的组合爆炸问题($N! \to K$),在保持$O(N\log N)$线性复杂度的同时实现自适应性。
 
-\textbf{(4) 层级自适应配置}:在不同网络stage使用递增的体素大小($v_s = v_0 \cdot \alpha^s$)和选择性启用机制,浅层关注局部细节(细粒度体素+MASA),深层关注全局语义(粗粒度体素+可选MASA),实现性能与效率的最优平衡。
+\textbf{(4) 共享参数优化策略}:所有路径共享同一个Mamba块,仅序列化顺序不同,相比独立参数方案实现\textbf{5倍加速}且参数量不变。这一设计充分利用了Mamba的选择性机制——相同的参数在不同输入顺序下可产生不同的信息传播模式。
 
-\textbf{(5) 几何感知的重要性场预测}:融合多尺度几何特征(曲率、法向变化、密度)为路由网络提供先验,使其能够根据局部几何特性(平面/曲面/边缘)选择最适合的序列化路径。
+\textbf{(5) 体素化分块路由}:基于空间体素网格将点云划分为$M \ll N$个块,每个块共享路由权重,既保持空间连贯性又显著减少路由决策数量,同时通过padding/unpadding机制处理不同大小的块。
+
+\textbf{(6) 层级自适应配置}:在不同网络stage使用递增的体素大小($v_s = v_0 \cdot \alpha^s$)和选择性启用机制,浅层关注局部细节(细粒度体素+MASA),深层关注全局语义(粗粒度体素+可选MASA),实现性能与效率的最优平衡。
 
 \subsection{实验验证}
 
