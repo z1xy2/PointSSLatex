@@ -1,16 +1,14 @@
 \chapter{基于多路径动态路由的自适应序列化网络}
 
-\section{引言}
+前两章分别提出了GGAM和ASD-SSM两个核心创新点，从几何特征增强和多尺度特征学习两个角度提升了PointSS在固定序列化策略下的性能。GGAM通过显式注入几何先验补偿了Mamba的几何学习不足（第三章），ASD-SSM通过自适应尺度解耦实现了层次化的多尺度特征学习（第四章）。然而，无论是GGAM还是ASD-SSM，都基于PTv3提供的固定序列化顺序（如Z-order或Hilbert曲线）进行特征学习。这种固定策略存在一个根本性局限：同一种扫描顺序被应用于所有场景和所有区域，无法适应不同场景的几何特性和语义结构。
 
-在将Mamba等选择性状态空间模型应用于三维点云处理时,点云序列化是一个关键但常被忽视的问题。现有方法\cite{wu2024point,wang2022ocnn}普遍采用固定的空间填充曲线(如Z-order曲线、Hilbert曲线)将无序点云转换为有序序列,然而这种固定策略存在显著局限性:(1)\textbf{场景无关性}——同一种扫描顺序被应用于所有场景,无法适应不同场景的几何特性和语义结构;(2)\textbf{重要性忽视}——固定曲线无法优先处理几何上或语义上更重要的区域(如物体边界、关键结构);(3)\textbf{局部性受限}——不同几何结构(如平面、曲面、边缘)适合不同的序列化方式,固定策略无法兼顾。
+具体而言，固定序列化策略面临三个关键问题：\textbf{场景无关性}——无法根据场景的几何特性调整序列化策略；\textbf{重要性忽视}——无法优先处理几何上或语义上更重要的区域（如物体边界、关键结构）；\textbf{局部性受限}——不同几何结构（如平面、曲面、边缘）适合不同的序列化方式，固定策略无法兼顾。受自然语言处理中混合专家模型（Mixture of Experts）和动态神经路由的启发，我们提出一个根本性问题：能否让模型根据局部几何特性，\textbf{动态选择}最适合的序列化路径？
 
-Mamba模型的核心优势在于其选择机制(selection mechanism)——模型能够根据输入内容动态决定"选择什么信息"进行记忆和传播\cite{gu2023mamba}。然而,现有工作仅在特征层面实现选择性,而忽略了序列化顺序本身对信息流动的深刻影响。受自然语言处理中混合专家模型(Mixture of Experts)\cite{shazeer2017outrageously}和动态神经路由\cite{rosenbaum2018routing}的启发,我们提出一个根本性问题:能否让模型根据局部几何特性,\textbf{动态选择}最适合的序列化路径?
+本章提出\textbf{多路径自适应序列化网络}（Multi-path Adaptive Serialization Network, MASA）作为PointSS的第三个核心创新点，从序列化策略的角度进一步提升模型性能。与GGAM和ASD-SSM在"给定序列化下如何更好地学习"不同，MASA解决的是"如何选择更好的序列化"的问题。MASA通过几何条件化的动态路由机制，根据局部几何特性自适应选择或组合序列化路径，将Mamba的选择机制从\textit{特征选择}（selecting features）扩展到\textit{路径选择}（selecting paths）。三个创新点协同作用，共同构成PointSS的完整技术体系。
 
-本章提出\textbf{多路径自适应序列化网络}(Multi-path Adaptive Serialization Network, MASA),通过几何条件化的动态路由机制实现内容自适应的点云序列化。如图\ref{fig:masa_overview}所示,MASA由三个核心模块组成:(1)\textbf{几何感知的重要性场预测},基于序列化邻域提取多尺度几何特征用于路由决策;(2)\textbf{多路径序列化生成器},复用Point Transformer V3已有的4种空间序列化(z-order和Hilbert的xyz/yxz变体),并新增1种语义驱动的importance-guided BFS序列化;(3)\textbf{几何条件化动态路由},根据局部几何特征自适应选择或组合序列化路径。MASA将Mamba的选择机制从\textit{特征选择}(selecting features)扩展到\textit{路径选择}(selecting paths),在保持计算效率的同时实现序列化的自适应性。
+本章结构安排如下：5.1节阐述MASA的问题建模与动机，5.2节详细介绍方法设计（包括多路径序列化策略、几何感知的重要性场预测、动态路由网络等），5.3节通过广泛的实验和可视化分析验证MASA的有效性，5.4节对本章进行总结并展望未来方向。
 
-\section{方法}
-
-\subsection{问题建模与动机}
+\section{问题建模与动机}
 
 给定一个包含$N$个点的点云$\mathcal{P} = \{p_i\}_{i=1}^N$,其中每个点$p_i = (x_i, f_i)$包含三维坐标$x_i \in \mathbb{R}^3$和特征$f_i \in \mathbb{R}^D$。传统方法使用固定函数$\pi_{\text{fixed}}$生成序列化顺序,而直接学习任意排列函数$\pi: \mathcal{P} \rightarrow \mathcal{S}_N$(其中$\mathcal{S}_N$为$N$元素的所有排列集合)面临两大挑战:
 
@@ -25,6 +23,8 @@ w^* = \arg\max_{w \in \Delta^K} \mathcal{L}_{\text{task}}\left(\text{SSM}\left(\
 \end{equation}
 
 其中$w = [w_1, \ldots, w_K]$为路由权重,$\Delta^K$表示$K$维概率单纯形。这种软路由(soft routing)方式完全可微分,支持端到端训练,同时将复杂度降低至$O(KN\log N)$,其中$K$为常数(通常$K=4\sim 6$)。
+
+\section{方法设计}
 
 \subsection{多路径序列化策略设计}
 
