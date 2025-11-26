@@ -233,18 +233,161 @@ PointGA（Geometrically Aware Transformer）\cite{pointga}其核心思想是将�
 
 第一章为绪论，介绍点云分析的研究背景及意义、国内外研究现状、本文的主要工作内容和论文的章节安排。
 
-第二章介绍全局几何感知机制（GGAM），详细阐述几何丢失问题的动机与分析、GGAM的方法设计以及消融实验验证。
+第二章介绍相关理论和技术，系统阐述点云数据表示、深度学习方法、Transformer模型、状态空间模型与Mamba架构、点云序列化技术等基础知识。
 
-第三章介绍自适应尺度解耦状态空间模型（ASD-SSM），包括长序列下特征粒度单一问题的分析、ASD-SSM的整体方案与处理流程、以及实验验证。
+第三章介绍全局几何感知机制（GGAM），详细阐述几何丢失问题的动机与分析、GGAM的方法设计以及消融实验验证。
 
-第四章介绍多路径自适应序列化网络（MASA），阐述MASA的设计动机、方法细节和实验分析。
+第四章介绍自适应尺度解耦状态空间模型（ASD-SSM），包括长序列下特征粒度单一问题的分析、ASD-SSM的整体方案与处理流程、以及实验验证。
 
-第五章为实验结果与分析，展示PointSS在S3DIS、ModelNet40等标准基准上的性能表现，并通过综合实验展示三个模块的协同作用。
+第五章介绍多路径自适应序列化网络（MASA），阐述MASA的设计动机、方法细节和实验分析。
 
-第六章为总结与展望，总结本文的主要工作和贡献，并对未来的研究方向进行展望。
+第六章为实验结果与分析，展示PointSS在S3DIS、ModelNet40等标准基准上的性能表现，并通过综合实验展示三个模块的协同作用。
+
+第七章为总结与展望，总结本文的主要工作和贡献，并对未来的研究方向进行展望。
 
 
 
+
+
+
+\chapter{相关理论和技术}
+
+
+\section{点云及其表示}
+
+点云是三维空间中点的集合，每个点通常包含位置坐标$(x, y, z)$以及可选的属性信息（如颜色、法向量、强度等）。点云数据可以通过多种方式获取，包括激光雷达（LiDAR）扫描、深度相机、多视角立体重建等。相比于传统的二维图像，点云能够直接表示三维物体的几何结构，在自动驾驶\cite{qi2018frustum}、机器人导航\cite{rusu20113d}、增强现实\cite{izadi2011kinectfusion}等领域具有重要应用价值。
+
+点云数据具有以下几个显著特性：
+
+\textbf{无序性（Permutation Invariance）}：点云是无序点集，改变点的排列顺序不应影响其表示的三维形状。这要求点云处理网络必须具有排列不变性或等变性，能够输出与输入点顺序无关的结果。
+
+\textbf{稀疏性和不规则性}：与规则网格结构的图像不同，点云在三维空间中分布稀疏且不规则。这使得传统的卷积操作难以直接应用，需要设计专门的网络结构来处理这种不规则数据。
+
+\textbf{局部结构重要性}：点云中点的局部邻域包含了重要的几何信息，如曲率、法向量等。有效提取和利用这些局部几何特征对于理解三维形状至关重要。
+
+\textbf{尺度变化}：同一物体在不同距离或分辨率下采样得到的点云具有不同的点密度。鲁棒的点云处理方法需要对这种尺度变化具有适应性。
+
+\section{深度学习在点云处理中的应用}
+
+近年来，深度学习技术在点云处理领域取得了显著进展。早期的方法主要将点云转换为其他表示形式（如体素网格、多视角图像）再进行处理，但这种方式会导致信息损失或计算效率低下。
+
+PointNet\cite{qi2017pointnet}首次提出了直接处理原始点云的深度学习架构，通过多层感知机（MLP）独立处理每个点的特征，然后使用对称函数（如最大池化）聚合全局特征，从而保证了排列不变性。然而，PointNet缺乏对局部结构的有效建模。
+
+为了解决这一问题，PointNet++\cite{qi2017pointnet++}引入了层次化的点云处理框架，通过最远点采样（Farthest Point Sampling, FPS）和球查询（Ball Query）构建多尺度局部区域，在每个区域内应用PointNet提取局部特征，然后逐层聚合形成层次化表示。这种设计使得网络能够捕获不同尺度的局部几何结构。
+
+DGCNN\cite{wang2019dynamic}提出了动态图卷积网络，通过在特征空间中动态构建k近邻图，使用边卷积（EdgeConv）操作聚合邻域信息。这种方法能够自适应地捕获点云的局部结构，并随着网络层数的增加动态更新邻域关系。
+
+这些开创性工作奠定了深度学习点云处理的基础，但它们主要关注局部特征提取，在捕获长距离依赖关系方面存在局限性。
+
+\section{Transformer模型}
+
+Transformer\cite{vaswani2017attention}最初是为自然语言处理任务设计的，其核心创新是自注意力机制（Self-Attention Mechanism），能够建模序列中任意两个位置之间的依赖关系。给定输入序列，Transformer通过查询（Query）、键（Key）、值（Value）三个线性变换计算注意力权重：
+
+\begin{equation}
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\end{equation}
+
+其中$d_k$是键向量的维度。这种机制允许模型根据内容的相似性动态地聚合信息，而不依赖于位置的远近。
+
+Transformer的优势在于能够并行处理整个序列，并且能够捕获长距离依赖关系。然而，自注意力机制的计算复杂度为$O(N^2)$，其中$N$是序列长度，这在处理大规模点云时会带来巨大的计算开销。
+
+近年来，研究者开始将Transformer应用于点云分析。Point Transformer\cite{zhao2021point}将自注意力机制引入点云处理，通过在局部邻域内计算点间的注意力权重来聚合特征。Point Transformer V2\cite{wu2022point}进一步改进了网络架构，采用分组向量注意力（Grouped Vector Attention）和位置编码优化，提高了计算效率和性能。Point Transformer V3\cite{wu2024point}引入了序列化注意力机制，通过将点云序列化后应用窗口注意力，显著降低了计算复杂度。
+
+尽管Transformer在点云分析中取得了优异性能，但其二次复杂度仍然限制了在大规模场景中的应用。这促使研究者探索更高效的序列建模方法。
+
+\section{状态空间模型与Mamba}
+
+\subsection{状态空间模型基础}
+
+状态空间模型（State Space Models, SSMs）是控制理论中的经典工具，用于描述系统的动态行为。连续时间的状态空间模型可以表示为：
+
+\begin{equation}
+\begin{aligned}
+\dot{h}(t) &= Ah(t) + Bx(t) \\
+y(t) &= Ch(t) + Dx(t)
+\end{aligned}
+\end{equation}
+
+其中$x(t) \in \mathbb{R}^L$是输入信号，$h(t) \in \mathbb{R}^N$是隐状态，$y(t) \in \mathbb{R}^L$是输出信号，$A \in \mathbb{R}^{N \times N}$是状态矩阵，$B \in \mathbb{R}^{N \times L}$、$C \in \mathbb{R}^{L \times N}$、$D \in \mathbb{R}^{L \times L}$是输入、输出和直通矩阵。
+
+为了在离散时间序列上应用SSM，需要通过离散化技术将连续模型转换为离散形式。使用零阶保持（Zero-Order Hold, ZOH）方法，可得：
+
+\begin{equation}
+\begin{aligned}
+h_t &= \bar{A}h_{t-1} + \bar{B}x_t \\
+y_t &= Ch_t
+\end{aligned}
+\end{equation}
+
+其中$\bar{A} = \exp(\Delta A)$，$\bar{B} = (\Delta A)^{-1}(\exp(\Delta A) - I) \cdot \Delta B$，$\Delta$是步长参数。
+
+传统的SSM（如S4\cite{gu2022efficiently}）通常假设系统参数是时间不变的（Linear Time Invariance, LTI），即矩阵$A$、$B$、$C$在整个序列中保持不变。这种设计虽然能够通过卷积定理实现高效的并行计算，但限制了模型根据输入内容动态调整的能力。
+
+\subsection{Mamba架构}
+
+Mamba\cite{gu2024mamba}是一种选择性状态空间模型，其核心创新在于打破了LTI约束，使得SSM参数能够根据输入内容动态变化。具体而言，Mamba将$B$、$C$和步长$\Delta$设计为输入相关的函数：
+
+\begin{equation}
+\begin{aligned}
+B_t &= \text{Linear}_B(x_t) \\
+C_t &= \text{Linear}_C(x_t) \\
+\Delta_t &= \text{Broadcast}(\text{Linear}_{\Delta}(x_t))
+\end{aligned}
+\end{equation}
+
+这种选择性机制使得模型能够根据输入内容选择性地更新隐状态，增强了对重要信息的记忆能力和对不相关信息的过滤能力。
+
+Mamba的计算过程包括：
+
+（1）输入投影：将输入$x$通过线性层映射到高维空间，并分为两路进行门控；
+
+（2）选择性SSM：根据输入动态计算$B_t$、$C_t$、$\Delta_t$，更新隐状态$h_t$；
+
+（3）门控融合：使用SiLU激活函数进行门控融合；
+
+（4）输出投影：通过线性层映射回原始维度。
+
+Mamba的一个关键优势是线性时间复杂度$O(N)$。虽然选择性机制破坏了卷积形式，无法直接使用FFT加速，但Mamba通过硬件感知的并行扫描算法（Hardware-Aware Parallel Scan）在GPU上实现了高效计算。该算法利用现代GPU的层次化内存结构（HBM、SRAM），通过kernel融合和内存复用，最小化IO开销，实现了比Transformer更高的吞吐量。
+
+Mamba在语言建模、序列分类等任务上展现出了优异性能，其线性复杂度使其能够处理超长序列。这些优势促使研究者探索将Mamba应用于点云分析。
+
+\section{点云序列化}
+
+将无序的点云数据转换为有序序列是应用序列建模方法（如Transformer、Mamba）的前提。点云序列化的核心挑战在于如何在保持计算效率的同时，尽可能保留点云的空间邻近关系和几何结构信息。
+
+\textbf{Z-order曲线}（也称Morton曲线）是一种经典的空间填充曲线，通过交错点的坐标位与构建Morton码来确定排序。具体地，对于三维点$(x, y, z)$，将每个坐标的二进制表示进行交错排列，得到Morton码，然后按Morton码排序。Z-order曲线能够较好地保持局部空间邻近性，但在某些情况下会出现跳跃，导致空间上相邻的点在序列中距离较远。
+
+\textbf{Hilbert曲线}是另一种空间填充曲线，相比Z-order曲线具有更好的局部性保持特性。Hilbert曲线通过递归分割空间并连接子空间的方式构建，使得曲线上相邻的点在空间中也更可能相邻。然而，Hilbert曲线的计算复杂度较高，在实时应用中可能带来额外开销。
+
+\textbf{基于学习的序列化}方法尝试通过神经网络学习最优的点云排序策略。例如，Point Transformer V3\cite{wu2024point}提出的序列化方法结合了网格划分和局部排序，在保持效率的同时提升了序列的空间连贯性。
+
+\textbf{窗口化序列化}策略将点云划分为多个局部窗口，在每个窗口内进行序列化，然后将各窗口序列拼接。这种方法能够在一定程度上缓解全局序列化带来的邻近性破坏问题，但窗口边界处的点仍然可能与其空间邻居分离。
+
+现有的序列化方法都存在一定的局限性：完全的空间邻近关系保持与计算效率之间存在权衡。这正是本文提出全局几何感知机制的动机之一——通过显式提取和注入几何先验信息，补偿序列化过程中的几何信息损失。
+
+\section{其他相关技术}
+
+\subsection{注意力机制变体}
+
+为了降低标准自注意力的二次复杂度，研究者提出了多种高效注意力机制。线性注意力（Linear Attention）\cite{katharopoulos2020transformers}通过核技巧将softmax注意力近似为线性操作，将复杂度降至$O(N)$，但可能损失部分表达能力。FlashAttention\cite{dao2022flashattention}通过优化内存访问模式和kernel融合，在保持精确注意力计算的同时显著提升了效率。稀疏注意力（Sparse Attention）仅计算部分位置对之间的注意力，通过限制注意力范围来降低计算量。
+
+\subsection{位置编码}
+
+由于Transformer和Mamba本身不包含位置信息，需要通过位置编码注入序列的顺序信息。绝对位置编码（如正弦位置编码\cite{vaswani2017attention}）为每个位置生成固定的编码向量。相对位置编码（如旋转位置编码RoPE\cite{su2024roformer}）则编码位置之间的相对关系，通常具有更好的泛化能力。在点云处理中，位置编码需要结合三维空间坐标的特性进行设计。
+
+\subsection{归一化技术}
+
+层归一化（LayerNorm）\cite{ba2016layer}和RMSNorm\cite{zhang2019root}是深度网络中常用的归一化技术。LayerNorm计算每个样本在特征维度上的均值和方差进行归一化，而RMSNorm仅使用均方根进行归一化，计算更高效。归一化技术能够稳定训练过程，加速收敛。
+
+\subsection{激活函数}
+
+除了传统的ReLU激活函数，现代深度学习网络常使用更平滑的激活函数。GELU（Gaussian Error Linear Unit）\cite{hendrycks2016gaussian}基于输入的累积分布函数进行激活，在Transformer中广泛应用。SiLU（Sigmoid Linear Unit，也称Swish）\cite{ramachandran2017searching}结合了sigmoid函数的平滑性和线性函数的简单性。GLU（Gated Linear Unit）\cite{dauphin2017language}及其变体（如SwiGLU）通过门控机制控制信息流动，在语言模型和视觉模型中都取得了良好效果。Mamba架构中使用了SiLU和门控机制来增强非线性表达能力。
+
+\section{本章小结}
+
+本章系统介绍了本文研究所涉及的相关理论和技术。首先介绍了点云数据的基本特性，包括无序性、稀疏性和局部结构重要性。然后概述了深度学习在点云处理中的应用，包括PointNet、PointNet++、DGCNN等经典方法。接着详细讨论了Transformer模型的自注意力机制及其在点云分析中的应用。随后深入介绍了状态空间模型的数学基础和Mamba架构的选择性机制，阐明了其线性复杂度的优势和硬件感知优化。点云序列化技术的讨论揭示了现有方法在空间邻近性保持方面的局限性，这正是本文提出全局几何感知机制的重要动机。最后介绍了注意力机制变体、位置编码、归一化技术、激活函数和采样策略等相关技术。
+
+这些理论和技术为后续章节中PointSS方法的设计提供了坚实基础。第三章将详细介绍全局几何感知机制（GGAM），展示如何通过显式几何先验补偿序列化过程中的信息损失。
 
 
 \chapter{基于全局几何感知的点云特征增强}
