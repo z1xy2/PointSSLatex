@@ -8,8 +8,6 @@
 
 具体而言，MASA通过预定义$K$种互补的序列化策略（包括空间填充曲线和语义驱动序列化），并根据局部几何特性动态分配路由权重，将Mamba的选择机制从\textit{特征选择}（selecting features）扩展到\textit{路径选择}（selecting paths）。这种动态路由机制能够为不同几何特性的区域选择最适合的序列化方式：对于规则平面区域使用高效的空间填充曲线，对于复杂物体边界使用重要性优先的语义序列化，从而为ASD-SSM的局部多尺度学习提供更优的全局上下文。
 
-本章结构安排如下：5.1节阐述引言，分析MASA的问题建模与动机，重点阐述其与ASD-SSM的互补关系；5.2节详细介绍多路径自适应序列化网络的设计（包括多路径序列化策略、几何感知的重要性场预测、动态路由网络等）；5.3节通过广泛的实验验证MASA的有效性，特别是其与ASD-SSM协同作用带来的性能提升；5.4节对本章进行总结并展望未来方向。
-
 \section{引言}
 
 \subsection{ASD-SSM的局限与MASA的互补定位}
@@ -24,19 +22,7 @@
 
 \subsection{问题形式化}
 
-给定一个包含$N$个点的点云$\mathcal{P} = \{p_i\}_{i=1}^N$,其中每个点$p_i = (x_i, f_i)$包含三维坐标$x_i \in \mathbb{R}^3$和特征$f_i \in \mathbb{R}^D$。传统方法使用固定函数$\pi_{\text{fixed}}$生成序列化顺序,而直接学习任意排列函数$\pi: \mathcal{P} \rightarrow \mathcal{S}_N$(其中$\mathcal{S}_N$为$N$元素的所有排列集合)面临两大挑战:
-
-\textbf{挑战1:组合爆炸}。对于$N$个点,可能的排列数为$N!$,直接优化离散排列是NP-hard问题。即使采用Pointer Network等序列生成方法,计算复杂度仍为$O(N^2)$,对于大规模点云(如$N > 10^4$)难以实际应用。
-
-\textbf{挑战2:训练困难}。排列生成的离散性使得难以端到端训练,需要依赖REINFORCE等策略梯度方法,训练过程方差大、不稳定。
-
-为此,我们提出\textbf{多路径路由}的替代方案:不直接生成完整排列,而是从$K$种预定义的序列化策略集合$\{\pi_1, \pi_2, \ldots, \pi_K\}$中进行动态选择或组合。优化目标转化为:
-
-\begin{equation}
-w^* = \arg\max_{w \in \Delta^K} \mathcal{L}_{\text{task}}\left(\text{SSM}\left(\sum_{k=1}^K w_k \mathcal{P}_{\pi_k}\right)\right)
-\end{equation}
-
-其中$w = [w_1, \ldots, w_K]$为路由权重,$\Delta^K$表示$K$维概率单纯形。这种软路由(soft routing)方式完全可微分,支持端到端训练,同时将复杂度降低至$O(KN\log N)$,其中$K$为常数(通常$K=4\sim 6$)。
+给定包含$N$个点的点云$\mathcal{P}$,传统方法使用固定序列化顺序(如Z-order或Hilbert曲线),而直接学习任意排列面临组合爆炸($N!$)和训练困难等问题。为此,我们提出多路径路由方案:从$K$种预定义序列化策略$\{\pi_1, \ldots, \pi_K\}$中动态选择或组合,通过学习路由权重$w = [w_1, \ldots, w_K]$实现软路由融合。这种方式完全可微分,支持端到端训练,复杂度为$O(KN\log N)$,其中$K$为常数。
 
 \section{多路径自适应序列化网络}
 
@@ -170,70 +156,7 @@ w_m &= \text{Softmax}(z_m / \tau)
 
 \subsubsection{多路径特征聚合}
 
-获得路由权重后,我们对$K$条路径的序列化特征进行加权融合。整个过程如算法\ref{alg:masa_forward}所示:
-
-\begin{algorithm}[h]
-\caption{MASA前向传播}
-\label{alg:masa_forward}
-\KwIn{点云$\mathcal{P}$包含坐标coord、特征feat和PTv3预计算的4种序列化顺序, 共享Mamba $\text{Mamba}_{\text{shared}}$}
-\KwOut{输出特征$h$, 路由信息$\text{routing\_info}$}
-\textbf{Step 1:} 提取几何特征\;
-使用z-order序列化创建邻域$\mathcal{N}$\;
-调用几何特征提取器: $g = \text{GeomExtractor}(\mathcal{N})$ \tcp{计算5维几何特征}
-\textbf{Step 2:} 预测重要性分数\;
-$s = \text{ImportancePredictor}(\text{feat}, g)$ \tcp{融合特征和几何}
-\textbf{Step 3:} 生成多路径序列化(5条路径)\;
-复用已有空间序列化: $\pi_1, \pi_2, \pi_3, \pi_4 \leftarrow$ PTv3预计算\;
-生成语义序列化: $\pi_5 \leftarrow \text{ImportanceGuidedBFS}(\text{coord}, s, \{\pi_1, \ldots, \pi_4\})$\;
-\textbf{Step 4:} 计算动态路由权重\;
-体素化: $\{\mathcal{B}_m\}_{m=1}^M \leftarrow \text{Voxelize}(\text{coord})$ \tcp{空间分块}
-$w \leftarrow \text{Router}(\text{feat}, g, s)$ \tcp{$w \in \mathbb{R}^{M \times K}$, 块级路由权重}
-\textbf{Step 5:} 多路径Mamba处理(共享参数)\;
-初始化路径输出列表: $\{h^{(k)}\}_{k=1}^K \leftarrow \emptyset$\;
-\For{$k = 1$ \KwTo $K$}{
-    按$\pi_k$重排特征: $f_{\text{ordered}} \leftarrow \text{feat}[\pi_k]$\;
-    添加路径嵌入: $f_{\text{ordered}} \leftarrow f_{\text{ordered}} + \text{OrderEmbed}_k$\;
-    通过共享Mamba: $h_{\text{ordered}}^{(k)} \leftarrow \text{Mamba}_{\text{shared}}(f_{\text{ordered}})$\;
-    恢复原始顺序: $h^{(k)} \leftarrow h_{\text{ordered}}^{(k)}[\text{argsort}(\pi_k)]$\;
-}
-\textbf{Step 6:} 软路由融合\;
-获取每个点的路由权重: $w_{\text{point}} \leftarrow w[\text{BlockAssign}]$ \tcp{$w_{\text{point}} \in \mathbb{R}^{N \times K}$}
-加权融合: $h \leftarrow \sum_{k=1}^K w_{\text{point}}^{(k)} \odot h^{(k)}$ \tcp{点级加权}
-\textbf{Step 7:} 计算负载均衡损失\;
-$\mathcal{L}_{\text{balance}} \leftarrow \sum_{k=1}^K (\text{mean}(w^{(k)}) - 1/K)^2$\;
-\Return{$h$, $\{\text{路由权重}, \text{重要性分数}, \mathcal{L}_{\text{balance}}\}$}
-\end{algorithm}
-
-具体地,对于每条路径$k$:
-
-\textbf{步骤1:序列化与邻域创建}。按序列化顺序$\pi_k$重排点云,并通过padding/unpadding操作形成标准化的序列化邻域:
-
-\begin{equation}
-\begin{aligned}
-\text{ordered\_coords}_k &= \{x_{\pi_k(i)}\}_{i=1}^N[\text{pad}] \\
-\text{neighborhoods}_k &= \text{reshape}(\text{ordered\_coords}_k, [-1, K_b, 3])
-\end{aligned}
-\end{equation}
-
-\textbf{步骤2:共享Mamba处理}。所有路径使用同一个Mamba块,但输入序列不同:
-
-\begin{equation}
-h^{(k)} = \text{Mamba}_{\text{shared}}(\text{neighborhoods}_k)
-\end{equation}
-
-\textbf{步骤3:动态路由融合}。根据路由权重$w$进行软融合:
-
-\begin{equation}
-h = \sum_{k=1}^K w_k \cdot h^{(k)}
-\end{equation}
-
-\textbf{步骤4:恢复原始顺序}。通过inverse索引将融合后的特征恢复到原始点云顺序:
-
-\begin{equation}
-h_{\text{output}}[i] = h[\text{inverse}_k(i)]
-\end{equation}
-
-这种设计的关键优势在于:所有路径在Mamba层面共享参数,仅序列化顺序不同,因此计算开销相比独立路径方案大幅降低,同时保持了路径多样性带来的性能增益。
+获得路由权重后,我们对$K$条路径的序列化特征进行加权融合。具体地,对于每条路径$k$:首先按序列化顺序$\pi_k$重排点云并形成标准化的序列化邻域,然后所有路径使用同一个Mamba块处理$h^{(k)} = \text{Mamba}_{\text{shared}}(\text{neighborhoods}_k)$,最后根据路由权重进行软融合$h = \sum_{k=1}^K w_k \cdot h^{(k)}$,并通过inverse索引恢复到原始点云顺序。这种设计的关键优势在于:所有路径在Mamba层面共享参数,仅序列化顺序不同,因此计算开销相比独立路径方案大幅降低,同时保持了路径多样性带来的性能增益。
 
 \subsubsection{负载均衡正则化}
 
@@ -247,172 +170,23 @@ h_{\text{output}}[i] = h[\text{inverse}_k(i)]
 
 \subsection{层级自适应的MASA配置}
 
-在深层神经网络中,不同stage处理的特征具有不同的感受野和抽象程度。为了充分利用这一特性,我们设计了\textbf{层级自适应的MASA配置}(Layer-wise Adaptive MASA Configuration),在不同stage使用不同的体素化粒度和路由策略。
+在深层神经网络中,不同stage处理的特征具有不同的感受野和抽象程度。我们设计了层级自适应配置,在不同stage使用不同的体素化粒度和路由策略。
 
-\subsubsection{自适应体素大小}
+随着网络深度增加,特征的感受野逐渐扩大,因此采用递增策略调整体素大小:$v_s = v_0 \cdot \alpha^s$,其中$v_0$为初始体素大小(如$0.5$m),$\alpha$为增长因子(如$1.5$),$s$为stage索引。这使得浅层关注局部几何细节,深层关注全局语义结构。
 
-随着网络深度增加,特征的感受野逐渐扩大,因此需要更粗粒度的空间分块。我们采用递增策略调整体素大小:
+并非所有stage都需要动态路由。实验发现前2个stage启用MASA效果最佳,因为浅层特征对序列化顺序更敏感,动态路由带来显著增益($+1.3\%$);而深层stage可选择性关闭MASA,因为深层特征已高度抽象,固定序列化即可满足需求,关闭MASA可减少计算开销($-15\%$推理时间),性能损失可忽略($<0.2\%$)。
 
-\begin{equation}
-v_s = v_0 \cdot \alpha^s, \quad s = 0, 1, \ldots, S-1
-\end{equation}
-
-其中$v_0$为初始体素大小(如$0.5$m),$\alpha$为增长因子(如$1.5$),$s$为stage索引,$S$为总stage数。例如,对于5-stage网络:Stage 0(浅层)的体素大小为$v_0 = 0.5$m,捕获细粒度局部模式;Stage 1的体素大小为$v_1 = 0.75$m,扩大感受野;Stage 2的体素大小为$v_2 = 1.125$m,处理中等尺度特征;Stage 3的体素大小为$v_3 = 1.688$m,获取大尺度上下文;Stage 4(深层)的体素大小为$v_4 = 2.531$m,捕获全局语义信息。
-
-这种递增策略使得浅层关注局部几何细节,使用细粒度体素确保路由决策能够适应局部几何变化;深层关注全局语义结构,使用粗粒度体素减少计算开销,同时捕获大范围的空间模式。
-
-\subsubsection{选择性MASA启用}
-
-并非所有stage都需要动态路由。我们引入\textbf{stage-wise启用机制}:
-
-\begin{equation}
-\text{use\_masa}_s =
-\begin{cases}
-\text{True}, & \text{if } s \in \mathcal{S}_{\text{masa}} \\
-\text{False}, & \text{otherwise}
-\end{cases}
-\end{equation}
-
-其中$\mathcal{S}_{\text{masa}}$为启用MASA的stage集合。实验发现前2个stage启用MASA效果最佳,因为浅层特征对序列化顺序更敏感,动态路由带来显著增益($+1.3\%$);而深层stage可选择性关闭MASA,因为深层特征已高度抽象,固定序列化即可满足需求,关闭MASA可减少计算开销($-15\%$推理时间),性能损失可忽略($<0.2\%$)。
-
-
-
-\subsection{共享参数的高效多路径处理}
-
-为了避免多条路径带来的计算开销激增,我们采用\textbf{参数共享策略}:所有$K$条序列化路径共用同一个Mamba块$\text{Mamba}_{\text{shared}}$,仅输入的序列化顺序不同。这带来两大优势:
-
-\textbf{(1) 计算效率}:相比为每条路径维护独立参数($K$倍参数量),共享参数仅需串行处理$K$次前向传播,参数量不变。实验表明,相比独立参数方案可实现\textbf{5倍加速}。
-
-\textbf{(2) 知识共享}:不同序列化路径观察到的局部模式存在重叠(如相邻点的特征相似性),共享参数使得模型能够跨路径复用学到的特征提取能力,避免每条路径独立学习冗余知识。
-
-具体地,对于第$k$条路径,我们按序列化顺序$\pi_k$重排输入,然后通过共享Mamba:
-
-\begin{equation}
-h_i^{(k)} = \text{Mamba}_{\text{shared}}(\{f_{\pi_k(j)}\}_{j=1}^{N})[i]
-\end{equation}
-
-Mamba的选择性参数$\Delta, B, C$由输入特征$f_i$动态生成,因此即使参数共享,不同序列化顺序下的信息传播模式仍然不同:
-
-\begin{equation}
-\begin{aligned}
-\Delta_i &= \text{softplus}(\text{Linear}_\Delta(f_i)) \\
-B_i &= \text{Linear}_B(f_i) \\
-C_i &= \text{Linear}_C(f_i)
-\end{aligned}
-\end{equation}
-
-这种设计使得序列化顺序的改变能够通过状态空间的动态调整反映出来,而无需为每条路径维护独立的权重矩阵。
 
 \subsection{训练策略}
 
-MASA采用端到端训练方式,所有组件(几何特征提取器、路由网络、共享Mamba)联合优化。
-
-\subsubsection{损失函数}
-
-总损失函数由三部分组成:
-
+MASA采用端到端训练,总损失函数由三部分组成:
 \begin{equation}
 \mathcal{L}_{\text{total}} = \mathcal{L}_{\text{task}} + \lambda_{\text{bal}} \mathcal{L}_{\text{balance}} + \lambda_{\text{reg}} \mathcal{L}_{\text{reg}}
 \end{equation}
 
-\textbf{(1) 任务损失}$\mathcal{L}_{\text{task}}$:根据具体任务定义,如语义分割的交叉熵损失:
+其中$\mathcal{L}_{\text{task}}$为任务损失(如语义分割的交叉熵),负载均衡损失$\mathcal{L}_{\text{balance}} = \sum_{k=1}^K (\frac{1}{M}\sum_{m=1}^M w_m^{(k)} - \frac{1}{K})^2$防止路由坍塌,正则化损失$\mathcal{L}_{\text{reg}}$防止过拟合。超参数设置:$\lambda_{\text{bal}} = 0.01$, $\lambda_{\text{reg}} = 0.0001$。
 
-\begin{equation}
-\mathcal{L}_{\text{task}} = -\frac{1}{N}\sum_{i=1}^N \sum_{c=1}^C y_{i,c} \log \hat{y}_{i,c}
-\end{equation}
-
-\textbf{(2) 负载均衡损失}$\mathcal{L}_{\text{balance}}$:防止路由坍塌:
-
-\begin{equation}
-\mathcal{L}_{\text{balance}} = \sum_{k=1}^K \left(\frac{1}{M}\sum_{m=1}^M w_m^{(k)} - \frac{1}{K}\right)^2
-\end{equation}
-
-鼓励各路径的平均使用率接近均匀分布($1/K$)。
-
-\textbf{(3) 正则化损失}$\mathcal{L}_{\text{reg}}$:防止路由网络过拟合:
-
-\begin{equation}
-\mathcal{L}_{\text{reg}} = \|\theta_{\text{router}}\|_2^2
-\end{equation}
-
-超参数设置:$\lambda_{\text{bal}} = 0.01$, $\lambda_{\text{reg}} = 0.0001$。
-
-\subsubsection{路由温度退火}
-
-训练初期,使用较高的温度$\tau$保持探索性(软路由),训练后期降低温度使路由决策更加确定。采用cosine退火策略:
-
-\begin{equation}
-\tau(t) = \tau_{\min} + \frac{1}{2}(\tau_{\max} - \tau_{\min})\left(1 + \cos\left(\frac{\pi t}{T}\right)\right)
-\end{equation}
-
-其中$\tau_{\max} = 1.0$, $\tau_{\min} = 0.3$, $T$为总训练步数,$t$为当前步数。
-
-\subsubsection{优化器设置}
-
-使用AdamW优化器,学习率采用OneCycleLR调度策略。初始学习率设置为$lr_0 = 6 \times 10^{-3}$,权重衰减为$\text{weight\_decay} = 10^{-4}$。预热步数设为总步数的10\%,总训练轮数为3000 epochs,批量大小为6。为加速训练过程,启用混合精度训练(AMP)。
-
-
-\subsection{复杂度分析}
-
-MASA的设计充分考虑了计算效率,通过参数共享和高效的序列化策略,在保持性能的同时控制计算开销。
-
-\subsubsection{时间复杂度}
-
-对于包含$N$个点的点云,MASA的时间复杂度分解如下:
-
-多路径序列化预计算的时间复杂度为$O(KN\log N)$。对于$K$条路径,每条路径需要对$N$个点进行排序(如Morton码排序),单次排序操作的时间复杂度为$O(N\log N)$,总计为$O(K \cdot N\log N)$。
-
-几何特征提取与重要性预测的时间复杂度为$O(Nkd)$。对每个点计算$k$-近邻的几何特征(如曲率、法向量),然后通过PointNet++风格的MLP提取重要性分数,特征维度为$d$,总计为$O(N \cdot k \cdot d)$,其中$k$为小常数(如$k=16$)。
-
-体素化与分块的时间复杂度为$O(N)$。将$N$个点分配到体素网格需要$O(N)$时间,并生成$M \ll N$个块($M \approx N/K_b$,其中$K_b$为块大小)。
-
-路由权重计算的时间复杂度为$O(Md)$。对$M$个块计算路由权重,每个块通过MLP($d$维隐藏层)处理。由于$M \ll N$,这部分开销很小。
-
-共享Mamba前向传播的时间复杂度为$O(KNd)$,这是关键优化点。所有$K$条路径共享同一个Mamba块,每条路径串行前向传播一次,总计为$K \times O(Nd)$。相比独立参数方案($K$个独立Mamba,参数量$\times K$),共享参数仅增加$K$倍前向时间,但参数量不变。
-
-加权融合与恢复原始顺序的时间复杂度为$O(KN)$。对$K$条路径的输出特征进行加权平均需要$O(KN)$时间,然后通过inverse索引恢复到原始点云顺序需要$O(N)$时间。
-
-\textbf{总时间复杂度}:
-\begin{equation}
-\begin{aligned}
-T_{\text{MASA}} &= O(KN\log N) + O(Nkd) + O(N) + O(Md) + O(KNd) + O(KN) \\
-&= O(KN\log N + KNd)
-\end{aligned}
-\end{equation}
-
-由于$K$为小常数(通常$K=5$),$d$为特征维度(如$d=128$),主导项为$O(N\log N)$(排序)和$O(Nd)$(Mamba)。相比单一固定序列化的$O(N\log N + Nd)$,MASA仅增加常数倍系数,远优于Pointer Network的$O(N^2)$。
-
-\subsubsection{空间复杂度}
-
-Mamba参数的空间复杂度为$O(d^2)$,这是关键优势所在。所有路径共享参数,空间开销与独立路径方案相同。若采用独立参数方案,则空间复杂度将增加至$O(Kd^2)$。
-
-路由网络的空间复杂度为$O(Kd)$。门控MLP的输入维度为$d$,输出维度为$K$,因此参数量与$K$和$d$成线性关系。
-
-中间特征存储的空间复杂度为$O(KNd)$。需要存储$K$条路径的输出特征用于加权融合,每条路径产生$N$个点的$d$维特征。
-
-\textbf{总空间复杂度}:$O(d^2 + KNd)$
-
-\subsubsection{效率对比}
-
-表\ref{tab:complexity_comparison}对比了不同序列化方法的复杂度:
-
-\begin{table}[h]
-\centering
-\caption{不同序列化方法的复杂度对比}
-\label{tab:complexity_comparison}
-\begin{tabular}{lccc}
-\toprule
-方法 & 时间复杂度 & 参数量 & 内存占用 \\
-\midrule
-固定序列化(PTv3) & $O(N\log N + Nd)$ & $O(d^2)$ & $O(Nd)$ \\
-Pointer Network & $O(N^2d)$ & $O(d^2)$ & $O(Nd)$ \\
-独立Mamba路径 & $O(KN\log N + KNd)$ & $O(Kd^2)$ & $O(KNd)$ \\
-\textbf{MASA(共享参数)} & $O(KN\log N + KNd)$ & $O(d^2)$ & $O(KNd)$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{关键优势}:MASA通过共享Mamba参数,在保持$O(d^2)$参数量的同时实现多路径路由,避免了独立路径方案的参数爆炸问题。实际测试表明,相比独立参数方案,共享参数可实现\textbf{5倍推理加速}。
+训练中采用路由温度退火策略,按cosine规则从$\tau_{\max} = 1.0$退火至$\tau_{\min} = 0.3$,初期保持探索性,后期使路由决策更确定。使用AdamW优化器,学习率$6 \times 10^{-3}$,OneCycleLR调度,总训练3000 epochs,批量大小6,启用混合精度训练。
 
 \section{实验设置与分析}
 
@@ -428,13 +202,7 @@ Pointer Network & $O(N^2d)$ & $O(d^2)$ & $O(Nd)$ \\
 
 \subsubsection{实现细节}
 
-我们在Point Transformer V3基础上实现MASA模块。网络结构采用5-stage编码-解码架构,编码器通道数为(32, 64, 128, 256, 512),解码器通道数为(64, 64, 128, 256)。
-
-MASA配置方面,路径数设置为$K=5$,其中4条空间序列化路径(z-order xyz轴、z-order yxz轴、Hilbert xyz轴、Hilbert yxz轴)直接复用Point Transformer V3的序列化结果,1条语义序列化路径(importance-guided BFS)为MASA新增。邻域大小$K_b=16$,初始体素大小$v_0=0.5$m,增长因子$\alpha=1.5$。MASA仅在前2个stage(Stage 0和Stage 1)启用,以平衡性能和效率,最小点数阈值$t_{\min}=5$。
-
-重要性预测器采用2层MLP结构,特征编码器和几何编码器各使用隐藏维度64,最终融合层隐藏维度128。路由网络采用3层MLP,隐藏维度为256,温度退火范围为$[0.3, 1.0]$。几何特征提取基于序列化邻域进行,无需额外的KNN搜索。
-
-训练设置方面,使用AdamW优化器,初始学习率为$6 \times 10^{-3}$,采用OneCycleLR调度策略,总训练3000 epochs,batch size为6,启用混合精度AMP加速。损失权重设置为$\lambda_{\text{bal}}=0.01$和$\lambda_{\text{reg}}=0.0001$。所有实验在4张Nvidia A6000 GPU(48GB显存)上进行。
+我们在Point Transformer V3基础上实现MASA模块。网络采用5-stage编码-解码架构,编码器通道数为(32, 64, 128, 256, 512),解码器通道数为(64, 64, 128, 256)。MASA配置:路径数$K=5$(4条空间序列化复用PTv3,1条importance-guided BFS为新增),邻域大小$K_b=16$,初始体素大小$v_0=0.5$m,增长因子$\alpha=1.5$,仅在前2个stage启用。重要性预测器和路由网络均采用2-3层MLP,隐藏维度64-256。训练使用AdamW优化器,学习率$6 \times 10^{-3}$,OneCycleLR调度,3000 epochs,batch size 6,混合精度训练,损失权重$\lambda_{\text{bal}}=0.01$和$\lambda_{\text{reg}}=0.0001$。所有实验在4张Nvidia A6000 GPU上进行。
 
 \subsection{主要结果}
 
@@ -506,10 +274,6 @@ MASA完整 (K=5, 动态路由) & \textbf{73.2} \\
 \end{tabular}
 \end{table}
 
-\subsubsection{分块粒度的影响}
-
-图\ref{fig:block_size}展示了分块大小对性能的影响。过粗的分块($>1.0$m)导致路由粒度不足,无法适应局部几何变化;过细的分块($<0.2$m)则引入过多噪声且增加计算开销。我们发现$0.5$m为最佳平衡点。
-
 \subsubsection{MASA与ASD-SSM的互补性验证}
 
 为了验证MASA与ASD-SSM的互补关系,我们设计了系统的消融实验,分别测试单独使用各模块和组合使用的性能。表\ref{tab:masa_asdssm_complementary}展示了实验结果。
@@ -533,57 +297,13 @@ Baseline (PTv3) & 71.9 & 固定Z-order序列化,无多尺度解耦 \\
 
 \textbf{关键发现}:
 
-(1)\textbf{两者都能独立带来提升}。单独使用ASD-SSM相比Baseline提升1.6\%,单独使用MASA提升1.3\%,证明两个模块都有独立的价值。ASD-SSM通过局部多尺度解耦提升了特征表达能力,MASA通过动态序列化优化了全局点云顺序。
-
-(2)\textbf{组合使用产生协同效应}。同时使用ASD-SSM和MASA达到75.2\% mIoU,相比单独使用ASD-SSM进一步提升1.7\%,相比单独使用MASA进一步提升2.0\%。更重要的是,75.2\%的性能超过了两者单独贡献的简单相加($71.9\% + 1.6\% + 1.3\% = 74.8\%$),表明两者存在\textbf{正向协同作用}。
-
-(3)\textbf{互补性的机制解释}。MASA为ASD-SSM提供了更优的全局序列化,使得ASD-SSM的局部邻域内包含更多语义相关的点,从而提升了多尺度特征解耦的质量。反过来,ASD-SSM的多尺度特征学习能力使得MASA的路由网络能够更准确地识别不同几何结构,做出更好的序列化决策。这种双向增强形成了"更好的序列化 → 更好的局部特征 → 更好的路由决策 → 更好的序列化"的正反馈循环。
-
-(4)\textbf{缺一不可}。如果只有ASD-SSM而无MASA,局部多尺度学习仍受限于固定序列化的次优全局顺序;如果只有MASA而无ASD-SSM,虽然序列化得到优化,但缺乏细粒度的局部多尺度建模能力。只有两者结合,才能形成"全局优化 + 局部精细化"的完整架构,实现最优性能。
+单独使用ASD-SSM相比Baseline提升1.6\%,单独使用MASA提升1.3\%,证明两个模块都有独立价值。同时使用ASD-SSM和MASA达到75.2\% mIoU,相比单独使用进一步提升,且超过两者简单相加($71.9\% + 1.6\% + 1.3\% = 74.8\%$),表明两者存在正向协同作用。MASA为ASD-SSM提供了更优的全局序列化,使得局部邻域内包含更多语义相关的点,从而提升多尺度特征解耦的质量;反过来,ASD-SSM的多尺度特征学习能力使得MASA的路由网络能够更准确地识别不同几何结构。两者缺一不可,共同构成"全局优化 + 局部精细化"的完整架构。
 
 这一消融实验充分证明了MASA与ASD-SSM的互补关系:两者解决不同层面的问题(全局序列化 vs 局部尺度建模),功能定位明确,协同作用显著,共同构成了PointSS的核心技术体系。
 
 \subsection{可视化分析}
 
-\subsubsection{路由权重可视化}
-
-图\ref{fig:routing_weights}展示了MASA在S3DIS场景中学习到的路由分布。观察发现:(1)\textbf{平面区域}(如地面、墙面)主要使用空间填充曲线(z-order和Hilbert),占比$>65\%$,因为这些区域几何规则,空间序列化效率高;(2)\textbf{复杂物体}(如桌椅、门窗)更多依赖importance-guided BFS序列化(占比$\sim 40\%$),该路径能优先处理物体边界等关键特征;(3)\textbf{边缘和角点}展现出更均匀的路径分布,模型通过多路径融合捕获多角度信息,其中importance-BFS的权重略高,反映了这些区域的语义重要性。(4)不同轴顺序的序列化(xyz vs yxz)在各向异性结构(如长走廊)上展现出互补性,动态路由能根据局部几何特性选择最适合的轴顺序。
-
-\subsubsection{序列化路径对比}
-
-图\ref{fig:scan_path_compare}对比了固定Z-order与MASA的动态路由在同一场景的序列化结果。固定Z-order按空间位置逐层扫描,可能先处理大片墙面和地板,后处理关键物体。而MASA在不同区域自适应选择:墙面使用高效的Z-order快速扫过;桌椅等物体切换至重要性优先,聚焦关键几何特征。
-
-\subsubsection{重要性场与路由的关系}
-
-图\ref{fig:importance_routing}展示了重要性分数与路由决策的相关性。高重要性区域(边缘、角点)倾向于选择重要性优先和几何感知随机游走,确保这些区域得到充分建模;低重要性区域则更多使用计算高效的空间填充曲线。
-
-\subsection{泛化性与鲁棒性}
-
-\subsubsection{跨数据集迁移}
-
-在S3DIS上训练的MASA路由网络,直接应用于ScanNet(无需重新训练),仍能带来$+0.8\%$的提升(72.4\% $\to$ 73.2\%)。这说明学到的几何-路由映射具有一定泛化性,不同室内场景共享相似的几何模式。
-
-\subsubsection{点云密度鲁棒性}
-
-表\ref{tab:density_robust}展示了在不同采样率下的性能。固定顺序在低密度下性能下降明显(100\% $\to$ 25\%: $-3.5\%$),而MASA仅下降$1.2\%$。这是因为动态路由能够根据稀疏点云调整策略,如增加密度自适应序列化的权重。
-
-\begin{table}[h]
-\centering
-\caption{不同点云密度下的性能}
-\label{tab:density_robust}
-\begin{tabular}{lccc}
-\toprule
-方法 & 100\%采样 & 50\%采样 & 25\%采样 \\
-\midrule
-PTv3-Fixed & 71.9 & 70.1 & 68.4 \\
-MASA (Ours) & \textbf{73.2} & \textbf{72.4} & \textbf{72.0} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsubsection{噪声鲁棒性}
-
-我们在点云中添加高斯噪声($\sigma \in \{0.01, 0.02, 0.05\}$m)测试鲁棒性。MASA在$\sigma=0.05$时仍保持71.8\% mIoU,相比PTv3-Fixed的69.2\%显著更鲁棒。动态路由能够识别噪声导致的几何失真并调整序列化策略。
+图\ref{fig:routing_weights}展示了MASA学习到的路由分布。观察发现:平面区域(如地面、墙面)主要使用空间填充曲线(z-order和Hilbert),占比$>65\%$;复杂物体(如桌椅、门窗)更多依赖importance-guided BFS序列化(占比$\sim 40\%$);边缘和角点展现出更均匀的路径分布,模型通过多路径融合捕获多角度信息。
 
 \subsection{计算效率分析}
 
@@ -606,34 +326,4 @@ MASA (Ours) & 0.46 & 42 & 4.5 \\
 
 \section{本章小结}
 
-本章提出了多路径自适应序列化网络(MASA),从全局序列化策略的角度与第四章的ASD-SSM形成互补,共同构成PointSS的"全局序列化优化 + 局部尺度建模"双层架构。MASA通过几何条件化的动态路由机制为ASD-SSM提供更优的点云序列化顺序,使得ASD-SSM的局部多尺度特征学习能够在更合理的全局上下文中进行,从而实现两者的协同增强。
-
-\subsection{核心贡献与ASD-SSM的互补}
-
-\textbf{功能定位的互补性}。MASA与ASD-SSM解决不同层面的问题:ASD-SSM关注\textit{局部层面}的多尺度特征解耦,在给定序列化下优化局部邻域内的特征学习;MASA关注\textit{全局层面}的序列化路径选择,根据场景几何特性动态调整点云顺序。两者功能定位明确,相互补充,缺一不可。消融实验表明,单独使用ASD-SSM或MASA分别带来1.6\%和1.3\%的性能提升,而组合使用达到3.3\%的提升,超过简单相加,证明了显著的协同效应。
-
-\textbf{(1) 零成本空间序列化复用 + 语义序列化创新}:与从头设计5条独立路径不同,MASA采用更实用的方案——直接复用Point Transformer V3已计算的4种空间序列化(z-order和Hilbert的xyz/yxz变体),仅新增1条语义驱动的importance-guided BFS序列化。这种设计既保证了路径多样性(空间 + 语义),又最小化了计算开销(仅BFS生成需要额外时间),避免了从头生成5条序列化的高昂成本。
-
-\textbf{(2) 重要性引导BFS序列化}:提出importance-guided BFS算法,平衡语义重要性和几何连续性。该算法利用现有4种空间序列化构建丰富的邻居候选集,通过多起点并行扩展和加权转移概率,生成既重视关键区域又保持空间连续性的序列化顺序,复杂度为$O(N)$。
-
-\textbf{(3) 多路径软路由框架}:突破固定空间填充曲线的局限,通过预定义$K=5$种互补序列化策略(4种空间 + 1种语义)并动态组合,避免了直接学习任意排列的组合爆炸问题($N! \to K$),在保持$O(N\log N)$线性复杂度的同时实现自适应性。
-
-\textbf{(4) 共享参数优化策略}:所有路径共享同一个Mamba块,仅序列化顺序不同,相比独立参数方案实现\textbf{5倍加速}且参数量不变。这一设计充分利用了Mamba的选择性机制——相同的参数在不同输入顺序下可产生不同的信息传播模式。
-
-\textbf{(5) 体素化分块路由}:基于空间体素网格将点云划分为$M \ll N$个块,每个块共享路由权重,既保持空间连贯性又显著减少路由决策数量,同时通过padding/unpadding机制处理不同大小的块。
-
-\textbf{(6) 层级自适应配置}:在不同网络stage使用递增的体素大小($v_s = v_0 \cdot \alpha^s$)和选择性启用机制,浅层关注局部细节(细粒度体素+MASA),深层关注全局语义(粗粒度体素+可选MASA),实现性能与效率的最优平衡。
-
-\subsection{实验验证}
-
-大规模实验证明了MASA的有效性和实用性。在性能提升方面,MASA在S3DIS/ScanNet/SemanticKITTI三个基准数据集上分别达到73.2\%/73.6\%/64.7\% mIoU,相比固定序列化提升1.2\%--1.5\%。在计算效率方面,相比独立参数方案实现5倍加速,相比PTv3-Fixed仅增加10\%训练时间和8\%推理时间。在鲁棒性方面,MASA在低密度点云(25\%采样)和高噪声环境($\sigma=0.05$m)下显著优于固定序列化。在可解释性方面,路由权重可视化揭示了模型的决策机制——平面区域优先空间填充曲线,复杂物体依赖重要性优先。
-
-\subsection{设计原则}
-
-MASA的成功源于以下设计原则。首先是离散优化的连续松弛,通过软路由将离散的排列选择转化为连续的权重分配,支持端到端训练。其次是空间局部性与计算效率的平衡,体素化分块在保持几何连贯性的同时减少决策复杂度。再次是参数共享与路径多样性的统一,共享Mamba参数避免冗余,动态路由保持多样性。最后是几何先验与数据驱动的结合,预定义互补策略提供结构性归纳偏置,动态路由实现场景自适应。
-
-\subsection{未来展望}
-
-MASA为点云序列化开辟了新方向,未来可在多个方向进行探索。自动化策略搜索方向可通过神经架构搜索(NAS)自动发现针对特定任务的最优序列化策略组合。时空扩展方向可将MASA扩展到动态点云序列(4D场景),为时空一致性建模提供自适应序列化。多任务路由方向可为不同任务(分割/检测/配准)学习专用路由策略,实现任务感知的序列化。硬件协同优化方向可设计CUDA kernel优化多路径并行处理,进一步降低计算开销。与Transformer的融合方向可探索MASA与基于注意力机制的方法结合,兼顾序列化顺序的自适应性和全局关系建模能力。
-
-总之,MASA通过将Mamba的选择机制从\textit{特征选择}扩展到\textit{路径选择},与ASD-SSM的局部多尺度建模形成"全局-局部"互补架构,为点云深度学习提供了完整的解决方案。两者的协同作用表明,在点云分析任务中,全局序列化优化与局部特征学习同等重要,只有两者结合才能充分发挥基于状态空间模型的点云网络的潜力,具有广泛的应用前景。
+本章提出了多路径自适应序列化网络(MASA),从全局序列化策略的角度与第四章的ASD-SSM形成互补,共同构成PointSS的"全局序列化优化 + 局部尺度建模"双层架构。MASA通过预定义5种互补的序列化策略(复用PTv3的4种空间序列化,新增1种importance-guided BFS语义序列化),并基于几何条件化的动态路由机制自适应选择或组合路径,为ASD-SSM的局部多尺度学习提供更优的全局序列化顺序。通过共享参数的多路径处理和体素化分块路由,MASA在保持线性时间复杂度的同时实现了序列化的场景自适应性。实验表明,MASA在S3DIS/ScanNet/SemanticKITTI三个数据集上分别达到73.2\%/73.6\%/64.7\% mIoU,相比固定序列化提升1.2\%--1.5\%。与ASD-SSM协同使用时,PointSS在S3DIS上达到75.2\% mIoU,相比单独使用MASA或ASD-SSM均有显著提升,验证了两者的互补性。
