@@ -163,7 +163,7 @@ Point cloud analysis, State space models, Multi scale feature fusion, Point clou
 
 点云分析被广泛应用于自动驾驶、增强现实（AR）/虚拟现实（VR）领域，相较于二维图像，点云有着稀疏性、无序性等特点。随着大规模高密度点云场景的获取成本逐渐降低，此类数据在自动驾驶、机器人导航等领域得到越来越广泛的应用。大规模点云场景为点云分析任务带来了挑战\cite{Vertex}，其需要更高效且精准度更高的处理手段，比如在提升点云处理效率或提升特征学习性能方面。且随着点云密度的增加，同一窗口下的点云也将增多，其对模型的上下文理解能力有了更高的要求。
 
-点云分析最初依赖PointNet\cite{pointnet,PointNet++}等基于邻近点搜索和MLP的方法，虽避免了中间表示转换，但特征提取能力有限。随后，Transformer\cite{pt,ptv3,superpoint} 因其更强的全局建模能力被广泛应用，却受限于二次计算复杂度与长序列理解不足。这些缺陷已成为点云大模型与大规模场景分析的发展瓶颈。受自然语言处理领域时序化特征提取方案的启发 \cite{ssm,Mamba,Lstm}，越来越多Mamba\cite{Mamba,VisionMamba}相关工作被应用到点云分析，如PCM(Point Cloud Mamba)\cite{pcm}和PointMamba\cite{PointMamba}。其线性时间复杂度的特点具有天然优势且对于点云的特征提取也有良好的效果。
+点云分析最初依赖PointNet\cite{pointnet,PointNet++}等基于邻近点搜索和MLP的方法，虽避免了中间表示转换，但特征提取能力有限。随后，Transformer\cite{pt,ptv3,superpoint} 因其更强的全局建模能力被广泛应用，却受限于二次计算复杂度与长序列理解不足。这些缺陷已成为点云大模型与大规模场景分析的发展瓶颈。受自然语言处理领域时序化特征提取方案的启发 \cite{ssm,Mamba,Lstm}，越来越多Mamba\cite{Mamba,VisionMamba}相关工作被应用到点云分析，如PCM(Point Cloud Mamba)\cite{pcm}和PointMamba\cite{PointMamba}。其线性时间复杂度在处理大规模点云数据时具有明显的效率优势，并在特征提取任务中表现出稳定的识别精度。
 
 目前基于Mamba的点云分析方法还有两个关键问题需要解决。其一：虽然序列化方法能在局部窗口内保持空间邻近性，但Mamba的线性状态传递机制无法有效关联空间邻近但序列距离较远的点（割裂点），导致模型难以综合所有空间邻居的几何信息，从而影响对复杂形状的精确学习。我们称这种情况为几何丢失。其二：当前的模型对于长序列下特征提取粒度单一，且为点云强加了因果关系，无法同时捕捉不同层次的特征信息。
 
