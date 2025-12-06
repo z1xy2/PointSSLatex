@@ -32,7 +32,7 @@
 
 \subsubsection{空间序列化路径(4条,零成本复用)}
 
-Point Transformer V3的序列化模块已计算了以下4种空间填充曲线,我们直接复用这些顺序:
+Point Transformer V3的序列化模块已计算了以下4种空间填充曲线,直接复用这些顺序:
 
 \textbf{(1) Z-order曲线(xyz轴顺序)}:通过Morton编码实现高效的空间索引,适合规则分布的点云。对于归一化坐标$(x,y,z) \in [0,1]^3$,Morton码定义为:
 \begin{equation}
@@ -42,7 +42,7 @@ m(p_i) = \text{Interleave}(\lfloor 2^{10} x_i \rfloor, \lfloor 2^{10} y_i \rfloo
 
 \textbf{(2) Z-order曲线(yxz轴顺序)}:与(1)相同的Morton编码,但改变坐标交织顺序,获得不同的空间遍历路径,增强路径多样性。
 
-\textbf{(3) Hilbert曲线(xyz轴顺序)}:相比Z-order具有更好的空间局部性保持特性,适合连续曲面。我们采用3D Hilbert曲线的快速近似算法\cite{lawder2000using}。
+\textbf{(3) Hilbert曲线(xyz轴顺序)}:相比Z-order具有更好的空间局部性保持特性,适合连续曲面。采用3D Hilbert曲线的快速近似算法\cite{lawder2000using}。
 
 \textbf{(4) Hilbert曲线(yxz轴顺序)}:类似(2),通过改变轴顺序获得Hilbert曲线的变体。
 
@@ -91,7 +91,7 @@ P(i \to j) \propto \exp\left(-\frac{\|x_i - x_j\|^2}{2\sigma^2}\right) \cdot (s_
 
 \subsubsection{多尺度重要性编码}
 
-为了捕获不同尺度的几何模式,我们采用多尺度编码器:
+为了捕获不同尺度的几何模式,采用多尺度编码器:
 
 \begin{equation}
 \begin{aligned}
@@ -118,7 +118,7 @@ s_i &= \text{MLP}_{\text{agg}}([h_i^{(r_1)}, h_i^{(r_2)}, h_i^{(r_3)}])
 
 其中$(g_x^m, g_y^m, g_z^m)$为块$m$的体素网格坐标。
 
-\textbf{(2) 分块序列化邻域}:对于每个块内的点,我们按序列化顺序$\pi_k$重排并进行padding,形成大小为$K_b$的序列化邻域(如$K_b=16$):
+\textbf{(2) 分块序列化邻域}:对于每个块内的点,按序列化顺序$\pi_k$重排并进行padding,形成大小为$K_b$的序列化邻域(如$K_b=16$):
 
 \begin{equation}
 \begin{aligned}
