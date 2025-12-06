@@ -293,7 +293,7 @@ y_{k} &= \overline{C}x_{k} + \overline{D}u_{k}
 \begin{equation}
 	\mathbf{f}_{ij} = [\Delta\mathbf{p}_{ij}, \alpha_{ij},  \boldsymbol{\kappa}] \in \mathbb{R}^8
 \end{equation}
-其中$\Delta\mathbf{p}_{ij} = \mathbf{p}_j - \mathbf{p}_i$是相对坐标向量(3维)，$\alpha_{ij}$是方向关系特征(3维)，由窗口内平均法向量与归一化相对位置向量的差值计算得到，用于表征边方向相对于局部表面法向的偏离程度，$\boldsymbol{\kappa}$是两种曲率(2维)。
+其中$\Delta\mathbf{p}_{ij} = \mathbf{p}_j - \mathbf{p}_i$是相对坐标向量(3维)，$\alpha_{ij}$是方向关系特征(3维)，由窗口内平均法向量与归一化相对位置向量的差值计算得到，用于表征边方向相对于局部表面法向的偏离程度，$\boldsymbol{\kappa}$是两种曲率(2维)：表面变化率和高斯曲率。
 再经过多层感知机之后我们通过累加所有邻边特征，再除以邻边数量的方式，实现了将边特征到点特征的均值聚合。对于点$p_i$,有聚合后的点特征$\mathbf{H}$。
 
 
