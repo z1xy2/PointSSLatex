@@ -128,7 +128,7 @@
 
 针对长序列下特征粒度单一与因果关系强加的问题，我们提出了自适应尺度解耦状态空间模型(Adaptive Scale-Decoupled State Space Model, ASD-SSM)。ASD-SSM通过轻量级参数生成器为不同尺度动态生成定制化的SSM参数，使粗尺度倾向于捕获长程依赖，细尺度倾向于快速响应局部变化，在尊重点云无序性的同时实现了层次化的多尺度特征学习。该方法在仅增加约20\%参数量的情况下，性能接近完全独立参数方案（仅低0.6\% mIoU），显著提升了模型的参数效率和表达能力。
 
-实验结果证明，所提出的算法较目前主流方法以及基于状态空间的点云分析方法有明显优势。在统一不使用预训练的情况下，在点云室内分割基准S3DIS中达到了75.2\%的mean Intersection over Union(mIoU)，以5.4\%的mIoU超过了效果最好的同类模型PCM。在3D分类基准ModelNet40中以1.9\%的整体正确率超过了效果最好的同类模型Mamba3D，达到96.0\%的准确率。
+实验结果证明，所提出的算法较目前主流方法以及基于状态空间的点云分析方法有明显优势。在统一不使用预训练的情况下，在点云室内分割基准S3DIS中达到了75.2\%的mean Intersection over Union(mIoU)，以5.4\%的mIoU超过了性能最优的同类模型PCM。在3D分类基准ModelNet40中以1.9\%的整体正确率超过了性能最优的同类模型Mamba3D，达到96.0\%的准确率。
 \end{abstract}
 
 %%Graphical abstract
@@ -169,7 +169,7 @@ Point cloud analysis, State space models, Multi scale feature fusion, Point clou
 
 几何丢失问题出现的核心原因在于Mamba的线性状态传递机制与点云空间特性的矛盾。虽然基于空间填充曲线的序列化方法（如Z-order和Hilbert编码）在局部窗口内能够较好地保持空间邻近性，但无法保证所有空间邻近的点在序列中也相邻。Mamba通过状态向量进行时序信息传递，在顺序特征提取过程中，状态向量会逐渐更新以吸收新点的信息。关键问题在于：割裂点的几何信息在状态传递过程中逐渐衰减，当模型处理某个点时，其空间邻近但序列距离较远的邻居点信息已经丢失，导致模型难以隐式学习到完整的几何结构特征。由于点云的几何结构信息（如曲面法向量、边缘曲率）通常由空间邻近点集合定义，割裂点的存在使得Mamba无法综合所有空间邻居的信息进行几何学习，从而影响对复杂形状（如墙与柱的边界、曲面过渡区域）的精确分割。例如，三维空间中距离仅0.1m的两个点，可能因x坐标差异被序列化为相隔数千点的位置，导致其k近邻集合在序列中被割裂，Mamba无法有效关联这些割裂点，最终导致分割效果不佳。如图\ref{fig:analysis}所示，我们以墙面与方柱的边界分割为例进行可视化：红色点为需要预测的中心点，绿色点代表空间邻近且序列邻近的点（其几何信息能通过Mamba状态传递正常学习），橙色点则为割裂点（空间邻近但序列距离远，其几何信息在到达中心点时已被遗忘）。
 
-\textbf{关键观察}：虽然可以通过KNN精确计算几何特征并避免割裂问题，但其$O(N\log N)$的计算复杂度限制了模型规模和感受野的扩展，在大规模点云场景下成为性能瓶颈。因此本文采用窗口化邻域快速提取几何先验（$O(N)$复杂度），并通过GGAM(Global Geometry-Aware Mechanism)的全局几何感知机制显式注入几何信息，补偿Mamba的隐式几何学习不足，在效率与效果间取得更优平衡。
+\textbf{关键观察}：虽然可以通过KNN精确计算几何特征并避免割裂问题，但其$O(N\log N)$的计算复杂度限制了模型规模和感受野的扩展，在大规模点云场景下成为性能瓶颈。因此本文采用窗口化邻域快速提取几何先验（$O(N)$复杂度），并通过GGAM(Global Geometry-Aware Mechanism)的全局几何感知机制显式注入几何信息，补偿Mamba的隐式几何学习不足，在效率与性能间取得更优平衡。
 
 \begin{figure}[htbp]
 	\centering
@@ -455,7 +455,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 \subsubsection{Experiment results on the S3DIS dataset}
 \cref{tab:s3dis}给出了S3DIS数据集上的语义分割结果，并与近几年其他有代表性的方法进行了比较。
 
-\textbf{整体性能分析：}在统一不使用预训练的情况下，PointSS在S3DIS上达到了75.2\%的mIoU，取得了显著的性能提升。相比之前的Transformer-based SOTA模型，PointSS超过Swin3D 2.7\% mIoU，超过PTv3 2.0\% mIoU。更值得注意的是，PointSS以5.4\% mIoU的大幅优势超过了当前效果最好的SSM模型PCM（69.8\%），这一提升幅度证明了所提方法的有效性。
+\textbf{整体性能分析：}在统一不使用预训练的情况下，PointSS在S3DIS上达到了75.2\%的mIoU，取得了显著的性能提升。相比之前的Transformer-based SOTA模型，PointSS超过Swin3D 2.7\% mIoU，超过PTv3 2.0\% mIoU。更值得注意的是，PointSS以5.4\% mIoU的大幅优势超过了当前性能最优的SSM模型PCM（69.8\%），这一提升幅度证明了所提方法的有效性。
 
 \textbf{方法对比分析：}Transformer方法（如PTv3、PTv2）在点云分析中表现优异。PointSS通过ASD-SSM的尺度解耦建模和GGAM的全局几何感知，在同等实验设置下达到了更高的精度（75.2\% vs PTv3的73.2\%）。作为SSM架构的附加优势，PointSS继承了状态空间模型的线性时间复杂度特性，如\cref{tab:parameterization_comparison}所示，不同参数化方案的推理时间增加均不显著（<7\%），展现了良好的可扩展性潜力。
 
@@ -774,7 +774,7 @@ LoRA适配借鉴自然语言处理领域的低秩适配思想\cite{lora}，通�
 
 
 \subsection{Qualitative Experiment}
-我们在\cref{fig:vis}中可视化了S3DIS数据集上的检测结果。其中划圈的部分标注了不同模型的分割差异。可以看到，PointSS在需要大感受野支持的窗户以及房柱等的物体的分割具有更好的效果，证明了PointSS在感受野融合上的优势、其具有多层次的理解能力。此外PointSS在需要细粒度的分割如杂物的分割上也有良好的效果，证明了PointSS多尺度架构的有效性以及几何特征学习能力，能够保留模型对细节的理解。
+我们在\cref{fig:vis}中可视化了S3DIS数据集上的检测结果。其中划圈的部分标注了不同模型的分割差异。可以看到，PointSS在需要大感受野支持的窗户以及房柱等的物体的分割具有更优的性能，证明了PointSS在感受野融合上的优势、其具有多层次的理解能力。此外PointSS在需要细粒度的分割如杂物的分割上也有良好的性能，证明了PointSS多尺度架构的有效性以及几何特征学习能力，能够保留模型对细节的理解。
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{picture/visualize.JPG}
