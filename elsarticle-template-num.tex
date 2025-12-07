@@ -379,7 +379,7 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数，解决参数共�
 
 传统SSM方法使用相同的状态转移参数$\overline{A}$、输入投影参数$\overline{B}$和输出投影参数$\overline{C}$处理所有尺度的特征，忽略了不同尺度对时序建模特性的差异化需求。状态转移参数$\overline{A}$（对角矩阵的对角元素）控制着状态向量的衰减速度：当$\overline{A}$的元素接近1时实现慢衰减（长程记忆），接近0时实现快衰减（快速响应）。对于粗尺度特征，我们需要$\overline{A}$接近全1向量以保持长程依赖；对于细尺度特征，我们需要$\overline{A}$具有更小的值以快速响应局部细节变化。
 
-\textbf{尺度感知参数生成器：}ASD-SSM的核心创新在于为不同尺度自适应生成差异化的状态转移参数$\overline{A}_s$。对于尺度$s$，点云特征已按Patch划分为$\mathbf{P}_s \in \mathbb{R}^{M \times P \times C}$，其中$M = \lceil N/P \rceil$为Patch数量。参数生成过程对每个Patch独立进行，每个Patch根据其内容特征生成专属的$\overline{A}_s$。
+\textbf{尺度感知参数生成器：}ASD-SSM为不同尺度自适应生成差异化的状态转移参数$\overline{A}_s$。对于尺度$s$，点云特征已按Patch划分为$\mathbf{P}_s \in \mathbb{R}^{M \times P \times C}$，其中$M = \lceil N/P \rceil$为Patch数量。参数生成过程对每个Patch独立进行，每个Patch根据其内容特征生成专属的$\overline{A}_s$。
 
 具体而言，我们首先对每个Patch内的$P$个点进行全局自适应平均池化，得到该Patch的全局特征$\mathbf{f}_{global}^{(s)} \in \mathbb{R}^{C/4}$，该特征捕捉Patch内点云的整体几何特性（如局部结构复杂度、密度分布等）。同时，我们为每个尺度学习一个尺度嵌入向量$\mathbf{e}_s \in \mathbb{R}^{C/4}$，用于区分不同尺度的特性。对于单个Patch，参数生成过程如下：
 \begin{equation}
@@ -388,7 +388,7 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数，解决参数共�
 \begin{equation}
 	\mathbf{c}_s = \text{MLP}([\mathbf{f}_{global}^{(s)} \| \mathbf{e}_s]) \in \mathbb{R}^{C/2}
 \end{equation}
-其中$\|$表示拼接操作。对于选择性参数$\overline{B}_s$和$\overline{C}_s$，我们沿用Mamba论文\cite{Mamba}的标准选择性机制，通过线性投影从输入内容动态生成，此处不再赘述。
+其中$\|$表示拼接操作。对于选择性参数$\overline{B}_s$和$\overline{C}_s$，我们沿用Mamba论文\cite{Mamba}的标准选择性机制，通过线性投影从输入内容动态生成。
 
 \textbf{尺度约束机制：}为实现差异化的状态衰减特性，我们通过尺度约束因子$\alpha_s$显式控制状态转移矩阵$\overline{A}_s$的值域。在离散状态空间模型中，状态更新遵循$\mathbf{h}_k = \overline{A}_s \mathbf{h}_{k-1} + \overline{B}_s \mathbf{u}_k$，其中$\overline{A}_s$的对角元素决定了状态的衰减速度：元素值接近1时实现慢衰减（长程记忆），接近0时实现快衰减（快速响应）。
 
@@ -404,8 +404,6 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数，解决参数共�
 \end{equation}
 通过设置$\alpha_s$从细尺度到粗尺度递增（$\alpha_1=0.3 \rightarrow \alpha_S=0.9$），我们显式地约束：细尺度$\overline{A}_1 \in [0, 0.3]$实现快速响应局部变化，粗尺度$\overline{A}_S \in [0, 0.9]$保持长程记忆以捕获全局上下文。需要强调的是，虽然为简化表示公式中省略了Patch索引，但每个Patch会根据其内容特征生成专属的参数$\overline{A}_s^{(m)}$，$m$为Patch编号。即$\overline{A}_s^{(m)} = \alpha_s \cdot \Delta\overline{A}_s^{norm,(m)}$，其中$\Delta\overline{A}_s^{norm,(m)} = \sigma(\lambda \cdot \text{MLP}([\mathbf{f}_{global}^{(s,m)} \| \mathbf{e}_s]))$。
 
-\textbf{Patch间状态传递策略：}为充分利用序列化的顺序信息，ASD-SSM在同一序列内相邻Patch间直接传递隐状态。处理第$m$个Patch时，将前一Patch的最终状态$\mathbf{h}_P^{(s,m-1)}$直接作为初始状态$\mathbf{h}_0^{(s,m)}$，通过标准的SSM更新公式自然地吸收前序上下文。在底层（$s=1$）利用序列化的空间邻接性，而在高层尺度（$s>1$）通过随机打乱Patch内点云保持对无序性的尊重。
-
 \textbf{状态空间更新：}对于第$s$个尺度的每个Patch内的点云特征序列，状态空间更新遵循标准的离散化SSM形式\cite{Mamba}：
 \begin{equation}
 	\begin{aligned}
@@ -414,9 +412,9 @@ ASD-SSM通过为不同尺度动态生成定制化的SSM参数，解决参数共�
 	\end{aligned}
 	\label{eq:asd_ssm_update}
 \end{equation}
-其中$\mathbf{h}_k^{(s,m)}$是尺度$s$、Patch $m$的隐状态向量，$\mathbf{u}_k^{(s,m)}$是Patch内第$k$个点的输入向量（$k=1,2,\ldots,P$），$\overline{D}$为直通连接参数。对于第$m$个Patch，初始状态设为$\mathbf{h}_0^{(s,m)} = \mathbf{h}_P^{(s,m-1)}$（第一个Patch时初始化为零向量），然后从$k=1$开始应用上述更新公式。这种直接传递的设计保持了SSM状态传递的统一性，使得Patch边界的状态更新与Patch内部完全一致，符合序列建模的本质。ASD-SSM的创新在于$\overline{A}_s$的尺度自适应生成策略。
+其中$\mathbf{h}_k^{(s,m)}$是尺度$s$、Patch $m$的隐状态向量，$\mathbf{u}_k^{(s,m)}$是Patch内第$k$个点的输入向量（$k=1,2,\ldots,P$），$\overline{D}$为直通连接参数。对于第$m$个Patch，初始状态设为$\mathbf{h}_0^{(s,m)} = \mathbf{h}_P^{(s,m-1)}$（第一个Patch时初始化为零向量），然后从$k=1$开始应用上述更新公式。这种直接传递的设计保持了SSM状态传递的统一性，使得Patch边界的状态更新与Patch内部保持一致。
 
-\textbf{双向特征学习与融合：}每个尺度内部采用双向特征学习策略。为使每个点获得前后文的上下文信息，我们为每个尺度$s$构建前向SSM和后向SSM，分别处理正向和反向序列。前向和后向SSM共享同一组尺度特定的状态转移参数$\overline{A}_s$，最后通过残差连接融合双向特征。这种设计使得粗尺度通过较大的$\overline{A}_S$在两个方向上均保持状态缓慢衰减（长程记忆），细尺度通过较小的$\overline{A}_1$在两个方向上都能快速衰减状态（快速响应局部变化）。
+\textbf{双向特征学习与融合：}每个尺度内部采用双向特征学习策略。为使每个点获得前后文的上下文信息，我们为每个尺度$s$构建前向SSM和后向SSM，分别处理正向和反向序列。前向和后向SSM共享同一组尺度特定的状态转移参数$\overline{A}_s$，最后通过残差连接融合双向特征。
 
 通过上述机制，ASD-SSM实现了尺度解耦的状态空间建模：最细尺度（$s=1$）通过$\alpha_1=0.3$约束$\overline{A}_1 \in [0, 0.3]$，状态快速衰减以响应局部细节变化；最粗尺度（$s=S$）通过$\alpha_S=0.9$约束$\overline{A}_S \in [0, 0.9]$，状态缓慢衰减以保持长程记忆捕捉全局语义。多层尺度特征提取完成后，采用拼接策略将不同尺度的特征$Points_{1:S}$逐点融合，最后通过MLP和线性层映射至原始维度$C$，得到融合多层次信息的点云表示$Points'\in\mathbb{R}^{N\times C}$。
 
@@ -440,7 +438,7 @@ S3DIS 数据集是由斯坦福大学发布的，用于室内场景理解和点�
 \textbf{ModelNet40:}
 ModelNet40 是由 Princeton University 提供，旨在为 3D 对象分类和识别任务提供标准化的基准。其包括40 个物体类别，12,311 个 3D 对象样本。训练集包含8,156 个样本，测试集包含4,155 个样本。数据集中的每个对象都经过详细的分类，涵盖各种日常物品，如椅子、桌子、瓶子、飞机、汽车等。
 
-
+\subsection{评价指标}
 \textbf{mIoU:}mean Intersection over Union是语义分割等任务中常用的评估指标，用于衡量预测结果与真实标签之间的重叠程度。对每一个类别$c$，IoU（交并比）定义为：\begin{equation}\mathrm{IoU}_c=\frac{\mathrm{TP}_c}{\mathrm{TP}_c+\mathrm{FP}_c+\mathrm{FN}_c}\end{equation}
 $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}$为假阴性。取所有类别的平均值，得到mIoU。其对类不均衡的数据更鲁棒，比Accuracy更常用于3D语义分割任务。因此我们选择mIoU为指标来评价在S3DIS上的点云语义分割任务。
 
@@ -450,11 +448,11 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 \subsubsection{Experiment results on the S3DIS dataset}
 \cref{tab:s3dis}给出了S3DIS数据集上的语义分割结果，并与近几年其他有代表性的方法进行了比较。
 
-\textbf{整体性能分析：}在统一不使用预训练的情况下，PointSS在S3DIS上达到了75.2\%的mIoU，取得了显著的性能提升。相比之前的Transformer-based SOTA模型，PointSS超过Swin3D 2.7\% mIoU，超过PTv3 2.0\% mIoU。更值得注意的是，PointSS以5.4\% mIoU的大幅优势超过了当前性能最优的SSM模型PCM（69.8\%），这一提升幅度证明了所提方法的有效性。
+\textbf{整体性能分析：}在统一不使用预训练的情况下，PointSS在S3DIS上达到了75.2\%的mIoU。相比之前的Transformer-based SOTA模型，PointSS超过Swin3D 2.7\% mIoU，超过PTv3 2.0\% mIoU。此外PointSS以5.4\% mIoU的优势超过了当前性能最优的SSM模型PCM（69.8\%），证明了所提方法的有效性。
 
 \textbf{方法对比分析：}Transformer方法（如PTv3、PTv2）在点云分析中表现优异。PointSS通过ASD-SSM的尺度解耦建模和GGAM的全局几何感知，在同等实验设置下达到了更高的精度（75.2\% vs PTv3的73.2\%）。作为SSM架构的附加优势，PointSS继承了状态空间模型的线性时间复杂度特性，如\cref{tab:parameterization_comparison}所示，不同参数化方案的推理时间增加均不显著（<7\%），展现了良好的可扩展性潜力。
 
-相比现有SSM方法（PCM 69.8\%和PointMamba），PointSS的显著优势主要体现在三个方面。首先，在几何信息保持方面，通过GGAM的双序列化融合和几何特征增强，PointSS有效解决了序列化导致的几何结构丢失问题，这对于边界区域（如墙与柱的交界）和复杂曲面的准确分割至关重要。其次，在多尺度层次化建模方面，ASD-SSM通过自适应参数生成为不同尺度定制SSM参数，使模型能够同时捕获全局语义和局部细节，而PCM等方法采用共享参数的单一粒度特征提取，难以兼顾不同层次的信息需求。最后，在无序性尊重方面，通过多尺度并行处理和双向建模策略，PointSS避免了为点云强加单一的因果关系，相比固定序列化方案具有更好的鲁棒性。
+相比现有SSM方法（PCM 69.8\%和PointMamba），PointSS的优势主要体现在三个方面。首先，在几何信息保持方面，通过GGAM的双序列化融合和几何特征增强，PointSS有效解决了序列化导致的几何结构丢失问题，这对于边界区域（如墙与柱的交界）和复杂曲面的准确分割至关重要。其次，在多尺度层次化建模方面，ASD-SSM通过自适应参数生成为不同尺度定制SSM参数，使模型能够同时捕获全局语义和局部细节，而PCM等方法采用共享参数的单一粒度特征提取，难以兼顾不同层次的信息需求。最后，在无序性尊重方面，通过多尺度并行处理和双向建模策略，PointSS避免了为点云强加单一的因果关系，相比固定序列化方案具有更好的鲁棒性。
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % Please add the following required packages to your document preamble:
@@ -478,7 +476,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 		AAAI25    & PCM\cite{pcm}                   & SSM         & 69.8         \\
 		Mathematics24 & PointMSGT\cite{pointmsgt}      & Transformer & 68.6         \\
 		Sci. Rep.25 & PointGA\cite{pointga}           & Transformer & 66.2         \\
-		& PointSS               &SSM           & 75.2          \\ \bottomrule
+		& \textbf{PointSS}               &\textbf{SSM}           & \textbf{75.2}          \\ \bottomrule
 	\end{tabular}
 		\centering
 
@@ -490,9 +488,9 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 
 \cref{tab:ModelNet}给出了ModelNet40数据集上的物体分类结果，并与近几年其他有代表性的方法进行了比较。
 
-\textbf{整体性能分析：}PointSS在ModelNet40上达到了96.0\%的整体准确率（OA），超过了所有对比方法。相比当前最好的Transformer方法Point2Vec（94.8\%），PointSS提升了1.2\%；相比引入掩码自监督学习的Point-FEMAE（94.5\%），提升了1.5\%。更重要的是，PointSS以1.9\%的显著优势超过了效果最好的SSM方法Mamba3D（94.1\%）。值得注意的是，在ModelNet40这样已经接近饱和的基准测试中（多数方法在94\%以上），1.2\%-1.9\%的提升是相当显著的。
+\textbf{整体性能分析：}PointSS在ModelNet40上达到了96.0\%的整体准确率（OA）。相比当前SOTA的Transformer方法Point2Vec（94.8\%），PointSS提升了1.2\%；相比引入掩码自监督学习的Point-FEMAE（94.5\%），提升了1.5\%。此外，PointSS以1.9\%的显著优势超过了效果最好的SSM方法Mamba3D（94.1\%）。
 
-\textbf{方法对比分析：}相比掩码学习方法（Point2Vec, Point-FEMAE），PointSS通过多尺度层次化建模在保留局部细节的同时有效捕获全局语义，且无需复杂的预训练策略。相比现有SSM方法，PointSS取得了显著领先（超过Mamba3D 1.9\%），其核心优势在于：通过GGAM显式建模几何特征（曲率、法向量），使模型能够精确捕捉关键判别性结构（如飞机机翼、椅子靠背）；通过ASD-SSM的自适应多尺度建模，实现了粗尺度长程记忆与细尺度快速响应的有效平衡，同时避免了固定序列化带来的方向偏置，提升了视角鲁棒性。PointSS在S3DIS（分割）和ModelNet40（分类）两个任务上的一致性提升验证了方法的通用性和广泛适用性。
+\textbf{方法对比分析：}相比掩码学习方法如Point2Vec, Point-FEMAE，PointSS通过多尺度层次化建模在保留局部细节的同时有效捕获全局语义，且无需复杂的预训练策略。相比现有SSM方法，PointSS超过Mamba3D 1.9\%OA，其核心优势在于：通过GGAM显式建模几何特征，使模型能够精确捕捉关键判别性结构，如飞机机翼、椅子靠背；通过ASD-SSM的自适应多尺度建模，实现了粗尺度长程记忆与细尺度快速响应的有效平衡，同时避免了固定序列化带来的方向偏置，提升了视角鲁棒性。PointSS在S3DIS和ModelNet40两个任务上的一致性提升验证了方法的通用性和广泛适用性。
 
 \begin{table}[htbp!]
 	\centering
@@ -547,7 +545,7 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 \end{table}
 
 
-实验结果表明，GGAM模块贡献+2.2\% mIoU，解决了序列化几何信息丢失问题；ASD-SSM模块在GGAM基础上进一步贡献+2.7\% mIoU（其中多尺度特征贡献+0.9\%，自适应参数生成贡献+1.8\%），实现了层次化的多尺度特征学习。
+实验结果表明，GGAM模块贡献+2.2\% mIoU，解决了序列化几何信息丢失问题；ASD-SSM模块在GGAM基础上进一步贡献+2.7\% mIoU，其中多尺度特征贡献+0.9\%，自适应参数生成贡献+1.8\%。其实现了层次化的多尺度特征学习。
 
 
 % ========== GGAM核心消融实验（精简版）==========
@@ -579,22 +577,21 @@ S3DIS具有丰富的场景和大型的点云，对模型的性能有更强的要
 	\label{tab:split_and_repair}
 	\begin{tabular}{@{}lllllll@{}}
 		\toprule
-		割裂近邻占比 & 点数量 & 点占比 & 基线IoU & GGAM IoU & 绝对提升 & 补偿率 \\
+		割裂近邻占比 & 点数量 & 点占比 & 基线IoU & GGAM IoU & 绝对提升  \\
 		\midrule
-		0-10\%（良好） & 27.0万 & 67\% & 74.0 & 74.8 & +0.8 & - \\
+		0-10\%（良好） & 27.0万 & 67\% & 74.0 & 74.8 & +0.8  \\
 		\midrule
-		10-20\%（轻度） & 10.1万 & 25\% & 63.0 & 67.1 & +4.1 & 37.3\% \\
-		20-30\%（中度） & 3.2万 & 8\% & 62.0 & 70.0 & +8.0 & 66.7\% \\
+		10-20\%（轻度） & 10.1万 & 25\% & 63.0 & 67.1 & +4.1   \\
+		20-30\%（中度） & 3.2万 & 8\% & 62.0 & 70.0 & +8.0  \\
 		\midrule
-		\textbf{总计} & \textbf{40.3万} & \textbf{100\%} & \textbf{70.3} & \textbf{72.5} & \textbf{+2.2} & \textbf{-} \\
+		\textbf{总计} & \textbf{40.3万} & \textbf{100\%} & \textbf{70.3} & \textbf{72.5} & \textbf{+2.2}  \\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
 注1：割裂近邻占比 = 该点的K近邻中序列距离>500的点数 / K。\\
-注2：补偿率 = (GGAM IoU - 基线IoU) / (良好状态IoU - 基线IoU)，以割裂近邻占比0-10\%的点作为参考基准。
 
-实验结果表明，在Hilbert曲线序列化下，33\%的点（13.3万/40.3万）存在不同程度的割裂问题（割裂近邻占比>10\%）。割裂程度与分割性能呈显著负相关，当一个点的割裂近邻占比从0-10\%增加到20-30\%时，其分割IoU从74.0\%降至62.0\%，性能损失达12.0个百分点，证明割裂问题严重影响Mamba对几何结构的隐式学习能力。GGAM通过显式注入几何先验有效补偿了这一问题，割裂程度越严重，GGAM的绝对提升越显著，从0.8\%增加到8.0\%，证明全局几何感知能够有效跨越序列距离为模型提供几何信息。整体而言，GGAM使所有点的平均IoU从70.3\%提升至72.5\%，绝对提升2.2\%，验证了显式几何先验增强机制的有效性。
+实验结果表明，在Hilbert曲线序列化下，33\%的点（13.3万/40.3万）存在不同程度的割裂问题（割裂近邻占比>10\%）。割裂程度与分割性能呈负相关，当一个点的割裂近邻占比从0-10\%增加到20-30\%时，其分割IoU从74.0\%降至62.0\%，性能损失达12.0个百分点，证明割裂问题影响了Mamba对几何结构的隐式学习能力。GGAM通过显式注入几何先验有效补偿了这一问题，割裂程度越严重，GGAM的绝对提升越显著，从0.8\%增加到8.0\%，证明全局几何感知能够有效跨越序列距离为模型提供几何信息。整体而言，GGAM使所有点的平均IoU从70.3\%提升至72.5\%，绝对提升2.2\%，验证了显式几何先验增强机制的有效性。
 
 
 %% ========================================
