@@ -1,12 +1,14 @@
 这是一个论文的latex项目，我用同一个课题，该研究成果需要发一篇期刊论文和一篇毕设论文
 
 [elsarticle-template-num.tex](elsarticle-template-num.tex)是主要的论文文档，我主要写作在这里，该文档用于发表期刊论文
+[PointSS-翻译.pdf](PointSS-%E7%BF%BB%E8%AF%91.pdf)翻译后的[elsarticle-template-num.tex](elsarticle-template-num.tex)
 [bishe.tex](bishe.tex)是我的毕业论文，我有关毕设的都在这里
 
 [picture](picture) 存储了所有论文图片
 [ref.bib](ref.bib)存储了所有引用
 [mamba.pdf](mamba.pdf) mamba原文
 [IEEE-Transactions-LaTeX2e-templates-and-instructions](IEEE-Transactions-LaTeX2e-templates-and-instructions) 我要发表的期刊的tex文件夹
+
 
 # 毕设
 该部分的提示词仅用于[bishe.tex](bishe.tex)
