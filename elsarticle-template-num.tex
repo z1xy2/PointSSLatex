@@ -238,15 +238,23 @@ Wen等人\cite{local_feature_fusion_2024}提出了基于局部特征融合和多
 \section{提出方法}
 
 \subsection{ Framework Overview}
-如\cref{fig:architecture}为PointSS模型整体架构，其中数据处理部分包括数据增强，点云序列化。序列化编码方式采用Ptv3\cite{ptv3}的方法。数据处理完后由GGAM对点云进行全局几何特征感知。特征学习部分采用基于PointNet的U型编码器-解码器架构。编码器和解码器都采取了逐点提取策略。需要注意的是图中标橙色的Repeated Points，它是为了窗口可以被均匀划分而进行的操作，详细细节将在Window Partitioning部分介绍。随后将点云数据进行最终的语义特征融合，在模型末尾根据标签预测概率的最大值得到最终的预测结果。相较于PCM，该方案只需要在训练初始时序列化点云，并通过序列化的点云采用池化的方式直接进行下采样，而非在编码器中进行多次序列化并使用KNN进行邻域搜索与下采样，降低了计算复杂度。
+如\cref{fig:architecture}为PointSS模型整体架构，其中数据处理部分包括数据增强，点云序列化。序列化编码方式采用Ptv3\cite{ptv3}的方法。数据处理完后由GGAM对点云进行全局几何特征感知。特征学习部分采用基于PointNet的U型编码器-解码器架构。需要注意的是图中标橙色的Repeated Points，它是为了窗口可以被均匀划分而进行的操作，详细细节将在Window Partitioning部分介绍。随后将点云数据进行最终的语义特征融合，在模型末尾根据标签预测概率的最大值得到最终的预测结果。相较于PCM，该方案只需要在训练初始时序列化点云，并通过序列化的点云采用池化的方式直接进行下采样，而非在编码器中进行多次序列化并使用KNN进行邻域搜索与下采样，降低了计算复杂度。
 %% If you have bib database file and want bibtex to generate the% TODO: \usepackage{graphicx} required
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{picture/architecture.jpg}
-	\caption{PointSS整体架构}
+	\caption{PointSS整体架构。编码器和解码器采用以Patch为单位对点云进行上采样和下采样的策略\cite{PointNet++,ptv3}。Feature Learning中括号内标注（点数，特征维度）表示各阶段的张量形状。}
 	\label{fig:architecture}
 \end{figure}
 
+\cref{fig:coder}为编码器的基本架构，包括池化层被用来进行下采样以及点云信息聚合，多个重复出现的ASD-SSM模块被用来进行深层次的特征理解。我们将ASD-SSM融入到编码器与解码器，以获得对点云的高性能感知。与编码器不同的是，解码器使用上采样来替换Max Pooling，由于解码器也包含ASD-SSM，因此在上采样时能够学习到不同编码器得到的层次信息。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{picture/coder.JPG}
+	\caption{编码器架构}
+	\label{fig:coder}
+\end{figure}
 
 \subsection{Global Geometry-Aware Mechanism(GGAM)}
 
@@ -322,17 +330,7 @@ y_{k} &= \overline{C}x_{k} + \overline{D}u_{k}
 \end{gather}
 其中 $\odot$ 表示逐元素相乘。这个约束可以看作是一个软性的过滤器，抑制了在融合过程中可能产生的几何上不合理的特征组合。最终，$\mathbf{H}_{final}$ 作为GGAM模块的输出，包含了几何感知特征。
 
-\subsection{编码器与解码器架构}
-\cref{fig:coder}为编码器的基本架构，包括池化层被用来进行下采样以及点云信息聚合，多个重复出现的ASD-SSM模块被用来进行深层次的特征理解。我们将ASD-SSM融入到编码器与解码器，以获得对点云的高性能感知。与编码器不同的是，解码器使用上采样来替换Max Pooling，由于解码器也包含ASD-SSM，因此在上采样时能够学习到不同编码器得到的层次信息。
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\linewidth]{picture/coder.JPG}
-	\caption{编码器架构}
-	\label{fig:coder}
-\end{figure}
 \subsection{自适应尺度解耦状态空间模型（ASD-SSM）}
-
 \subsubsection{问题动机与整体方案}
 
 现有多尺度特征提取方法在处理不同尺度点云时采用共享的状态空间参数，忽略了不同尺度对时序建模特性的差异化需求。粗尺度特征需要保持长时记忆以捕捉全局上下文，而细尺度特征需要快速状态更新以响应局部细节变化。针对这一问题以及SSM方法在点云无序性和长序列处理方面的局限性，我们提出自适应尺度解耦状态空间模型（Adaptive Scale-Decoupled SSM, ASD-SSM）。
