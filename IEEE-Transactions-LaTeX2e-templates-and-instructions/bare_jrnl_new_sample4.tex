@@ -91,7 +91,7 @@ Multi-scale feature fusion serves as a fundamental mechanism for hierarchical re
 
 \subsection{Framework Overview}
 
-The overall architecture of the PointSS model is illustrated in \cref{fig:architecture}. The data processing stage encompasses data augmentation and point cloud serialization, with the latter adopting the encoding scheme from PTv3 \cite{ptv3}. Following data processing, the Global Geometry-Aware Mechanism (GGAM) is employed to perform global geometric feature perception on the point cloud. The feature learning component utilizes a PointNet-based U-shaped encoder-decoder architecture, where both the encoder and decoder implement a point-wise extraction strategy. It should be noted that the Repeated Points (highlighted in orange in the figure) refer to an operation performed to ensure uniform window partitioning; specific details are provided in the Window Partitioning section. Subsequently, the point cloud data undergoes final semantic feature fusion, and the ultimate prediction is obtained at the end of the model based on the maximum probability of the label prediction. Compared to PCM, this scheme only requires point cloud serialization at the beginning of training. It performs down-sampling directly via pooling on the serialized point cloud, rather than executing multiple serializations and using K-Nearest Neighbor (KNN) for neighborhood search and down-sampling within the encoder. This approach significantly reduces computational complexity.
+The overall architecture of the PointSS model is illustrated in \cref{fig:architecture} The data processing stage encompasses data augmentation and point cloud serialization, with the latter adopting the encoding scheme from PTv3 \cite{ptv3}. Following data processing, the Global Geometry-Aware Mechanism (GGAM) is employed to perform global geometric feature perception on the point cloud. The feature learning component utilizes a PointNet-based U-shaped encoder-decoder architecture, where both the encoder and decoder implement a point-wise extraction strategy. It should be noted that the Repeated Points (highlighted in orange in the figure) refer to an operation performed to ensure uniform window partitioning; specific details are provided in the Window Partitioning section. Subsequently, the point cloud data undergoes final semantic feature fusion, and the ultimate prediction is obtained at the end of the model based on the maximum probability of the label prediction. Compared to PCM, this scheme only requires point cloud serialization at the beginning of training. It performs down-sampling directly via pooling on the serialized point cloud, rather than executing multiple serializations and using K-Nearest Neighbor (KNN) for neighborhood search and down-sampling within the encoder. This approach significantly reduces computational complexity.
 
 \begin{figure}[htbp]
 	\centering
@@ -178,7 +178,9 @@ This constraint acts as a soft filter, suppressing geometrically inconsistent fe
 
 \subsection{Adaptive Scale-Decoupled State Space Model (ASD-SSM)}
 
-\subsubsection{Overall Scheme}
+\subsubsection{Motivation and Overall Scheme}
+
+Existing multi-scale feature extraction methods employ shared state space parameters when processing point clouds at different scales, overlooking the differentiated requirements of temporal modeling across scales. Coarse-scale features necessitate long-term memory to capture global context, while fine-scale features require rapid state updates to respond to local structural variations. To address this issue, as well as the limitations of SSM-based methods in handling point cloud disorder and long sequences, the Adaptive Scale-Decoupled State Space Model (ASD-SSM) is proposed.
 
 ASD-SSM resolves the modeling constraints caused by parameter sharing by dynamically generating customized SSM parameters for different scales. This method applies a serialized feature extraction scheme to point cloud tasks, constructing a hierarchical point cloud information matrix by parallelly processing multi-layer scale point clouds and fusing information across levels. This enables the model to capture long-range contextual dependencies in long sequences, ensuring high-level semantic understanding while maintaining high-precision processing of local details.
 
@@ -333,114 +335,6 @@ Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
 
 Ablation studies were conducted on the S3DIS dataset using a progressive strategy to verify individual module contributions. First, the effectiveness of GGAM in addressing geometric loss was examined (\Cref{tab:ggam_fragmentation,tab:ggam_category,tab:ggam_components}), followed by the validation of ASD-SSM design choices (\Cref{tab:scale_constraint,tab:param_gen,tab:param_comparison,tab:scale_config}).
 
-The baseline model utilizes a standard single-scale bidirectional Mamba with shared parameters. As shown in \cref{tab:progressive_improvement}, introducing GGAM alone yields a 2.2\% mIoU improvement. This confirms that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates serialization-induced information loss, thereby enhancing local structural representation.
-
-Building on this, incorporating multi-scale modeling with shared parameters improves performance by 0.9\% to 73.4\% mIoU. However, employing the full ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing an additional 1.8\% gain over the GGAM baseline. This demonstrates that decoupling parameters is crucial for simultaneously optimizing local detail capture and global semantic modeling.
-
-In summary, GGAM and ASD-SSM exhibit strong functional complementarity: GGAM restores geometric integrity, while ASD-SSM balances multi-scale dependencies. Their synergy achieves a total performance improvement of 4.9\% mIoU while maintaining high computational efficiency.
-
-\begin{table}[!t]
-\centering
-\caption{Incremental Performance Improvement Path on S3DIS}
-\label{tab:progressive_improvement}
-\begin{tabular}{@{}lll@{}}
-\toprule
-\textbf{Model Configuration} & \textbf{mIoU (\%)} & \textbf{Improvement} \\ \midrule
-Pure Mamba Baseline & 70.3 & - \\
-Baseline + GGAM & 72.5 & +2.2 \\
-Baseline + GGAM + Shared-Parameter ASD-SSM & 73.4 & +0.9 \\
-Baseline + GGAM + Full ASD-SSM (PointSS) & \textbf{75.2} & +1.8 \\ \midrule
-\textbf{Total Improvement} & - & \textbf{+4.9} \\ \bottomrule
-\end{tabular}
-\end{table}
-
-\section{Experiments}
-
-\textbf{Implementation Details:} We conducted benchmark tests for point cloud analysis on the indoor dataset S3DIS and the classification dataset ModelNet40. All experiments were performed on an Nvidia A6000 GPU. For network training, we employed the AdamW optimizer and the OneCycleLR learning rate scheduler, with an initial maximum learning rate of 6e-3. The scheduling mechanism included an early-stage warm-up followed by a cosine annealing cycle. The entire training process spanned 3000 epochs with a batch size of 6, utilizing Automatic Mixed Precision (AMP) to enhance training efficiency.
-
-In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The Patch Size was uniformly set to 128, consistent with existing works to ensure a fair comparison. We selected the Cross-Entropy loss as the evaluation criterion, which is the most widely used loss function for classification and segmentation tasks in semantic analysis.
-
-To fairly evaluate the independent contributions of our proposed architectural innovations (GGAM and ASD-SSM), we adopted a train-from-scratch setting, consistent with current Mamba-based methods. This choice ensures that performance gains are solely attributable to architectural improvements, eliminating confounding factors arising from diverse pre-training strategies.
-
-\subsection{Datasets}
-
-\textbf{S3DIS:} The S3DIS dataset serves as a standard benchmark for indoor semantic segmentation. It contains 272 rooms across six distinct areas, covering 13 semantic categories (e.g., walls, furniture). Each point includes 3D coordinates and RGB information. Following established protocols, Area 5 is selected for result validation.
-
-\textbf{ModelNet40:} This dataset is utilized for 3D object classification, comprising 12,311 CAD models from 40 categories. The data is partitioned into 8,156 training samples and 4,155 testing samples.
-
-\subsection{Evaluation Metrics}
-
-\textbf{mIoU:} Mean Intersection over Union (mIoU) is a widely used evaluation metric in tasks such as semantic segmentation to measure the degree of overlap between predicted results and ground truth labels. For each category $c$, the Intersection over Union (IoU) is defined as:
-\begin{equation}
-\text{IoU}_c = \frac{\text{TP}_c}{\text{TP}_c + \text{FP}_c + \text{FN}_c}
-\end{equation}
-where TP$_c$ denotes the number of points correctly predicted as category $c$ (True Positives), FP$_c$ represents the number of points incorrectly predicted as category $c$ (False Positives), and FN$_c$ represents the number of points that truly belong to category $c$ but were not correctly predicted (False Negatives). The mIoU is obtained by taking the arithmetic mean of the IoU values across all semantic categories. Since mIoU provides a more comprehensive reflection of the model's segmentation performance across various classes---especially in cases of imbalanced class distributions---it is more robust than Overall Accuracy. Therefore, this paper adopts mIoU as the primary metric for evaluating point cloud semantic segmentation performance on the S3DIS dataset.
-
-\textbf{OA:} Overall Accuracy (OA) is defined as the ratio of the number of correctly predicted samples to the total number of samples across all point cloud data. It is one of the most intuitive and commonly used performance metrics in classification tasks. This metric effectively reflects the model's discriminative capability at the global classification level. Consequently, this paper utilizes OA as the evaluation metric for point cloud classification performance on the ModelNet40 dataset.
-
-\subsection{Quantitative Experiments}
-
-\subsubsection{Experiment Results on the S3DIS Dataset}
-
-\Cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mIoU in Area 5, significantly outperforming mainstream methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 2.0\% and the representative state-space method PCM by 5.4\%.
-
-These improvements are primarily attributed to two architectural innovations. First, the Global Geometry-Aware Mechanism (GGAM) mitigates serialization-induced information loss by integrating windowed neighborhoods and dual-serialization fusion. This enhances boundary continuity and semantic consistency, particularly in complex regions with sharp transitions. Second, the Adaptive Scale-Decoupled State Space Model (ASD-SSM) dynamically generates customized parameters across scales. This decoupling enables the simultaneous modeling of long-range global dependencies at coarse scales and rapid local responses at fine scales, overcoming the limitations of single-granularity shared parameters.
-
-Furthermore, PointSS retains the linear time complexity of SSMs. As shown in \Cref{tab:param_comparison}, the method maintains high computational efficiency with only a marginal increase in inference time, validating its scalability for large-scale point cloud scenarios.
-
-\begin{table}[!t]
-\centering
-\caption{Performance Comparison of Semantic Segmentation on S3DIS}
-\label{tab:s3dis}
-\begin{tabular}{llll}
-\toprule
-\textbf{Source} & \textbf{Model} & \textbf{Architecture} & \textbf{mIoU} \\
-\midrule
-NeurIPS22 & Point Transformer V2 \cite{ptv2} & Transformer & 72.6 \\
-CVPR23 & PointMetaBase \cite{pmb} & Transformer & 72.0 \\
-ICCV23 & SuperpointTransformer \cite{spt} & Transformer & 68.1 \\
-CVMJ23 & Swin3D \cite{Swin3D} & Transformer & 72.5 \\
-CVPR24 & PPT+SpareUNET \cite{ppt} & Transformer & 72.7 \\
-CVPR24 & OA-CNNs \cite{oacnn} & CNN & 71.1 \\
-CVPR24 & OneFormer3D \cite{OneFormer3D} & Transformer & 72.4 \\
-CVPR24 & Point Transformer V3 \cite{ptv3} & Transformer & 73.2 \\
-AAAI25 & PCM \cite{pcm} & SSM & 69.8 \\
-Mathematics24 & PointMSGT \cite{pointmsgt} & Transformer & 68.6 \\
-Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 66.2 \\
- & PointSS & SSM & \textbf{75.2} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsubsection{Experiment Results on the ModelNet40 Dataset}
-
-\Cref{tab:ModelNet} summarizes the classification performance on ModelNet40. PointSS achieves an Overall Accuracy (OA) of 96.0\% without pre-training, outperforming the state-of-the-art Transformer-based Point2Vec by 1.2\% and the SSM-based Mamba3D by 1.9\%. This establishes PointSS as the top-performing SSM approach. The superior results compared to masked self-supervised methods indicate that explicit structural modeling tailored to point clouds can effectively enhance global semantic understanding without relying on large-scale pre-training. By preserving local geometric details through multi-scale hierarchical aggregation, the model demonstrates robust discriminative capability in classification tasks.
-
-\begin{table}[!t]
-\centering
-\caption{Classification Performance Comparison on ModelNet40}
-\label{tab:ModelNet}
-\begin{tabular}{llll}
-\toprule
-\textbf{Source} & \textbf{Model} & \textbf{Architecture} & \textbf{OA} \\
-\midrule
-NeurIPS22 & Point Transformer V2 \cite{ptv2} & Transformer & 94.2 \\
-AAAI24 & Point-FEMAE \cite{FEMAE} & Transformer & 94.5 \\
-LNCS24 & Point2Vec \cite{Point2Vec} & Transformer & 94.8 \\
-ACM MM24 & Mamba3D \cite{Mamba3D} & SSM & 94.1 \\
-NIPS24 & PointMamba \cite{PointMamba} & SSM & 93.6 \\
-TIP25 & OTMae3D \cite{OTMae3D} & Transformer & 94.5 \\
-AAAI25 & PCM \cite{pcm} & SSM & 93.4 \\
-Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
- & PointSS & SSM & \textbf{96.0} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Ablation Study}
-
-Ablation studies were conducted on the S3DIS dataset using a progressive strategy to verify individual module contributions. First, the effectiveness of GGAM in addressing geometric loss was examined (\Cref{tab:ggam_fragmentation,tab:ggam_category,tab:ggam_components}), followed by the validation of ASD-SSM design choices (\Cref{tab:scale_constraint,tab:param_gen,tab:param_comparison,tab:scale_config}).
-
 The baseline model utilizes a standard single-scale bidirectional Mamba with shared parameters. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a 2.2\% mIoU improvement. This confirms that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates serialization-induced information loss, thereby enhancing local structural representation.
 
 Building on this, incorporating multi-scale modeling with shared parameters improves performance by 0.9\% to 73.4\% mIoU. However, employing the full ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing an additional 1.8\% gain over the GGAM baseline. This demonstrates that decoupling parameters is crucial for simultaneously optimizing local detail capture and global semantic modeling.
@@ -449,7 +343,7 @@ In summary, GGAM and ASD-SSM exhibit strong functional complementarity: GGAM res
 
 \begin{table}[!t]
 \centering
-\caption{Incremental Performance Improvement Path on S3DIS}
+\caption{INCREMENTAL PERFORMANCE IMPROVEMENT PATH ON THE S3DIS DATASET}
 \label{tab:progressive_improvement}
 \begin{tabular}{lll}
 \toprule
