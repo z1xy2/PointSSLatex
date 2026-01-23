@@ -21,9 +21,9 @@
 
 \begin{document}
 
-\title{PointSS: A Geometry-Aware Multi-Scale State Space Model for Point Cloud Analysis}
+\title{PointSS: Geometry-Aware Multi-Scale State Space Feature Learning for Point Clouds}
 
-\author{Xin Wang$^{1,2,3}$,Xinyuan Zhang $^{1}$
+\author{Xin Wang$^{1,2,3}$, Xinyuan Zhang$^{1}$
 \thanks{$^{1}$School of Software, Jilin University, Changchun, China.}
 \thanks{$^{2}$School of Computer Science and Technology, Jilin University, Changchun, China.}
 \thanks{$^{3}$Key Laboratory of Symbolic Computation and Knowledge Engineering of Ministry of Education, Jilin University, Changchun, China.}
@@ -31,305 +31,231 @@
 
 % The paper headers
 \markboth{IEEE Transactions on Neural Networks and Learning Systems,~Vol.~XX, No.~X, Month~Year}%
-{Zhang \MakeLowercase{\textit{et al.}}: PointSS: A Geometry-Aware Multi-Scale State Space Model}
+{Wang \MakeLowercase{\textit{et al.}}: PointSS: Geometry-Aware Multi-Scale State Space Feature Learning}
 
 \maketitle
 
 \begin{abstract}
-Point cloud analysis is crucial for autonomous driving, robotic navigation, and virtual reality applications. While state space models like Mamba have been applied to point cloud processing due to their linear complexity, they face two key challenges: serialization-induced geometric information loss when spatially adjacent points are separated in sequences, and inability to distinguish feature importance across different scales in long sequences, leading to insufficient capture of both local details and global semantics.
-
-To address these challenges, we propose PointSS, a geometry-aware multi-scale state space model for point cloud analysis. We introduce the Global Geometry-Aware Mechanism (GGAM) that explicitly injects geometric priors into Mamba through efficient windowed neighborhood extraction and global cross-attention, compensating for geometric learning deficiency. We further propose the Adaptive Scale-Decoupled State Space Model (ASD-SSM) that dynamically generates customized parameters for different scales via a lightweight generator, enabling hierarchical multi-scale feature learning while respecting point cloud disorder with only 20\% additional parameters.
-
-Experimental results demonstrate significant advantages over existing methods. Without pre-training, PointSS achieves 75.2\% mIoU on S3DIS (5.4\% improvement over PCM) and 96.0\% accuracy on ModelNet40 (1.9\% improvement over Mamba3D), validating the effectiveness of our approach.
+State Space Models (SSMs) offer linear complexity for point cloud analysis but often suffer from geometric information loss and insufficient multi-scale representation due to the irregularity of 3D data serialization. To address these limitations, this paper proposes PointSS, a geometry-aware multi-scale state space framework. First, we introduce a Global Geometry-Aware Mechanism (GGAM) that mitigates the structural degradation caused by serialization. By incorporating spatial priors and a dual-serialization strategy, GGAM effectively recovers local geometric relationships and enhances boundary consistency. Second, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM) featuring a dynamic parameter generation mechanism. This approach decouples feature modeling across scales, allowing the model to simultaneously capture fine-grained local details and long-range global dependencies. The proposed method integrates efficiently with standard encoder-decoder architectures without relying on pre-trained models. Extensive experiments on the S3DIS and ModelNet40 datasets demonstrate that PointSS achieves state-of-the-art performance in semantic segmentation and classification tasks, exhibiting superior robustness to serialization perturbations while maintaining computational efficiency.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Point cloud analysis, State space models, Multi-scale feature fusion, Point cloud serialization, Geometric structure
+Geometry-Aware Feature Learning, Multi-Scale Representation, Point Cloud Serialization, Semantic Segmentation, State Space Models
 \end{IEEEkeywords}
 
 \section{Introduction}
-\IEEEPARstart{P}{oint} cloud analysis has been widely applied in autonomous driving and augmented reality (AR)/virtual reality (VR) domains. Compared to 2D images, point clouds possess characteristics such as sparsity and disorder, requiring new approaches distinct from 2D image analysis. With the maturation of point cloud reconstruction techniques, large-scale high-density point cloud scenes are gradually becoming prevalent. These large-scale scenes pose significant difficulties for point cloud analysis tasks \cite{Vertex}, requiring more efficient and accurate processing methods, such as improvements in point cloud processing efficiency or feature learning performance. As point cloud density increases, the number of points within the same window also increases, placing higher demands on the model's contextual understanding capabilities.
+\IEEEPARstart{P}{oint} clouds are fundamental for 3D perception but challenge feature extraction due to sparsity and disorder. Early methods like PointNet \cite{pointnet,PointNet++} processed points efficiently but often neglected local geometric relationships. Transformers \cite{pt,ptv2,ptv3} subsequently improved semantic representation via self-attention; however, their quadratic complexity O(N$^2$) creates scalability bottlenecks.
 
-Point cloud analysis initially relied on methods like PointNet \cite{pointnet,PointNet++} based on nearest neighbor search and MLPs, which avoided intermediate representation conversion but had limited feature extraction capabilities. Subsequently, Transformers \cite{pt,ptv3,superpoint} were widely applied due to their stronger global modeling capabilities, yet were constrained by quadratic computational complexity and insufficient long-sequence understanding. These limitations have become bottlenecks for developing point cloud foundation models and large-scale scene analysis. Inspired by temporal feature extraction schemes from natural language processing \cite{ssm,Mamba,Lstm}, increasingly more Mamba-related work \cite{Mamba,VisionMamba} has been applied to point cloud analysis, such as PCM (Point Cloud Mamba) \cite{pcm} and PointMamba \cite{PointMamba}. Its linear time complexity characteristic provides natural advantages and demonstrates good effectiveness for point cloud feature extraction.
+Recently, State Space Models (SSMs) \cite{ssm,Mamba}, exemplified by PointMamba \cite{PointMamba} and PCM \cite{pcm}, have been adopted for their linear complexity. Despite this efficiency, mapping 3D data to 1D sequences introduces ``geometric loss" and limits feature granularity. The root of geometric loss lies in the conflict between Mamba's linear state transition and 3D spatial proximity. Serialization using space-filling curves inevitably creates ``fracture points"---neighbors that are spatially close but sequentially distant. In Mamba's recurrent mechanism, information from these distant points decays before reaching the center point, preventing the effective recovery of local attributes like surface normals and curvature. As illustrated in Fig.~1, this information loss is particularly detrimental at object boundaries (e.g., wall-pillar junctions), where spatially adjacent yet sequentially distant context is crucial for accurate segmentation.
 
-Current Mamba-based point cloud analysis methods face two critical issues. First, although serialization methods can maintain spatial proximity within local windows, Mamba's linear state propagation mechanism cannot effectively associate spatially adjacent but sequentially distant points (fragmented points), making it difficult for the model to integrate geometric information from all spatial neighbors, thereby affecting accurate learning of complex shapes. We refer to this situation as \textit{geometric loss}. Second, current models have single-granularity feature extraction in long sequences and impose causal relationships on point clouds, unable to simultaneously capture feature information at different hierarchical levels, leading to poor point cloud analysis performance.
+The limitations of existing methods stem from coupling serialization strategies with linear modeling. First, rigid preprocessing makes models sensitive to input permutation, undermining the unordered nature of point clouds. Second, standard linear frameworks struggle to assign adaptive weights based on spatial distance, failing to balance local geometric details with global semantic aggregation.
 
-The core reason for the geometric loss problem lies in the contradiction between Mamba's linear state propagation mechanism and point cloud spatial characteristics. Although spatial filling curve-based serialization methods (such as Z-order and Hilbert encoding) can better maintain spatial proximity within local windows, they cannot guarantee that all spatially adjacent points are also adjacent in the sequence. Mamba propagates temporal information through state vectors, and during sequential feature extraction, the state vector gradually updates to absorb information from new points. The key issue is: geometric information from fragmented points gradually decays during state propagation; when the model processes a certain point, information from spatially nearby but sequentially distant neighbors has been lost, making it difficult for the model to implicitly learn complete geometric structural features. Since point cloud geometric structure information (such as surface normals and edge curvature) is typically defined by spatially adjacent point sets, the existence of fragmented points prevents Mamba from integrating information from all spatial neighbors for geometric learning, thereby affecting accurate segmentation of complex shapes (such as wall-column boundaries and curved surface transition regions). For example, two points only 0.1m apart in 3D space may be serialized to positions thousands of points apart due to x-coordinate differences, causing their k-nearest neighbor sets to be fragmented in the sequence. Mamba cannot effectively associate these fragmented points, ultimately leading to poor segmentation performance. As shown in \cref{fig:analysis}, we visualize using the wall-column boundary segmentation as an example: red points represent the center point to be predicted, green points represent spatially and sequentially adjacent points (whose geometric information can be normally learned through Mamba state propagation), and orange points represent fragmented points (spatially adjacent but sequentially distant, whose geometric information has been forgotten when reaching the center point).
+To address these issues, this paper proposes PointSS, an adaptive scale-decoupled state space framework. The main contributions are:
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=3.5in]{../picture/analysis.JPG}
-\caption{Visualization of geometric structure loss after serialization. Red point: center point to be predicted. Green points: spatially and sequentially adjacent neighbors. Orange points: fragmented neighbors that are spatially close but sequentially distant, causing geometric information loss.}
-\label{fig:analysis}
-\end{figure}
+\begin{enumerate}
+\item Explicit geometric priors are injected via windowed neighborhoods and dual-serialization fusion. This compensates for serialization-induced fragmentation and enhances boundary characterization.
 
-\textbf{Key Observation}: Although KNN can precisely calculate geometric features and avoid fragmentation issues, its $O(N\log N)$ computational complexity limits model scale and receptive field expansion, becoming a performance bottleneck in large-scale point cloud scenarios. Therefore, windowed neighborhoods are adopted to rapidly extract geometric priors ($O(N)$ complexity) and explicitly inject geometric information through GGAM's (Global Geometry-Aware Mechanism) global geometric awareness mechanism to compensate for Mamba's insufficient implicit geometric learning, achieving a better balance between efficiency and effectiveness.
+\item A dynamic parameter generation mechanism enables fine scales to capture local variations and coarse scales to model long-range dependencies, achieving robust hierarchical representation efficiently.
 
-The core reason for single feature granularity and imposed causality in long sequences is that existing methods, although improving serialization through additional ordering strategies, cannot precisely distinguish learning weights between near and far points within neighborhoods when processing long-sequence point clouds due to Mamba's linear computational characteristics. This makes it difficult to simultaneously capture fine-grained details from nearby points and high-level semantics from distant points, resulting in insufficient feature extraction granularity and hierarchical structure. Additionally, these methods often rely on specific ordering or structured preprocessing of point clouds, ignoring the inherently unordered nature of point clouds and imposing causal relationships, thereby losing data diversity and completeness of original feature distributions to some extent. This makes models overly sensitive to sequence order, where changes in input order may lead to completely different outputs, reducing model robustness.
-
-To address these issues, we propose PointSS, a point cloud analysis method based on Adaptive Scale-Decoupled State Space Models. Our main contributions include:
-
-\begin{itemize}
-\item We propose the Global Geometry-Aware Mechanism (GGAM), which efficiently extracts geometric priors (curvature and normals) through windowed neighborhoods and provides Mamba with explicit geometric awareness capabilities through dual serialization fusion, global cross-attention, and adaptive gating, effectively compensating for geometric learning difficulties caused by sequence fragmentation.
-
-\item We propose the Adaptive Scale-Decoupled State Space Model (ASD-SSM). ASD-SSM dynamically generates customized SSM parameters for different scales through a scale-aware parameter generator, enabling coarse scales to capture long-range dependencies and fine scales to quickly respond to local variations. This method achieves hierarchical multi-scale feature learning while respecting point cloud disorder, with only approximately 20\% additional parameters reaching performance close to fully independent parameter schemes.
-
-\item We conducted extensive experiments on standard benchmarks including S3DIS and ModelNet40. PointSS significantly outperforms existing Mamba-based point cloud analysis methods, achieving 75.2\% mIoU on S3DIS and 96.0\% accuracy on ModelNet40. Detailed ablation studies validate the effectiveness of each component.
-\end{itemize}
-Code will be released at https://github.com/z1xy2/PointSS-public.
+\item PointSS outperforms existing Mamba-based methods, achieving 75.2\% mIoU on S3DIS and 96.0\% accuracy on ModelNet40, with ablation studies validating each component.
+\end{enumerate}
 
 \section{Related Work}
 
-In recent years, the point cloud analysis field has undergone an important transformation from early geometry-prior-based methods to deep learning-driven end-to-end models. Researchers have proposed a series of innovative solutions addressing issues such as sparsity, disorder, and high dimensionality of point cloud data. This section systematically reviews related work from three dimensions: deep learning development in point cloud semantic analysis, geometry feature enhancement strategies, and multi-scale feature fusion techniques, analyzing the core ideas, technical contributions, and limitations of various methods.
+In recent years, the field of point cloud analysis has undergone a significant transition from early methods based on geometric priors to deep learning-driven end-to-end models. Researchers have proposed a series of innovative solutions to address challenges such as the sparsity, disorder, and high-dimensional nature of point cloud data. This section systematically reviews related work across three dimensions: the development of deep learning in point cloud semantic analysis, geometric feature enhancement strategies, and multi-scale feature fusion techniques, while analyzing the core ideas, technical contributions, and limitations of each method.
 
-\subsection{Deep Learning-Based Point Cloud Semantic Analysis}
+\subsection{Deep Learning-based Point Cloud Semantic Analysis}
 
-PointNet \cite{pointnet}, as pioneering work, achieved permutation invariance through symmetric aggregation functions (such as max pooling) and enabled end-to-end learning directly on raw point clouds. However, its global pooling strategy, while capturing overall shape information, has obvious deficiencies in local geometric detail modeling. PointNet++ \cite{PointNet++} proposed a hierarchical feature learning framework that recursively applies the PointNet structure at different scales through a sampling-grouping-feature extraction strategy, effectively balancing the modeling needs for local details and global structure. Building on PointNet++, PointNeXt \cite{pointnext} demonstrated that improved training strategies and model scaling can significantly boost performance without architectural changes. Subsequently, DGCNN \cite{DGCNN} introduced a dynamic graph construction mechanism, defining neighborhood relationships in feature space and significantly enhancing adaptability to complex geometric structures. PAConv \cite{paconv} proposed position adaptive convolution with dynamic kernel assembling, constructing convolution kernels in a data-driven manner to better handle irregular point cloud data. FusionNet \cite{FusionNet} achieved multi-scale feature fusion through multi-resolution feature extraction modules, improving analysis accuracy. Additionally, methods exploring alternative representations have emerged: CurveNet \cite{curvenet} proposed learning curves in point clouds by taking guided walks to aggregate hypothetical curves; RepSurf \cite{repsurf} introduced surface representation through triangular and umbrella structures; PointVector \cite{pointvector} designed vector-oriented point set abstraction for better local feature extraction; and PointMLP \cite{pointmlp} demonstrated that simple residual MLP frameworks can achieve competitive performance without sophisticated local geometric extractors. However, CNN-based methods are still limited by regular grid convolutions and fixed receptive fields, making it difficult to effectively construct a hierarchical information matrix of multi-scale semantic information.
+PointNet \cite{pointnet} pioneered handling point cloud disorder via symmetric functions but lacked local detail modeling, a limitation addressed by PointNet++ \cite{PointNet++} through hierarchical sampling. Subsequent works like DGCNN \cite{DGCNN} and FusionNet \cite{FusionNet} enhanced adaptability via dynamic graphs and multi-scale fusion. However, these convolution-based methods remain constrained by fixed receptive fields, limiting effective hierarchical feature construction.
 
-Inspired by Transformers' success in NLP and CV, Point Transformer \cite{pt} designed specialized point cloud self-attention modules that achieve joint modeling of point cloud geometric information and semantic features through position encoding and feature enhancement strategies. Its attention computation considers not only feature similarity but also incorporates relative position information, enabling the model to simultaneously perceive semantic associations and spatial proximity relationships. PCT \cite{PCT} improved feature extraction efficiency through a lightweight attention mechanism, Point Transformer V2 \cite{ptv2} introduced grouped vector attention mechanisms that effectively reduced computational complexity, and PTv3 \cite{ptv3} adopted a simplified design philosophy, discarding complex attention interaction mechanisms and achieving SOTA performance through direct serialization strategies, proving the "simplicity is effective" design philosophy. To address efficiency and scalability, Fast Point Transformer \cite{fast_point_transformer} proposed lightweight self-attention with voxel hashing-based architecture for rapid inference, while Stratified Transformer \cite{stratified_transformer} introduced stratified key sampling to enlarge receptive fields at low computational cost. For LiDAR-based recognition, Spherical Transformer \cite{spherical_transformer} designed radial window self-attention to handle varying-sparsity distribution of LiDAR points. Octree-based approaches like OctFormer \cite{octformer2} leveraged sorted shuffled keys for efficient local window partitioning. Self-supervised and pre-training methods have also advanced significantly: I2P-MAE \cite{i2p_mae} leveraged 2D pre-trained models via image-to-point masked autoencoders, Point-M2AE \cite{point_m2ae} proposed multi-scale masked autoencoders for hierarchical pre-training, PointGPT \cite{pointgpt} introduced auto-regressive generative pre-training, and PointCLIP \cite{pointclip} conducted zero-shot and few-shot learning by aligning CLIP-encoded point clouds with 3D category texts. Although Transformer methods excel in global modeling capabilities, the $O(N^2)$ complexity of standard self-attention mechanisms makes models struggle to maintain real-time performance when facing large-scale point clouds, and their global perception characteristics show insufficient sensitivity to local structural details in fine geometric modeling tasks.
+Transformers revolutionized the field by leveraging self-attention for global dependency modeling. Point Transformer \cite{pt} integrated positional encoding for spatial awareness, while PTv3 \cite{ptv3} achieved state-of-the-art performance using simplified serialization. Despite their advantages, the quadratic complexity O(N$^2$) creates bottlenecks for large-scale processing, and their global focus often reduces sensitivity to fine-grained local details.
 
-To address Transformer's computational complexity bottleneck, State Space Model (SSM)-based methods have emerged as an efficient alternative. Mamba \cite{Mamba} achieves efficient sequence modeling through selective state space mechanisms, with its linear time complexity providing a theoretical foundation for large-scale point cloud processing. PointMamba \cite{PointMamba} first introduced the Mamba architecture to point cloud analysis, serializing 3D point clouds into 1D sequences through space-filling curves, enabling global information aggregation with linear complexity. PCM \cite{pcm} further optimized the serialization strategy, proposing point cloud ordering methods that preserve spatial adjacency and designing new position encoding mechanisms to enhance spatial perception capabilities. However, existing SSM methods face fundamental challenges when adapting 3D unstructured data to 1D sequence processing frameworks: First, PointMamba relies on fixed serialization rules for point cloud processing, causing spatially adjacent points to potentially be fragmented in sequences, making key features defined by local geometric neighborhoods such as normals and curvature difficult to model effectively, thereby affecting the model's representation capability for complex surfaces and sharp edges; Second, although PCM alleviates fragmentation through specific serialization strategies, limited by Mamba's linear computational framework, it cannot dynamically assign differentiated weights to neighborhood points at different distances in long-sequence scenarios—fine geometric information from nearby points (such as precise normal variations in high-curvature regions) and global semantic associations from distant points (such as inter-part structural relationships) are not hierarchically distinguished in feature aggregation, resulting in single-granularity feature expression and difficulty balancing local geometric details with cross-scale semantic associations.
+State Space Models (SSMs) \cite{Mamba} offer a promising alternative with linear complexity. Methods like PointMamba \cite{PointMamba} and PCM \cite{pcm} adapt SSMs by serializing 3D clouds into 1D sequences. However, this adaptation introduces two key challenges: ``geometric fragmentation," where fixed serialization separates spatially adjacent points crucial for local structure (e.g., normals), and single-granularity representation, where linear scanning struggles to balance high-frequency local details with long-range semantic associations.
 
-\subsection{Geometry Feature Enhancement Methods for Point Cloud Analysis}
+\subsection{Point Cloud Analysis via Geometric Feature Enhancement}
 
-Point cloud data inherently carries rich geometric information, such as local surface normals, curvature, and edge features, which are crucial for understanding 3D structures. In recent years, researchers have increasingly focused on how to explicitly model and utilize these geometric features to enhance point cloud analysis performance.
+Explicit modeling of geometric attributes, such as surface normals and curvature, is essential for robust 3D structural understanding. PointGA \cite{pointga} injects geometric priors by expanding raw coordinates into multi-dimensional features via triangular positional encoding. Similarly, PointMSGT \cite{pointmsgt} utilizes a multi-scale framework with a Geometric Feature Extraction (GFE) module to reconstruct local triangular structures for detailed relationship modeling. Beyond direct feature extraction, geometric consistency constraints, including distance and angle preservation, have been employed to regularize learning processes \cite{gsrnet,geotransformer}. Geo-CNN \cite{geo-cnn} further captures structural dependencies by constructing geometric graphs with similarity-based edge weights. However, these approaches are often constrained by the high computational overhead of K-Nearest Neighbor (KNN) searches required for precise geometric calculation. Furthermore, effectively integrating explicit geometric priors with deep features while avoiding information redundancy and conflict remains a significant challenge.
 
-PointGA (Geometrically Aware Transformer) \cite{pointga} extends original 3D coordinates to multi-dimensional geometric information, injecting more geometric prior knowledge into the network. This method designs a triangular position encoding mechanism suitable for point clouds, capturing fine-grained geometric relationships by reconstructing local triangular structures. Experiments show that explicit geometric information integration can significantly improve the model's feature expression capabilities. PointMSGT \cite{pointmsgt} proposes a multi-scale geometric feature extraction framework with core modules including Geometric Feature Extraction (GFE) and Multi-Scale Attention (MSA). The GFE module reconstructs triangular structures through two neighbors of each point, extracting detailed local geometric relationships using polar coordinates, normal vectors, and triangle plane constants. This geometric modeling strategy demonstrates strong robustness in complex scenarios. In geometric constraint aspects, recent research \cite{gsrnet,geotransformer,geotransformer2} has explored using geometric consistency to improve point cloud registration and reconstruction tasks. These methods regulate the feature learning process by introducing geometric constraints (such as distance preservation and angle preservation), ensuring learned feature representations conform to physical world geometric laws. For LiDAR-based applications, advanced denoising methods \cite{gdanet_lidar} have been proposed to enhance object recognition through novel frameworks combining denoising and modified architectures. Geo-CNN \cite{geo-cnn} captures point cloud geometric features by constructing geometric graphs, using geometric similarity between points to define edge weights, but requires additional geometric information and depends on high-quality input point clouds.
+\subsection{Point Cloud Analysis via Multi-Scale Feature Fusion}
 
-However, existing geometry feature enhancement methods mainly encounter two limitations: First, computational efficiency issues—precise geometric feature computation (such as KNN-based normal estimation) often has high computational cost, especially on large-scale point clouds; Second, feature fusion issues—how to effectively fuse geometric and deep features while avoiding information redundancy and feature conflicts remains an open problem. Most methods rely on traditional KNN search for geometric relationship modeling, which becomes a performance bottleneck when processing million-point clouds.
+Multi-scale feature fusion serves as a fundamental mechanism for hierarchical representation in point cloud analysis. Early approaches inspired by Feature Pyramid Networks often suffered from feature redundancy and high computational costs. Recent adaptive strategies have addressed these limitations; Bi et al. \cite{adaptive_fusion_2025} combined sparse and point convolutions via an Importance of Spatial Location module, while Liu et al. \cite{projection_based_fusion_2024} integrated 3D geometry with 2D projections to enhance small object detection. Wen et al. \cite{local_feature_fusion_2024} further utilized multi-layer attention to distinctly encode geometric and semantic features. Despite these advancements, significant challenges persist regarding automatic scale selection, adaptive weight learning, and computational efficiency \cite{lidar_segmentation}. Specifically, existing methods struggle to achieve effective information transmission and dynamic weight allocation across scales in long-sequence scenarios, limiting their capacity for complex scene understanding.
 
-\subsection{Multi-Scale Feature Fusion Methods for Point Cloud Analysis}
-
-Multi-scale feature fusion is one of the core technologies in point cloud analysis. Traditional multi-scale methods such as Feature Pyramid Networks (FPN) have inspired hierarchical feature learning in the point cloud domain. Early work extracted local features at different scales through multiple parallel branches, then fused features at multiple levels, but these methods often suffer from feature redundancy and high computational overhead issues. In recent years, research in this area has mainly focused on designing more effective multi-scale feature extraction and fusion strategies.
-
-Adaptive fusion strategies have shown excellent performance in multi-scale feature integration. Bi et al. \cite{adaptive_fusion_2025} proposed an adaptive fusion method combining multi-scale sparse convolution and point convolution, introducing an Importance of Spatial Location (IoSL) sparse 3D convolution module that effectively addresses low accuracy and feature redundancy issues in LiDAR point cloud semantic segmentation. Liu et al. \cite{projection_based_fusion_2024} proposed a multi-scale feature fusion method based on raw point clouds and projections, achieving more complete multi-scale feature expression by combining 3D geometric information from point clouds with 2D texture information from projection images. This method significantly improves detection performance for small and distant targets while maintaining computational efficiency. Similarly, 2DPASS \cite{2dpass} leveraged 2D priors to assist semantic segmentation on LiDAR point clouds through multi-modal fusion and knowledge distillation. Wen et al. \cite{local_feature_fusion_2024} proposed a semantic segmentation network based on local feature fusion and multi-layer attention mechanisms, fully utilizing point cloud feature perception and geometric structure representation capabilities by separately encoding geometric and feature information. This method achieved significant performance improvements in complex indoor scene semantic segmentation tasks. Advanced multi-scale architectures have also been proposed: CCMNet \cite{ccmnet} explored multi-scale and cross-type features by integrating coarse-grained, mid-grained, and fine-grained feature granularities; PointStack \cite{pointstack} utilized multi-resolution features and learnable pooling for comprehensive feature aggregation. Graph-based multi-scale methods like LGGCM \cite{lggcm} and DGACN \cite{dgacn} proposed local-global graph convolution and dual-graph attention mechanisms for hierarchical feature learning. For LiDAR point cloud processing, specialized segmentation methods \cite{lidar_segmentation} have been developed to handle 3D data in projection space. Alternative feature learning approaches include PointWavelet \cite{pointwavelet}, which learns in the spectral domain via graph wavelet transforms to capture multi-scale spectral graph convolution.
-
-Multi-scale feature fusion plays an important role in point cloud analysis, but existing methods still have several limitations. Automatically determining appropriate scale ranges and scale intervals remains an open research question. The importance of different scale features may vary across regions and tasks, yet designing adaptive weight learning mechanisms is challenging. Multi-scale processing often brings additional computational overhead, making it difficult to optimize efficiency while maintaining performance. Particularly in long-sequence point cloud processing, existing methods struggle to achieve effective information propagation and weight allocation across different scales, limiting model understanding capabilities for complex scenes.
-
-\section{Proposed Method}
+\section{Method}
 
 \subsection{Framework Overview}
 
-\cref{fig:architecture} shows the overall architecture of the PointSS model, where the data processing part includes data augmentation and point cloud serialization. The serialization encoding method adopts PTv3's \cite{ptv3} approach. After data processing, GGAM performs global geometric feature perception on the point cloud. The feature learning part adopts a PointNet-based U-shaped encoder-decoder architecture. Both encoder and decoder employ point-wise extraction strategies. Note the orange-marked Repeated Points in the figure, which is an operation to enable uniform window division, with detailed procedures introduced in the Window Partitioning section. Subsequently, point cloud data undergoes final semantic feature fusion, and at the model's end, final prediction results are obtained based on the maximum predicted probability of labels. Compared to PCM, this scheme only needs to serialize the point cloud once during training initialization and directly performs downsampling through pooling using the serialized point cloud, rather than performing multiple serializations in the encoder and using KNN for neighborhood search and downsampling, providing significant performance advantages.
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=3.5in]{../picture/architecture.jpg}
-\caption{Overall architecture of PointSS. The framework includes data processing with one-time serialization, GGAM for geometric feature perception, and U-shaped encoder-decoder with ASD-SSM modules. Skip connections link encoder and decoder at each level.}
-\label{fig:architecture}
-\end{figure}
+The overall architecture of the PointSS model is illustrated in Fig.~2. The data processing stage encompasses data augmentation and point cloud serialization, with the latter adopting the encoding scheme from PTv3 \cite{ptv3}. Following data processing, the Global Geometry-Aware Mechanism (GGAM) is employed to perform global geometric feature perception on the point cloud. The feature learning component utilizes a PointNet-based U-shaped encoder-decoder architecture, where both the encoder and decoder implement a point-wise extraction strategy. It should be noted that the Repeated Points (highlighted in orange in the figure) refer to an operation performed to ensure uniform window partitioning; specific details are provided in the Window Partitioning section. Subsequently, the point cloud data undergoes final semantic feature fusion, and the ultimate prediction is obtained at the end of the model based on the maximum probability of the label prediction. Compared to PCM, this scheme only requires point cloud serialization at the beginning of training. It performs down-sampling directly via pooling on the serialized point cloud, rather than executing multiple serializations and using K-Nearest Neighbor (KNN) for neighborhood search and down-sampling within the encoder. This approach significantly reduces computational complexity.
 
 \subsection{Global Geometry-Aware Mechanism (GGAM)}
 
-Addressing the geometric learning difficulties in Mamba-based point cloud analysis methods described earlier, the core issue lies in the contradiction between Mamba's state space model mechanism and point cloud geometric characteristics. Mamba performs sequence modeling through the following discretized state space equations:
+The difficulty in geometric learning within Mamba-based point cloud analysis methods, as previously discussed, stems fundamentally from the contradiction between the state space model mechanism of Mamba and the geometric characteristics of point clouds. Mamba performs sequence modeling through the following discretized state space equations:
 \begin{equation}
-\begin{aligned}
-x_{k} &= \overline{A}x_{k-1} + \overline{B}u_{k} \\
-y_{k} &= \overline{C}x_{k} + \overline{D}u_{k}
-\end{aligned}
+x_k = \bar{A}x_{k-1} + \bar{B}u_k, \quad y_k = \bar{C}x_k + \bar{D}u_k
 \end{equation}
-where $k$ represents the position index after point cloud serialization, $x_k$ is the state vector at position $k$, $u_k$ is the input vector, $y_k$ is the output vector, and $\overline{A}$, $\overline{B}$, $\overline{C}$, $\overline{D}$ are system matrices. During point cloud serialization processing, geometrically adjacent points are separated into fragmented points due to serialization rules, making it difficult for the state vector $x_k$ to establish associations between fragmented points during linear propagation, preventing the model from implicitly learning complete geometric structural features, especially key geometric information such as normals and curvature defined by spatial neighborhoods.
+where, $k$ denotes the position index after point cloud serialization, $x_k$ is the state vector at the $k$-th position, $u_k$ is the input vector, $y_k$ is the output vector, and $\bar{A}$, $\bar{B}$, $\bar{C}$, $\bar{D}$ are the system matrices. During the point cloud serialization process, geometrically adjacent points are separated into ``fracture points" due to serialization rules. Consequently, the state vector $x_k$ struggles to establish associations between these fracture points during linear transmission. This makes it difficult for the model to implicitly learn complete geometric structural features, particularly critical geometric information such as surface normals and curvature that rely on spatial neighborhood definitions.
 
-Therefore, we design the Global Geometry-Aware Mechanism (GGAM), which explicitly extracts point cloud geometric priors and establishes global associations to provide rich geometric information for subsequent encoder and decoder, thereby compensating for Mamba's geometric learning difficulties. The overall design of GGAM is shown in \cref{fig:ggam}, mainly including two parts: point cloud graph construction with geometric feature extraction, and geometric feature enhancement and fusion.
+To address this, the Global Geometry-Aware Mechanism (GGAM) is designed to compensate for the geometric learning difficulties of Mamba by explicitly extracting point cloud geometric priors and establishing global associations, thereby providing rich geometric information for the subsequent encoder and decoder. The overall design of GGAM is illustrated in Fig.~3, which primarily consists of two parts: point cloud graph construction with geometric feature extraction, and geometric feature enhancement and fusion.
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=3.5in]{../picture/ggam.jpg}
-\caption{Structure of GGAM. Dual serialization paths (Z-order and Hilbert) extract geometric features ($\Delta\mathbf{p}_{ij}$, $\alpha_{ij}$, $\boldsymbol{\kappa}$), which are aggregated and enhanced through self-attention and cross-attention, then adaptively fused to produce final features $\mathbf{H}_{final}$.}
-\label{fig:ggam}
-\end{figure}
+Traditional methods for point cloud graph construction and geometric relationship computation (such as curvature and surface normals) typically rely on K-Nearest Neighbor (KNN) searches. However, the computational complexity of KNN searches is prohibitively high, especially when processing large-scale point cloud data. To address this issue, an efficient edge construction and curvature/normal computation method based on point cloud serialization is proposed.
 
-\textbf{Point Cloud Graph Construction and Geometric Feature Extraction}: Traditional point cloud graph construction and geometric relationship computation methods (such as curvature and normals) typically rely on $K$-nearest neighbor (KNN) search for construction. However, KNN search has high computational complexity, especially when processing large-scale point cloud data. To address this issue, we propose an efficient edge construction and curvature-normal computation method based on point cloud serialization.
-
-Given point cloud $\{p_1, p_2, \ldots, p_N\}$ and its serialized point sequence $Q$, i.e., $\{q_1, q_2, \ldots, q_N\}$, it is partitioned into non-overlapping windows:
+Given the point cloud $\{p_1, p_2, \ldots, p_N\}$ and its serialized sequence $Q = \{q_1, q_2, \ldots, q_N\}$, the sequence is partitioned into non-overlapping windows:
 \begin{equation}
 W_m = \{q_{(m-1) \cdot P + 1}, q_{(m-1) \cdot P + 2}, \ldots, q_{m \cdot P}\}
 \end{equation}
-where $m = 1, 2, \ldots, \lfloor N/P \rfloor$ is the window index, and $P$ is the window size (patch size). During partitioning, the last window may have fewer than $P$ points; in this case, a window padding strategy is used to fill the last window with points from the second-to-last window. Detailed procedures are described in the Window Partitioning section.
+where $m = 1, 2, \ldots, \lfloor N/P \rfloor$ represents the window index, and $P$ denotes the patch size. During the partitioning process, cases may arise where the number of points in the final window is less than $P$. In such instances, a window padding strategy is employed, where points from the penultimate window are padded into the final window. Detailed implementation is provided in the Window Partitioning section.
 
-For any point $p_i$, let its position after serialization be $pos(i)$, then the neighborhood of this point is defined as its belonging window:
+For any point $p_i$, let its position after serialization be pos($i$). The neighborhood of this point is defined as the window to which it belongs:
 \begin{equation}
-\mathcal{N}_P(p_i) = W_{\lfloor \frac{pos(i)-1}{P} \rfloor + 1}
+\mathcal{N}_P(p_i) = W_{\lfloor \frac{\text{pos}(i)-1}{P} \rfloor + 1}
 \end{equation}
 
-Based on windowed neighborhoods, edge connection relationships for the point cloud are constructed. For points within each window $W_m$, full connections are established:
+Based on the windowed neighborhoods, the edge connections of the point cloud are constructed. For points within each window $W_m$, a fully connected graph is established:
 \begin{equation}
-\mathcal{E}_m = \{(q_i, q_j) : q_i, q_j \in W_m, i \neq j\}
+\mathcal{E}_m = \{(q_i, q_j): q_i, q_j \in W_m, i \neq j\}
 \end{equation}
 
-Compared to traditional KNN methods, the windowed neighborhood construction method adopts an efficiency-first design philosophy: trading local neighborhood approximation for significant computational efficiency improvement (complexity reduced from $O(N\log N)$ to $O(N)$). This trade-off strategy is inspired by Point Transformer V3 \cite{ptv3}, where PTv3 demonstrated that computational resources saved through efficient neighborhood search can be used to expand model scale (receptive field expanded from 16 points to 1024 points), ultimately outperforming KNN-based methods on multiple benchmarks.
+Compared to traditional KNN methods, the windowed neighborhood construction method adopts an efficiency-oriented design philosophy, trading the precision of local neighborhoods for a significant increase in computational efficiency (reducing complexity from O($N$log$N$) to O($N$)). This trade-off strategy is inspired by Point Transformer V3 \cite{ptv3}, which demonstrated that computational resources saved through efficient neighborhood search can be reallocated to expand the model scale (e.g., expanding the receptive field from 16 to 1024 points), ultimately outperforming KNN-based methods across multiple benchmarks.
 
-\textbf{Geometric Prior Value of Windowed Neighborhoods}: Although windowed neighborhoods cannot guarantee precise K-nearest neighbor relationships, the geometric features (curvature and normals) they compute still preserve the \textbf{geometric structural priors} of the point cloud. GGAM's design does not pursue precision of single-point geometric features but provides Mamba with global geometric awareness capabilities through the following mechanisms to compensate for geometric learning difficulties caused by fragmentation: (1) \textbf{Dual serialization complementarity}: Z-order and Hilbert encoding partition space from different angles, reducing systematic bias of single serialization and improving geometric prior coverage; (2) \textbf{Global geometric association}: The cross-attention mechanism aggregates geometric information across the global range of two sequences, enabling each point (including highly fragmented points) to establish geometric associations with spatially adjacent points, breaking through Mamba's linear propagation locality limitations; (3) \textbf{Adaptive fusion}: The gating mechanism dynamically adjusts geometric feature weights based on local geometric complexity, enhancing geometric prior influence in complex boundary regions. As shown in \cref{tab:split_and_repair}, this mechanism improves performance for severely fragmented points ($>70\%$ neighbor loss) from 47.6\% to 57.2\% (+9.6\%), proving GGAM can effectively compensate for Mamba's geometric learning deficiency. The key insight is: \textit{The value of explicit geometric priors lies not in their absolute accuracy but in providing inductive biases for deep learning models, guiding them to focus on point cloud geometric structural properties}.
-
-Based on the constructed windowed neighborhoods, an 8-dimensional feature vector is extracted for each edge $(q_i, q_j)$ to fully describe the geometric relationship between point pairs, constructing a point cloud graph. In the graph structure, nodes represent each point, and edges represent geometric relationships between two points. The edge construction properties of the point cloud graph determine its advantage in extracting geometric information. The edge feature vector $\mathbf{f}_{ij}$ consists of the following components:
-
+Based on the constructed windowed neighborhoods, an 8-dimensional feature vector is extracted for each edge $(q_i, q_j)$ to fully describe the geometric relationship between point pairs and construct the point cloud graph. In this graph structure, nodes represent individual points, and edges represent the geometric relationships between pairs of points. The inherent properties of the edge construction in the point cloud graph provide distinct advantages for extracting geometric information. The edge feature vector $\mathbf{f}_{ij}$ consists of the following components:
 \begin{equation}
 \mathbf{f}_{ij} = [\Delta\mathbf{p}_{ij}, \alpha_{ij}, \boldsymbol{\kappa}] \in \mathbb{R}^8
 \end{equation}
-where $\Delta\mathbf{p}_{ij} = \mathbf{p}_j - \mathbf{p}_i$ is the relative coordinate vector (3D), $\alpha_{ij}$ is the directional relationship feature (3D), computed as the difference between the average normal within the window and the normalized relative position vector to characterize edge direction deviation relative to the local surface normal, and $\boldsymbol{\kappa} = [\kappa_{norm}, \kappa_G]$ represents two types of curvature (2D): a normalized curvature measure $\kappa_{norm}$ (minimum eigenvalue-to-trace ratio) and Gaussian curvature $\kappa_G$ (product of two smallest eigenvalues).
+where $\Delta\mathbf{p}_{ij} = \mathbf{p}_j - \mathbf{p}_i$ is the relative coordinate vector (3D), and $\alpha_{ij}$ represents the directional relationship feature (3D). The latter is calculated from the difference between the average surface normal within the window and the normalized relative position vector, serving to characterize the deviation of the edge direction relative to the local surface normal. $\boldsymbol{\kappa}$ denotes two types of curvature (2D): the surface variation rate and the Gaussian curvature. After passing through a Multi-Layer Perceptron (MLP), edge features are aggregated into point features by accumulating all incident edge features and dividing by the number of neighboring edges, thereby achieving mean aggregation. For point $p_i$, the aggregated point feature is denoted as $\mathbf{H}$.
 
-After passing through multilayer perceptrons, mean aggregation from edge features to point features is achieved by accumulating all neighbor edge features and dividing by the number of neighbor edges. For point $p_i$, aggregated point feature $\mathbf{H}$ is obtained.
+The geometric feature enhancement and fusion module consists of three parts: a cross-attention mechanism based on dual-spatial encoding, adaptive gated fusion, and geometric consistency constraints.
 
-\textbf{Geometric Feature Enhancement and Fusion}: The geometric feature enhancement and fusion module includes three parts: cross-attention mechanism based on dual spatial encoding, adaptive gated fusion, and geometric consistency constraints.
+Since the aforementioned process is computed in parallel using point clouds serialized via Z-order encoding and Hilbert encoding, each point respectively obtains features $\mathbf{H}_z$ and $\mathbf{H}_h$. These two encoding methods produce different spatial neighborhood relationships and node permutation orders. Due to its recursive binary partitioning characteristic, Z-order encoding exhibits strong spatial clustering at local scales, enabling effective detection of geometric boundaries and local variations. In contrast, the Hilbert curve possesses superior spatial continuity preservation, which better maintains the overall coherence of geometric structures during serialization. Following standard practice, $Q$, $K$, and $V$ are generated within each encoding sequence for self-attention computation, allowing nodes to focus on their neighboring node features under that specific encoding. This yields results $A_z$ and $A_h$ for the Z-order and Hilbert sequences, respectively. Subsequently, a cross-attention mechanism is established between the two encoding sequences to generate $A'_z$ and $A'_h$, ensuring that the feature representations of the same point under two different spatial orderings can mutually enhance each other. Finally, more informative and robust node representations are obtained through feature fusion, the specific process of which is illustrated in Fig.~3. The fusion results in the dual-serialization enhanced features $\mathbf{H}''_z$ and $\mathbf{H}''_h$.
 
-\textbf{Cross-Attention Mechanism Based on Dual Spatial Encoding}: Since the above process is computed in parallel using point clouds serialized with Z-order and Hilbert encoding, each point obtains features $\mathbf{H}_{z}$ and $\mathbf{H}_{h}$ respectively. These two encoding methods produce different spatial neighborhood relationships and node arrangement orders. Z-order encoding, due to its recursive binary partitioning characteristics, has good spatial clustering at local scales and can effectively detect geometric boundaries and local variations. Hilbert curves have better spatial continuity preservation characteristics, better maintaining overall geometric structure coherence during serialization. Following \cite{attention}, $Q$, $K$, $V$ are generated within each encoding sequence for self-attention computation, enabling nodes to attend to neighbor node features under that encoding, with Z-order and Hilbert encoding sequences generating results $A_z$ and $A_h$ respectively. Then cross-attention mechanisms are established between the two encoding sequences, generating ${A}'_z$ and ${A}'_h$ respectively, enabling feature representations of the same point under two different spatial orderings to mutually enhance. Finally, through feature fusion, richer and more robust node representations are obtained, with specific fusion methods shown in \cref{fig:ggam}. After fusion, dual serialization-enhanced features $\mathbf{H}''_z$ and $\mathbf{H}''_h$ are obtained.
-
-\textbf{Adaptive Gated Fusion}: After obtaining enhanced features, the final fusion step is designed. To more intelligently fuse the two features, an adaptive gating unit is designed. It receives concatenated features and generates a weight for each feature flow (Z-order and Hilbert):
+After obtaining the enhanced features, a final fusion step is designed. To integrate the two features more intelligently, an adaptive gated unit is developed. It receives the concatenated features and generates a weight for each feature stream (Z-order and Hilbert):
 \begin{equation}
 [\alpha_z, \alpha_h] = \text{Softmax}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
-\label{eq:adaptive_gate}
 \end{equation}
-where $\|$ denotes concatenation. The final fused feature $\mathbf{H}_{fused}$ is obtained through weighted summation:
+where $\|$ denotes the concatenation operation. The final fused feature $\mathbf{H}_{\text{fused}}$ is obtained via weighted summation:
 \begin{equation}
-\mathbf{H}_{fused} = \alpha_z \odot \mathbf{H}''_z + \alpha_h \odot \mathbf{H}''_h
-\label{eq:gated_fusion}
+\mathbf{H}_{\text{fused}} = \alpha_z \odot \mathbf{H}''_z + \alpha_h \odot \mathbf{H}''_h
 \end{equation}
-where $\odot$ denotes element-wise multiplication.
+where $\odot$ denotes the element-wise multiplication.
 
-\textbf{Geometric Consistency Constraint}: Since our method computes curvature and normals at the neighborhood granularity, results are less precise compared to point-wise computation. After introducing dual-branch learning, to ensure fused features still conform to physical world geometric laws, a geometric consistency module is introduced. This module learns a consistency factor $\boldsymbol{\gamma} \in [0, 1]$ and applies it to the fused features:
-\begin{gather}
-\boldsymbol{\gamma} = \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h])) \label{eq:consistency_factor} \\
-\mathbf{H}_{final} = \mathbf{H}_{fused} \odot \boldsymbol{\gamma} \label{eq:final_feature}
-\end{gather}
-where $\odot$ denotes element-wise multiplication. This constraint acts as a soft filter, suppressing geometrically unreasonable feature combinations that may arise during fusion. Finally, $\mathbf{H}_{final}$ serves as the GGAM module output, containing rich geometry-aware features.
+Since the curvature and surface normals in this method are calculated at the neighborhood granularity, the results are less precise compared to point-wise calculations. Following the introduction of dual-branch learning, a geometric consistency module is incorporated to ensure that the fused features still conform to the geometric laws of the physical world. This module learns a consistency factor $\boldsymbol{\gamma} \in [0, 1]$, which is applied to the fused features:
+\begin{align}
+\boldsymbol{\gamma} &= \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h])) \\
+\mathbf{H}_{\text{final}} &= \mathbf{H}_{\text{fused}} \odot \boldsymbol{\gamma}
+\end{align}
+
+This constraint acts as a soft filter, suppressing geometrically inconsistent feature combinations that may arise during the fusion process. Ultimately, $\mathbf{H}_{\text{final}}$ serves as the output of the GGAM module, incorporating geometry-aware features.
 
 \subsection{Encoder and Decoder Architecture}
 
-\cref{fig:coder} shows our encoder's basic architecture, including pooling layers for downsampling and point cloud information aggregation, and multiple repeated ASD-SSM modules for deep feature understanding. ASD-SSM is integrated into the encoder and decoder to achieve high-performance point cloud perception. Unlike the encoder, the decoder uses upsampling to replace Max Pooling. Since the decoder also contains ASD-SSM, it can learn hierarchical information from different encoder stages during upsampling.
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=3.5in]{../picture/coder.JPG}
-\caption{Encoder architecture with ASD-SSM modules. Progressive downsampling through max pooling with channel dimensions (32, 64, 128, 256, 512). The decoder uses upsampling with channel sizes (64, 64, 128, 256).}
-\label{fig:coder}
-\end{figure}
+Fig.~4 illustrates the basic architecture of the encoder, which includes pooling layers used for downsampling and point cloud information aggregation, along with multiple recurring ASD-SSM modules for deep feature understanding. ASD-SSM is integrated into both the encoder and decoder to achieve high-performance perception of the point cloud. Unlike the encoder, the decoder replaces max pooling with upsampling. Since the decoder also incorporates ASD-SSM, it is capable of learning hierarchical information from different encoder stages during the upsampling process.
 
 \subsection{Adaptive Scale-Decoupled State Space Model (ASD-SSM)}
 
-\subsubsection{Problem Motivation and Overall Solution}
+\subsubsection{Overall Scheme}
 
-Existing multi-scale feature extraction methods adopt shared state space parameters when processing point clouds at different scales, ignoring the differentiated requirements of different scales for temporal modeling characteristics. Coarse-scale feature extraction requires long-term memory to capture global context, while fine-scale feature extraction requires rapid state updates to respond to local detail variations. Addressing this issue and SSM methods' limitations in point cloud disorder and long-sequence processing, we propose the Adaptive Scale-Decoupled State Space Model (ASD-SSM).
+ASD-SSM resolves the modeling constraints caused by parameter sharing by dynamically generating customized SSM parameters for different scales. This method applies a serialized feature extraction scheme to point cloud tasks, constructing a hierarchical point cloud information matrix by parallelly processing multi-layer scale point clouds and fusing information across levels. This enables the model to capture long-range contextual dependencies in long sequences, ensuring high-level semantic understanding while maintaining high-precision processing of local details.
 
-ASD-SSM addresses the modeling capability limitations caused by parameter sharing by dynamically generating customized SSM parameters for different scales. This method applies serialized feature extraction schemes to point cloud tasks, constructing a hierarchical point cloud information matrix by processing multi-scale point clouds in parallel and fusing information from all levels. This enables the model to have strong contextual understanding capabilities in long sequences while maintaining high-precision processing of point cloud local details alongside high-level semantic understanding.
+As illustrated in Fig.~5, the complete processing pipeline of ASD-SSM consists of three core steps: (1) Window Partitioning, where the point cloud is divided into patches according to different scales; (2) Order Prompting, which injects positional information into the serialized point cloud; and (3) Multi-scale Feature Modeling based on adaptive parameter generation, where SSM parameters are dynamically modulated for different scales via a parameter generator. The figure demonstrates the feature processing flow for $S=3$ scales, with dashed lines separating the patches. The first layer (finest scale) uses a base window size $P$ for serialization. The window expansion factors $F_s$ for the second and third layers are 2 and 4, respectively, resulting in patch sizes of $2P$ and $4P$. Within each layer, an adaptive parameter-generated Mamba is employed for feature extraction, including forward SSM, backward SSM, and residual connections. Upon completion of feature extraction across scales, a concatenation strategy is used to fuse the multi-layer features point-wise. Finally, feature mapping is completed through an MLP and a linear layer to obtain the final point cloud representation Points$' \in \mathbb{R}^{N \times C}$, which incorporates multi-level information.
 
-\textbf{Overall Processing Flow}: As shown in \cref{fig:bss}, the complete processing flow of ASD-SSM includes three core steps: (1) Window partitioning, dividing the point cloud into Patches at different scales; (2) Order prompting, injecting position information into serialized point clouds; (3) Multi-scale feature modeling based on scale-adaptive parameter generation, dynamically modulating SSM parameters for different scales through a parameter generator. The figure shows the feature processing flow for $S=3$ scale layers, with dashed lines separating Patches. The first layer (finest scale) uses basic window size $P$ for serialization, while the window expansion factors $F_s$ for the second and third layers are 2 and 4 respectively, expanding patch sizes to $2P$ and $4P$. Each layer internally uses adaptive parameter generation Mamba for feature extraction, including forward SSM, backward SSM, and residual connections. After feature extraction at different scales is completed, a concatenation strategy fuses multi-level features point-wise, finally completing feature mapping through MLP and linear layers to obtain point cloud representations $Points'\in\mathbb{R}^{N\times C}$ fusing multi-level information.
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=3.5in]{../picture/BSS.JPG}
-\caption{Processing flow of ASD-SSM with $S=3$ scales. Window partitioning with expansion factors $F_s \in \{1, 2, 4\}$. Each scale uses bidirectional SSMs with adaptive parameters $\overline{A}_s$. Scale constraints $\alpha_s \in \{0.3, 0.6, 0.9\}$ enable differentiated state decay.}
-\label{fig:bss}
-\end{figure}
-
-\textbf{Notation}: In subsequent descriptions, we use $s \in \{1, 2, ..., S\}$ to denote the scale index of multi-scale layers, where $s=1$ represents the finest scale (corresponding to the first layer with window size $P$), and $s=S$ represents the coarsest scale (window size $P \times F_s$). $N$ is the number of points, and $C$ is the point cloud feature dimension.
+Notation: In the following descriptions, $s \in \{1, 2, \ldots, S\}$ denotes the scale index of the multi-scale layers, where $s=1$ represents the finest scale (corresponding to the first layer with a window size $P$), and $s=S$ represents the coarsest scale (with a window size $P \times F_s$). $N$ denotes the number of points, and $C$ represents the feature dimension of the point cloud.
 
 \subsubsection{Window Partitioning}
 
-Window partitioning is the first step of ASD-SSM, aiming to divide continuous point cloud sequences into multiple fixed-size Patches, establishing a foundation for subsequent multi-scale feature extraction. This module mainly includes two sub-processes: Padding and Patch Grouping.
+Window partitioning is the initial step of ASD-SSM, aimed at dividing the continuous point cloud sequence into multiple fixed-size patches to establish a foundation for subsequent multi-scale feature extraction. This module primarily consists of two sub-processes: Padding and Patch Grouping.
 
-\textbf{Padding}: To ensure the point cloud can be evenly divided, the point cloud is first padded to an integer multiple of patch size. For total points $N$ and patch size $P$, if $N$ is not divisible by $P$, padding is performed by copying the last several points.
+Padding: To ensure that the point cloud can be uniformly partitioned, the sequence is first padded to an integer multiple of the patch size. Given the total number of points $N$ and the patch size $P$, if $N$ is not divisible by $P$, the sequence is padded by replicating the last few points.
 
-\textbf{Patch Grouping}: After completing padding, the point cloud sequence is evenly grouped. For the bottom layer ($s=1$), the patch size is $P$ with window expansion factor $F_1=1$, resulting in partitioned point cloud $Points_1\in\mathbb{R}^{\lceil N/P \rceil\times P \times C}$. For higher scale layers $s>1$, the patch size expands to $P\times F_s$, resulting in point cloud $Points_s\in\mathbb{R}^{\lceil N/(P\times F_s) \rceil\times (P\times F_s) \times C}$ for that layer.
+Patch Grouping: After padding, the point cloud sequence is grouped uniformly. For the base layer ($s=1$), the patch size is $P$ with an expansion factor $F_1 = 1$. The partitioned point cloud is represented as Points$_1 \in \mathbb{R}^{\lceil N/P \rceil \times P \times C}$. For higher-scale layers where $s > 1$, the patch size is expanded to $P \times F_s$, and the partitioned point cloud for that layer is represented as Points$_s \in \mathbb{R}^{\lceil N/(P \times F_s) \rceil \times (P \times F_s) \times C}$.
 
-\textbf{Boundary Processing}: In actual operation, the last Patch may have insufficient points. To maintain local continuity, a sliding window strategy is adopted: padding the beginning of the last Patch with end points from the second-to-last Patch. Although this produces a small number of repeated points, it ensures points within the last Patch maintain spatial proximity, avoiding introduction of unrelated padding points.
+Boundary Handling: In practice, the final patch may contain an insufficient number of points. To maintain local continuity, a sliding window strategy is adopted: the trailing points of the penultimate patch are used to pad the beginning of the final patch. Although this introduces a small number of redundant points, it ensures that the points within the final patch maintain spatial proximity, thereby avoiding the introduction of unrelated padding points.
 
 \subsubsection{Order Prompt}
 
-Since ASD-SSM employs multiple serialization strategies (such as Z-order and Hilbert curves), to help the model understand and utilize different point cloud arrangement rules, an order prompting mechanism is introduced. This mechanism informs the model of the current sequence's arrangement rules through learnable vector flags, enabling the model to learn order-related patterns.
+Since ASD-SSM adopts multiple serialization strategies (e.g., Z-order and Hilbert curves), an Order Prompting mechanism is introduced to help the model understand and utilize different point cloud arrangement rules. This mechanism informs the model of the arrangement rules followed by the current sequence through learnable vector flags, enabling the model to learn order-dependent patterns.
 
-\textbf{Prompt Vector Design}: A set of unique learnable vectors $\{v_1, v_2, ..., v_L\}$ is created for each serialization method, where $L$ is the number of prompt vectors (set to 6-8 in experiments). Before use, these vectors are mapped through linear layers to the same dimension $C$ as current point cloud features. Then, these prompt vectors are inserted at the beginning and end positions of each Patch, forming an enhanced sequence.
+Prompt Vector Design: A set of unique learnable vectors $\{v_1, v_2, \ldots, v_L\}$ is created for each serialization method, where $L$ denotes the number of prompt vectors (set to 6--8 in experiments). Before use, these vectors are mapped to the same dimension $C$ as the current point cloud features through a linear layer. These prompt vectors are then inserted at the beginning and end of each patch to form an augmented sequence.
 
-\textbf{Hierarchical Strategy}: At the finest scale layer ($s=1$), since point clouds are arranged in serialization order, order prompts are added to strengthen position information. At higher scale layers ($s>1$), points within the same Patch in $Points_s$ are shuffled, enabling SSM to respect point cloud disorder for feature learning. Since order is already shuffled, order prompts are no longer needed.
+Hierarchical Strategy: At the finest scale layer ($s =1$), since the point cloud is arranged in serialized order, order prompts are added to reinforce positional information. In higher-scale layers ($s>1$), the point cloud within each patch of Points$_s$ is shuffled to encourage the SSM to learn features while respecting the inherent permutation invariance (disorder) of point clouds. In these cases, since the order has been shuffled, order prompts are no longer required.
 
-This design borrows from Vision Mamba's \cite{VisionMamba} idea of processing block data, providing order information to the model at the sequence beginning, guiding it to adjust feature extraction strategies accordingly.
+This design draws inspiration from the approach used in Vision Mamba \cite{VisionMamba} for processing block-based data, providing the model with order information at the start of the sequence to guide it in adjusting its feature extraction strategy accordingly.
 
-\subsubsection{Multi-Scale Feature Modeling Based on Scale-Adaptive Parameter Generation}
+\subsubsection{Multi-scale Feature Modeling Based on Adaptive Scale-aware Parameter Generation}
 
-Traditional SSM methods use the same state transition parameter $\overline{A}$, input projection parameter $\overline{B}$, and output projection parameter $\overline{C}$ to process features at all scales, ignoring differentiated requirements of different scales for temporal modeling characteristics. The state transition parameter $\overline{A}$ (diagonal elements of the diagonal matrix) controls the decay rate of state vectors: when elements of $\overline{A}$ approach 1, slow decay (long-term memory) is achieved; when approaching 0, fast decay (rapid response) is achieved. For coarse-scale features, $\overline{A}$ needs to be close to an all-ones vector to maintain long-range dependencies; for fine-scale features, $\overline{A}$ needs to have smaller values to rapidly respond to local detail variations.
+Traditional SSM methods employ identical state transition parameters $\bar{A}$, input projection parameters $\bar{B}$, and output projection parameters $\bar{C}$ to process features across all scales, overlooking the differentiated requirements of temporal modeling for different scales. The state transition parameter $\bar{A}$ (diagonal elements of the diagonal matrix) controls the decay rate of the state vector: when the elements of $\bar{A}$ are close to 1, slow decay (long-term memory) is achieved; when they are close to 0, rapid decay (fast response) occurs. For coarse-scale features, $\bar{A}$ needs to be close to an all-ones vector to maintain long-range dependencies; for fine-scale features, smaller values of $\bar{A}$ are required to respond quickly to local detailed variations.
 
-\textbf{Scale-Aware Parameter Generator}: The core innovation of ASD-SSM lies in adaptively generating differentiated state transition parameters $\overline{A}_s$ for different scales. For scale $s$, point cloud features are already partitioned by Patch as $\mathbf{P}_s \in \mathbb{R}^{M \times P \times C}$, where $M = \lceil N/P \rceil$ is the number of Patches. The parameter generation process proceeds independently for each Patch, with each Patch generating its dedicated $\overline{A}_s$ based on its content features.
+Scale-aware Parameter Generator: ASD-SSM adaptively generates differentiated state transition parameters $\bar{A}_s$ for different scales. For a given scale $s$, the point cloud features have been partitioned into patches as $\mathbf{P}_s \in \mathbb{R}^{M \times P \times C}$, where $M = \lceil N/P \rceil$ is the number of patches. The parameter generation process is conducted independently for each patch, creating an exclusive $\bar{A}_s$ based on the content features of each patch.
 
-Specifically, global adaptive average pooling is first performed on $P$ points within each Patch, obtaining the Patch's global feature $\mathbf{f}_{global}^{(s)} \in \mathbb{R}^{C/4}$, which captures the overall geometric characteristics of points within the Patch (such as local structural complexity and density distribution). Meanwhile, a scale embedding vector $\mathbf{e}_s \in \mathbb{R}^{C/4}$ is learned for each scale to distinguish characteristics of different scales. For a single Patch, the parameter generation process is as follows:
+Specifically, we first perform global adaptive average pooling on the $P$ points within each patch to obtain the global feature of that patch, $\mathbf{f}_{\text{global}}^{(s)} \in \mathbb{R}^{C/4}$. This feature captures the overall geometric characteristics within the patch (e.g., local structural complexity, density distribution, etc.). Simultaneously, we learn a scale embedding vector $\mathbf{e}_s \in \mathbb{R}^{C/4}$ for each scale to distinguish the characteristics across different scales. For a single patch, the parameter generation process is as follows:
+\begin{align}
+\mathbf{f}_{\text{global}}^{(s)} &= \text{MLP}_{\text{global}}(\mathbf{f}_{\text{global}}^{(s)}) \in \mathbb{R}^{C/4} \\
+\mathbf{c}_s &= \text{MLP}([\mathbf{f}_{\text{global}}^{(s)} \| \mathbf{e}_s]) \in \mathbb{R}^{C/2}
+\end{align}
+where $\|$ denotes the concatenation operation. For the selective parameters $\bar{B}_s$ and $\bar{C}_s$, we follow the standard selective mechanism from the Mamba paper \cite{Mamba}, dynamically generating them from the input content via linear projections.
+
+Scale Constraint Mechanism: To achieve differentiated state decay characteristics, the value range of the state transition matrix $\bar{A}_s$ is explicitly controlled via the scale constraint factor $\alpha_s$. Within the framework of discrete state space models, the state update rule is governed by $\mathbf{h}_k = \bar{A}_s\mathbf{h}_{k-1} + \bar{B}_s\mathbf{u}_k$. where, the diagonal elements of $\bar{A}_s$ dictate the state decay rate; specifically, elements approaching 1 facilitate slow decay (capturing long-range memory), whereas elements approaching 0 induce fast decay (enabling rapid response).
+
+To directly constrain the range of eigenvalues of $\bar{A}_s$, the output of the parameter generator is first mapped to the interval [0,1] via a sigmoid function:
 \begin{equation}
-\mathbf{f}_{global}^{(s)} = \text{MLP}_{global}(\mathbf{f}_{global}^{(s)}) \in \mathbb{R}^{C/4}
+\Delta\bar{A}_s^{\text{norm}} = \sigma(\lambda \cdot \text{MLP}([\mathbf{f}_{\text{global}}^{(s)} \| \mathbf{e}_s]))
 \end{equation}
+where $\sigma(\cdot)$ is the sigmoid activation function, and $\lambda$ is the modulation intensity coefficient (set to 0.1 in experiments), used to control the amplitude of the MLP output. Then, the scale constraint factor $\alpha_s$ serves as an upper bound coefficient to directly control the value range of $\bar{A}_s$:
 \begin{equation}
-\mathbf{c}_s = \text{MLP}([\mathbf{f}_{global}^{(s)} \| \mathbf{e}_s]) \in \mathbb{R}^{C/2}
-\end{equation}
-where $\|$ denotes concatenation. For selective parameters $\overline{B}_s$ and $\overline{C}_s$, the standard selective mechanism from the Mamba paper \cite{Mamba} is followed, dynamically generating from input content through linear projection, which is not elaborated here.
-
-\textbf{Scale Constraint Mechanism}: To achieve differentiated state decay characteristics, the value domain of state transition matrix $\overline{A}_s$ is explicitly controlled through scale constraint factor $\alpha_s$. In discrete state space models, state updates follow $\mathbf{h}_k = \overline{A}_s \mathbf{h}_{k-1} + \overline{B}_s \mathbf{u}_k$, where diagonal elements of $\overline{A}_s$ determine state decay rate: element values close to 1 achieve slow decay (long-term memory), close to 0 achieve fast decay (rapid response).
-
-To directly constrain the eigenvalue range of $\overline{A}_s$, the parameter generator's output is first mapped to the $[0,1]$ interval through the sigmoid function:
-\begin{equation}
-\Delta\overline{A}_s^{norm} = \sigma(\lambda \cdot \text{MLP}([\mathbf{f}_{global}^{(s)} \| \mathbf{e}_s]))
-\label{eq:param_norm}
-\end{equation}
-where $\sigma(\cdot)$ is the sigmoid activation function, $\lambda$ is the modulation intensity coefficient (set to 0.1 in experiments) to control MLP output magnitude. Then, scale constraint factor $\alpha_s$ acts as an upper bound coefficient, directly controlling the value domain of $\overline{A}_s$:
-\begin{equation}
-\overline{A}_s = \alpha_s \cdot \Delta\overline{A}_s^{norm}
-\label{eq:param_modulation}
+\bar{A}_s = \alpha_s \cdot \Delta\bar{A}_s^{\text{norm}}
 \end{equation}
 
-By setting $\alpha_s$ to increase from fine to coarse scales ($\alpha_1=0.3 \rightarrow \alpha_S=0.9$), explicit constraints are imposed: fine scale $\overline{A}_1 \in [0, 0.3]$ achieves rapid response to local variations, coarse scale $\overline{A}_S \in [0, 0.9]$ maintains long-term memory to capture global context. It should be emphasized that although Patch indices are omitted for simplified notation, each Patch generates its dedicated parameter $\overline{A}_s^{(m)}$ based on its content features, where $m$ is the Patch number. That is, $\overline{A}_s^{(m)} = \alpha_s \cdot \Delta\overline{A}_s^{norm,(m)}$, where $\Delta\overline{A}_s^{norm,(m)} = \sigma(\lambda \cdot \text{MLP}([\mathbf{f}_{global}^{(s,m)} \| \mathbf{e}_s]))$.
+By setting $\alpha_s$ to increase from fine to coarse scales ($\alpha_1 = 0.3 \rightarrow \alpha_S = 0.9$), we impose an explicit constraint: the fine-scale $\bar{A}_1 \in [0, 0.3]$ enables a rapid response to local variations, while the coarse-scale $\bar{A}_S \in [0, 0.9]$ maintains long-term memory to capture global context. It should be emphasized that, although the patch index is omitted in the notation for simplicity, each patch generates its exclusive parameter $\bar{A}_s^{(m)}$ based on its specific content features, where $m$ denotes the patch index. Specifically, $\bar{A}_s^{(m)} = \alpha_s \cdot \Delta\bar{A}_s^{\text{norm},(m)}$, where $\Delta\bar{A}_s^{\text{norm},(m)} = \sigma(\lambda \cdot \text{MLP}([\mathbf{f}_{\text{global}}^{(s,m)} \| \mathbf{e}_s]))$.
 
-\textbf{Inter-Patch State Propagation Strategy}: To fully utilize serialization's order information, ASD-SSM directly propagates hidden states between adjacent Patches within the same sequence. When processing the $m$-th Patch, the final state $\mathbf{h}_P^{(s,m-1)}$ from the previous Patch is directly used as initial state $\mathbf{h}_0^{(s,m)}$, naturally absorbing preceding context through standard SSM update formulas. At the bottom layer ($s=1$), this utilizes spatial adjacency of serialization, while at higher scale layers ($s>1$), shuffling points within Patches maintains respect for disorder.
+State Space Update: For the point cloud feature sequence within each patch at the $s$-th scale, the state space update follows the standard discretized SSM formulation \cite{Mamba}:
+\begin{align}
+\mathbf{h}_k^{(s,m)} &= \bar{A}_s\mathbf{h}_{k-1}^{(s,m)} + \bar{B}_s\mathbf{u}_k^{(s,m)} \\
+\mathbf{y}_k^{(s,m)} &= \bar{C}_s\mathbf{h}_k^{(s,m)} + \bar{D}\mathbf{u}_k^{(s,m)}
+\end{align}
+where $\mathbf{h}_k^{(s,m)}$ is the hidden state vector for scale $s$ and patch $m$, $\mathbf{u}_k^{(s,m)}$ is the input vector of the $k$-th point within the patch ($k = 1,2, \ldots, P$), and $\bar{D}$ denotes the skip connection parameter. For the $m$-th patch, the initial state is set as $\mathbf{h}_0^{(s,m)} = \mathbf{h}_P^{(s,m-1)}$ (initialized as a zero vector for the first patch), and the aforementioned update formulas are applied starting from $k = 1$. This direct transmission design maintains the consistency of state transitions in the SSM, ensuring that state updates at patch boundaries remain coherent with those within the patches.
 
-\textbf{State Space Update}: For point cloud feature sequences within each Patch at scale $s$, state space updates follow the standard discretized SSM form \cite{Mamba}:
-\begin{equation}
-\begin{aligned}
-\mathbf{h}_k^{(s,m)} &= \overline{A}_s \mathbf{h}_{k-1}^{(s,m)} + \overline{B}_s \mathbf{u}_k^{(s,m)} \\
-\mathbf{y}_k^{(s,m)} &= \overline{C}_s \mathbf{h}_k^{(s,m)} + \overline{D} \mathbf{u}_k^{(s,m)}
-\end{aligned}
-\label{eq:asd_ssm_update}
-\end{equation}
-where $\mathbf{h}_k^{(s,m)}$ is the hidden state vector for scale $s$, Patch $m$, $\mathbf{u}_k^{(s,m)}$ is the input vector for the $k$-th point within the Patch ($k=1,2,\ldots,P$), and $\overline{D}$ is the feedthrough connection parameter. For the $m$-th Patch, the initial state is set as $\mathbf{h}_0^{(s,m)} = \mathbf{h}_P^{(s,m-1)}$ (initialized as zero vector for the first Patch), then the above update formula is applied starting from $k=1$. This direct propagation design maintains the unity of SSM state propagation, making state updates at Patch boundaries completely consistent with those inside Patches, conforming to the essence of sequence modeling. ASD-SSM's innovation lies in the scale-adaptive generation strategy for $\overline{A}_s$.
+Bidirectional Feature Learning and Fusion: A bidirectional feature learning strategy is employed within each scale. To enable each point to capture both preceding and succeeding contextual information, we construct a forward SSM and a backward SSM for each scale $s$, processing the sequence in forward and reverse orders, respectively. The forward and backward SSMs share the same set of scale-specific state transition parameters $\bar{A}_s$. Finally, the bidirectional features are integrated via residual connections.
 
-\textbf{Bidirectional Feature Learning and Fusion}: Each scale internally employs a bidirectional feature learning strategy. To enable each point to obtain preceding and following contextual information, forward and backward SSMs are constructed for each scale $s$, processing forward and reverse sequences respectively. Forward and backward SSMs share the same set of scale-specific state transition parameters $\overline{A}_s$, finally fusing bidirectional features through residual connections. This design enables coarse scales to maintain slow state decay in both directions through larger $\overline{A}_S$ (long-term memory), while fine scales can rapidly decay states in both directions through smaller $\overline{A}_1$ (rapid response to local variations).
-
-Through the above mechanisms, ASD-SSM achieves scale-decoupled state space modeling: the finest scale ($s=1$) constrains $\overline{A}_1 \in [0, 0.3]$ through $\alpha_1=0.3$, enabling rapid state decay to respond to local detail variations; the coarsest scale ($s=S$) constrains $\overline{A}_S \in [0, 0.9]$ through $\alpha_S=0.9$, enabling slow state decay to maintain long-term memory for capturing global semantics. After multi-scale feature extraction is completed, features $Points_{1:S}$ from different scales are fused point-wise using a concatenation strategy, then mapped to the original dimension $C$ through MLP and linear layers, obtaining point cloud representations $Points'\in\mathbb{R}^{N\times C}$ fusing multi-level information.
+Through the aforementioned mechanisms, ASD-SSM achieves scale-decoupled state-space modeling: at the finest scale ($s = 1$), the constraint $\alpha_1 = 0.3$ ensures $\bar{A}_1 \in [0,0.3]$, allowing for rapid state decay to respond to local detailed variations; at the coarsest scale ($s = S$), the constraint $\alpha_S = 0.9$ ensures $\bar{A}_S \in [0,0.9]$, enabling slow state decay to maintain long-range memory for capturing global semantics. Upon completion of feature extraction across multiple scales, the features Points$_{1:S}$ from different scales are fused point-wise using a concatenation strategy. Finally, the fused representation is mapped back to the original dimension $C$ through an MLP and a linear layer, resulting in the multi-level informed point cloud representation Points$' \in \mathbb{R}^{N \times C}$.
 
 \section{Experiments}
 
-\textbf{Implementation Details}: We conducted point cloud analysis benchmark tests on the indoor dataset S3DIS and classification dataset ModelNet40, with all experiments performed on Nvidia A6000 GPUs. For network training, the AdamW optimizer is used with OneCycleLR learning rate scheduling strategy, setting the initial maximum learning rate to 6e-3, employing early warmup and late cosine annealing scheduling mechanisms. The entire training process lasts 3000 epochs with batch size 6, and mixed precision (AMP) acceleration enabled to improve training efficiency. In the encoder, channel sizes are set to (32, 64, 128, 256, 512). In the decoder, channel sizes are set to (64, 64, 128, 256). patch size is uniformly set to 128, consistent with existing work for fair comparison. Cross-entropy loss is selected as the loss criterion. Cross-entropy loss is the most commonly used loss function for classification and segmentation tasks, widely applied to semantic analysis problems.
+Implementation Details: We conducted benchmark tests for point cloud analysis on the indoor dataset S3DIS and the classification dataset ModelNet40. All experiments were performed on an Nvidia A6000 GPU. For network training, we employed the AdamW optimizer and the OneCycleLR learning rate scheduler, with an initial maximum learning rate of 6e-3. The scheduling mechanism included an early-stage warm-up followed by a cosine annealing cycle. The entire training process spanned 3000 epochs with a batch size of 6, utilizing Automatic Mixed Precision (AMP) to enhance training efficiency.
 
-For fair evaluation of the independent contributions of our proposed architectural innovations (GGAM and ASD-SSM), the same training-from-scratch setting as current Mamba-based methods is adopted. This choice ensures performance improvements are entirely attributable to architectural improvements, avoiding confounding factors from diverse pre-training strategies.
+In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The Patch Size was uniformly set to 128, consistent with existing works to ensure a fair comparison. We selected the Cross-Entropy loss as the evaluation criterion, which is the most widely used loss function for classification and segmentation tasks in semantic analysis.
+
+To fairly evaluate the independent contributions of our proposed architectural innovations (GGAM and ASD-SSM), we adopted a train-from-scratch setting, consistent with current Mamba-based methods. This choice ensures that performance gains are solely attributable to architectural improvements, eliminating confounding factors arising from diverse pre-training strategies.
 
 \subsection{Datasets}
 
-\textbf{S3DIS}: The S3DIS dataset is one of the standard datasets for indoor scene understanding and point cloud processing released by Stanford University. It contains 3D point cloud data of multiple indoor buildings, mainly used for point cloud semantic segmentation tasks. It includes 6 large buildings covering various indoor environments such as offices, lounges, conference rooms, and halls. S3DIS contains 272 rooms, with each room's 3D point cloud data meticulously annotated. Each point in the dataset includes 3D coordinates and RGB color information, along with semantic categories for each point. The dataset has 13 annotated categories such as wall, floor, table, chair, window, and bookshelf. Various indoor environments are evenly distributed across six areas, and Area 5 is selected for result validation.
+S3DIS: The S3DIS dataset serves as a standard benchmark for indoor semantic segmentation. It contains 272 rooms across six distinct areas, covering 13 semantic categories (e.g., walls, furniture). Each point includes 3D coordinates and RGB information. Following established protocols, Area 5 is selected for result validation.
 
-\textbf{ModelNet40}: ModelNet40 is provided by Princeton University, aiming to provide a standardized benchmark for 3D object classification and recognition tasks. It includes 40 object categories with 12,311 3D object samples. The training set contains 8,156 samples, and the test set contains 4,155 samples. Each object in the dataset is meticulously classified, covering various everyday items such as chairs, tables, bottles, airplanes, and cars.
+ModelNet40: This dataset is utilized for 3D object classification, comprising 12,311 CAD models from 40 categories. The data is partitioned into 8,156 training samples and 4,155 testing samples.
 
 \subsection{Evaluation Metrics}
 
-\textbf{mIoU}: Mean Intersection over Union is a commonly used evaluation metric for semantic segmentation tasks, measuring the overlap between prediction results and ground truth labels. For each category $c$, IoU is defined as:
+mIoU: Mean Intersection over Union (mIoU) is a widely used evaluation metric in tasks such as semantic segmentation to measure the degree of overlap between predicted results and ground truth labels. For each category $c$, the Intersection over Union (IoU) is defined as:
 \begin{equation}
-\mathrm{IoU}_c=\frac{\mathrm{TP}_c}{\mathrm{TP}_c+\mathrm{FP}_c+\mathrm{FN}_c}
+\text{IoU}_c = \frac{\text{TP}_c}{\text{TP}_c + \text{FP}_c + \text{FN}_c}
 \end{equation}
-where $\mathrm{TP}_{c}$ is true positives, $\mathrm{FP}_{c}$ is false positives, and $\mathrm{FN}_{c}$ is false negatives. Taking the average across all categories yields mIoU. It is more robust to class imbalance and more commonly used than Accuracy for 3D semantic segmentation tasks. Therefore, mIoU is selected as the metric to evaluate point cloud semantic segmentation tasks on S3DIS.
+where TP$_c$ denotes the number of points correctly predicted as category $c$ (True Positives), FP$_c$ represents the number of points incorrectly predicted as category $c$ (False Positives), and FN$_c$ represents the number of points that truly belong to category $c$ but were not correctly predicted (False Negatives). The mIoU is obtained by taking the arithmetic mean of the IoU values across all semantic categories. Since mIoU provides a more comprehensive reflection of the model's segmentation performance across various classes---especially in cases of imbalanced class distributions---it is more robust than Overall Accuracy. Therefore, this paper adopts mIoU as the primary metric for evaluating point cloud semantic segmentation performance on the S3DIS dataset.
 
-\textbf{OA}: Overall Accuracy is the number of correctly predicted point cloud samples divided by the total number of all samples. It is simple and intuitive, commonly used as an overall metric for classification tasks, so OA is selected as the metric to evaluate point cloud classification tasks on ModelNet40.
+OA: Overall Accuracy (OA) is defined as the ratio of the number of correctly predicted samples to the total number of samples across all point cloud data. It is one of the most intuitive and commonly used performance metrics in classification tasks. This metric effectively reflects the model's discriminative capability at the global classification level. Consequently, this paper utilizes OA as the evaluation metric for point cloud classification performance on the ModelNet40 dataset.
 
 \subsection{Quantitative Experiments}
 
-\subsubsection{Experiment Results on S3DIS Dataset}
+\subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} presents semantic segmentation results on the S3DIS dataset and compares with other representative methods from recent years.
+Table~I summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mIoU in Area 5, significantly outperforming mainstream methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 2.0\% and the representative state-space method PCM by 5.4\%.
 
-\textbf{Overall Performance Analysis}: Without using pre-training, PointSS achieves 75.2\% mIoU on S3DIS, demonstrating significant performance improvement. Compared to previous Transformer-based SOTA models, PointSS exceeds Swin3D by 2.7\% mIoU and PTv3 by 2.0\% mIoU. More notably, PointSS significantly outperforms the current best-performing SSM model PCM (69.8\%) by 5.4\% mIoU, and this improvement margin proves the effectiveness of our proposed method.
+These improvements are primarily attributed to two architectural innovations. First, the Global Geometry-Aware Mechanism (GGAM) mitigates serialization-induced information loss by integrating windowed neighborhoods and dual-serialization fusion. This enhances boundary continuity and semantic consistency, particularly in complex regions with sharp transitions. Second, the Adaptive Scale-Decoupled State Space Model (ASD-SSM) dynamically generates customized parameters across scales. This decoupling enables the simultaneous modeling of long-range global dependencies at coarse scales and rapid local responses at fine scales, overcoming the limitations of single-granularity shared parameters.
 
-\textbf{Method Comparison Analysis}: Transformer methods (such as PTv3 and PTv2) perform excellently in point cloud analysis. Through ASD-SSM's scale-decoupled modeling and GGAM's global geometric awareness, PointSS achieves higher accuracy under the same experimental settings (75.2\% vs PTv3's 73.2\%). As an additional advantage of the SSM architecture, PointSS inherits the linear time complexity characteristic of state space models.
-
-Compared to existing SSM methods (PCM 69.8\% and PointMamba), PointSS's significant advantages are mainly reflected in three aspects. First, in geometric information preservation, through GGAM's dual serialization fusion and geometric feature enhancement, PointSS effectively addresses geometric structure loss caused by serialization, which is crucial for accurate segmentation of boundary regions (such as wall-column junctions) and complex surfaces. Second, in multi-scale hierarchical modeling, ASD-SSM customizes SSM parameters for different scales through adaptive parameter generation, enabling the model to simultaneously capture global semantics and local details, while PCM and similar methods using shared parameters for single-granularity feature extraction struggle to balance information needs at different levels. Finally, in respecting disorder, through multi-scale parallel processing and bidirectional modeling strategies, PointSS avoids imposing a single causal relationship on point clouds, demonstrating better robustness compared to fixed serialization schemes. As shown in \cref{tab:parameterization_comparison}, inference time increases for different parameterization schemes are all insignificant ($<7\%$), demonstrating good scalability potential.
+Furthermore, PointSS retains the linear time complexity of SSMs. As shown in Table~IX, the method maintains high computational efficiency with only a marginal increase in inference time, validating its scalability for large-scale point cloud scenarios.
 
 \begin{table}[!t]
-\caption{Segmentation Performance Comparison on S3DIS}
-\label{tab:s3dis}
 \centering
+\caption{Performance Comparison of Semantic Segmentation on S3DIS}
+\label{tab:s3dis}
 \begin{tabular}{@{}llll@{}}
 \toprule
-\textbf{Venue} & \textbf{Model} & \textbf{Architecture} & \textbf{mIoU} \\ \midrule
+\textbf{Source} & \textbf{Model} & \textbf{Architecture} & \textbf{mIoU} \\ \midrule
 NeurIPS22 & Point Transformer V2\cite{ptv2} & Transformer & 72.6 \\
 CVPR23 & PointMetaBase\cite{pmb} & Transformer & 72.0 \\
 ICCV23 & SuperpointTransformer\cite{spt} & Transformer & 68.1 \\
@@ -345,13 +271,9 @@ Sci. Rep.25 & PointGA\cite{pointga} & Transformer & 66.2 \\
 \end{tabular}
 \end{table}
 
-\subsubsection{Experiment Results on ModelNet40 Dataset}
+\subsubsection{Experiment Results on the ModelNet40 Dataset}
 
-\cref{tab:ModelNet} presents object classification results on the ModelNet40 dataset and compares with other representative methods from recent years.
-
-\textbf{Overall Performance Analysis}: PointSS achieves 96.0\% overall accuracy (OA) on ModelNet40, surpassing all comparison methods. Compared to the current best Transformer method Point2Vec (94.8\%), PointSS improves by 1.2\%; compared to Point-FEMAE (94.5\%) that introduces masked self-supervised learning, it improves by 1.5\%. More importantly, PointSS significantly outperforms the best-performing SSM method Mamba3D (94.1\%) by 1.9\%. It is worth noting that on a near-saturated benchmark like ModelNet40 (most methods above 94\%), improvements of 1.2\%-1.9\% are quite significant.
-
-\textbf{Method Comparison Analysis}: Compared to masked learning methods (Point2Vec, Point-FEMAE), PointSS effectively captures global semantics while preserving local details through multi-scale hierarchical modeling without requiring complex pre-training strategies. Compared to existing SSM methods, PointSS achieves significant leadership (surpassing Mamba3D by 1.9\%), with core advantages being: explicitly modeling geometric features (curvature and normals) through GGAM enables the model to precisely capture key discriminative structures (such as airplane wings and chair backs); through ASD-SSM's adaptive multi-scale modeling, it achieves an effective balance between coarse-scale long-term memory and fine-scale rapid response while avoiding directional bias from fixed serialization, improving viewpoint robustness. PointSS's consistent improvements on both S3DIS (segmentation) and ModelNet40 (classification) tasks validate the method's generality and broad applicability.
+Table~II summarizes the classification performance on ModelNet40. PointSS achieves an Overall Accuracy (OA) of 96.0\% without pre-training, outperforming the state-of-the-art Transformer-based Point2Vec by 1.2\% and the SSM-based Mamba3D by 1.9\%. This establishes PointSS as the top-performing SSM approach. The superior results compared to masked self-supervised methods indicate that explicit structural modeling tailored to point clouds can effectively enhance global semantic understanding without relying on large-scale pre-training. By preserving local geometric details through multi-scale hierarchical aggregation, the model demonstrates robust discriminative capability in classification tasks.
 
 \begin{table}[!t]
 \centering
@@ -359,252 +281,347 @@ Sci. Rep.25 & PointGA\cite{pointga} & Transformer & 66.2 \\
 \label{tab:ModelNet}
 \begin{tabular}{@{}llll@{}}
 \toprule
-\textbf{Venue} & \textbf{Model} & \textbf{Architecture} & \textbf{OA} \\ \midrule
-NeurIPS22 & Point Transformer V2\cite{ptv2} & Transformer & 94.2 \\
-AAAI24 & Point-FEMAE\cite{FEMAE} & Transformer & 94.5 \\
-LNCS24 & Point2Vec\cite{Point2Vec} & Transformer & 94.8 \\
-ACM MM24 & Mamba3D\cite{Mamba3D} & SSM & 94.1 \\
-NIPS24 & PointMamba\cite{PointMamba} & SSM & 93.6 \\
-TIP25 & OTMae3D\cite{OTMae3D} & Transformer & 94.5 \\
-AAAI25 & PCM\cite{pcm} & SSM & 93.4 \\
-Sci. Rep.25 & PointGA\cite{pointga} & Transformer & 93.8 \\
+\textbf{Source} & \textbf{Model} & \textbf{Architecture} & \textbf{OA} \\ \midrule
+NeurIPS22 & Point Transformer V2 \cite{ptv2} & Transformer & 94.2 \\
+AAAI24 & Point-FEMAE \cite{FEMAE} & Transformer & 94.5 \\
+LNCS24 & Point2Vec \cite{Point2Vec} & Transformer & 94.8 \\
+ACM MM24 & Mamba3D \cite{Mamba3D} & SSM & 94.1 \\
+NIPS24 & PointMamba \cite{PointMamba} & SSM & 93.6 \\
+TIP25 & OTMae3D \cite{OTMae3D} & Transformer & 94.5 \\
+AAAI25 & PCM \cite{pcm} & SSM & 93.4 \\
+Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
 & PointSS & SSM & \textbf{96.0} \\ \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Ablation Study}
 
-S3DIS has rich scenes and large-scale point clouds, placing stronger performance requirements on models. Different methods show larger performance variations on S3DIS compared to ModelNet40, making observations easier. Therefore, except for combination ablation experiments, other ablation experiments are uniformly conducted on the S3DIS dataset.
+Ablation studies were conducted on the S3DIS dataset using a progressive strategy to verify individual module contributions. First, the effectiveness of GGAM in addressing geometric loss was examined (Tables IV--VI), followed by the validation of ASD-SSM design choices (Tables VII--X).
 
-\textbf{Experimental Design and Baseline Description}: The complete PointSS model consists of two core modules: GGAM and ASD-SSM. To systematically verify the independent contribution of each module, a progressive ablation strategy is adopted: first validating GGAM's effectiveness in addressing serialization geometric information loss (\cref{tab:split_and_repair}-\cref{tab:ggam_full_ablation}), then validating ASD-SSM's design choices based on GGAM (\cref{tab:alpha_ablation}-\cref{tab:scale_number}). This progressive design avoids inter-module interaction interference and more clearly demonstrates each module's marginal contribution.
+The baseline model utilizes a standard single-scale bidirectional Mamba with shared parameters. As shown in Table~III, introducing GGAM alone yields a 2.2\% mIoU improvement. This confirms that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates serialization-induced information loss, thereby enhancing local structural representation.
 
-\textbf{Baseline Implementation Details}: Our baseline model adopts a standard single-scale bidirectional Mamba architecture without GGAM's geometric awareness mechanism. Specifically, the baseline model employs forward and backward SSM branches at each encoder layer, using shared single state transition parameters ($\overline{A}$ value fixed), and fuses bidirectional features through residual connections. This baseline maintains the same network depth and channel configuration as complete PointSS but lacks GGAM's dual serialization geometric priors and ASD-SSM's scale decoupling mechanism.
+Building on this, incorporating multi-scale modeling with shared parameters improves performance by 0.9\% to 73.4\% mIoU. However, employing the full ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing an additional 1.8\% gain over the GGAM baseline. This demonstrates that decoupling parameters is crucial for simultaneously optimizing local detail capture and global semantic modeling.
 
-\textbf{Performance Improvement Path of Complete Model}: To clearly demonstrate each module's marginal contribution, a progressive performance improvement path is provided as shown in \cref{tab:progressive_improvement}.
+In summary, GGAM and ASD-SSM exhibit strong functional complementarity: GGAM restores geometric integrity, while ASD-SSM balances multi-scale dependencies. Their synergy achieves a total performance improvement of 4.9\% mIoU while maintaining high computational efficiency.
 
 \begin{table}[!t]
 \centering
-\caption{Progressive Performance Improvement Path of Modules on S3DIS. + denotes adding modules to Mamba Baseline}
+\caption{Incremental Performance Improvement Path on S3DIS}
 \label{tab:progressive_improvement}
 \begin{tabular}{@{}lll@{}}
 \toprule
-\textbf{Model Configuration} & \textbf{mIoU (\%)} & \textbf{Improvement (\%)} \\
+\textbf{Model Configuration} & \textbf{mIoU (\%)} & \textbf{Improvement} \\ \midrule
+Pure Mamba Baseline & 70.3 & - \\
+Baseline + GGAM & 72.5 & +2.2 \\
+Baseline + GGAM + Shared-Parameter ASD-SSM & 73.4 & +0.9 \\
+Baseline + GGAM + Full ASD-SSM (PointSS) & \textbf{75.2} & +1.8 \\ \midrule
+\textbf{Total Improvement} & - & \textbf{+4.9} \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\section{Experiments}
+
+\textbf{Implementation Details:} We conducted benchmark tests for point cloud analysis on the indoor dataset S3DIS and the classification dataset ModelNet40. All experiments were performed on an Nvidia A6000 GPU. For network training, we employed the AdamW optimizer and the OneCycleLR learning rate scheduler, with an initial maximum learning rate of 6e-3. The scheduling mechanism included an early-stage warm-up followed by a cosine annealing cycle. The entire training process spanned 3000 epochs with a batch size of 6, utilizing Automatic Mixed Precision (AMP) to enhance training efficiency.
+
+In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The Patch Size was uniformly set to 128, consistent with existing works to ensure a fair comparison. We selected the Cross-Entropy loss as the evaluation criterion, which is the most widely used loss function for classification and segmentation tasks in semantic analysis.
+
+To fairly evaluate the independent contributions of our proposed architectural innovations (GGAM and ASD-SSM), we adopted a train-from-scratch setting, consistent with current Mamba-based methods. This choice ensures that performance gains are solely attributable to architectural improvements, eliminating confounding factors arising from diverse pre-training strategies.
+
+\subsection{Datasets}
+
+\textbf{S3DIS:} The S3DIS dataset serves as a standard benchmark for indoor semantic segmentation. It contains 272 rooms across six distinct areas, covering 13 semantic categories (e.g., walls, furniture). Each point includes 3D coordinates and RGB information. Following established protocols, Area 5 is selected for result validation.
+
+\textbf{ModelNet40:} This dataset is utilized for 3D object classification, comprising 12,311 CAD models from 40 categories. The data is partitioned into 8,156 training samples and 4,155 testing samples.
+
+\subsection{Evaluation Metrics}
+
+\textbf{mIoU:} Mean Intersection over Union (mIoU) is a widely used evaluation metric in tasks such as semantic segmentation to measure the degree of overlap between predicted results and ground truth labels. For each category $c$, the Intersection over Union (IoU) is defined as:
+\begin{equation}
+\text{IoU}_c = \frac{\text{TP}_c}{\text{TP}_c + \text{FP}_c + \text{FN}_c}
+\end{equation}
+where TP$_c$ denotes the number of points correctly predicted as category $c$ (True Positives), FP$_c$ represents the number of points incorrectly predicted as category $c$ (False Positives), and FN$_c$ represents the number of points that truly belong to category $c$ but were not correctly predicted (False Negatives). The mIoU is obtained by taking the arithmetic mean of the IoU values across all semantic categories. Since mIoU provides a more comprehensive reflection of the model's segmentation performance across various classes---especially in cases of imbalanced class distributions---it is more robust than Overall Accuracy. Therefore, this paper adopts mIoU as the primary metric for evaluating point cloud semantic segmentation performance on the S3DIS dataset.
+
+\textbf{OA:} Overall Accuracy (OA) is defined as the ratio of the number of correctly predicted samples to the total number of samples across all point cloud data. It is one of the most intuitive and commonly used performance metrics in classification tasks. This metric effectively reflects the model's discriminative capability at the global classification level. Consequently, this paper utilizes OA as the evaluation metric for point cloud classification performance on the ModelNet40 dataset.
+
+\subsection{Quantitative Experiments}
+
+\subsubsection{Experiment Results on the S3DIS Dataset}
+
+\Cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mIoU in Area 5, significantly outperforming mainstream methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 2.0\% and the representative state-space method PCM by 5.4\%.
+
+These improvements are primarily attributed to two architectural innovations. First, the Global Geometry-Aware Mechanism (GGAM) mitigates serialization-induced information loss by integrating windowed neighborhoods and dual-serialization fusion. This enhances boundary continuity and semantic consistency, particularly in complex regions with sharp transitions. Second, the Adaptive Scale-Decoupled State Space Model (ASD-SSM) dynamically generates customized parameters across scales. This decoupling enables the simultaneous modeling of long-range global dependencies at coarse scales and rapid local responses at fine scales, overcoming the limitations of single-granularity shared parameters.
+
+Furthermore, PointSS retains the linear time complexity of SSMs. As shown in \Cref{tab:param_comparison}, the method maintains high computational efficiency with only a marginal increase in inference time, validating its scalability for large-scale point cloud scenarios.
+
+\begin{table}[!t]
+\centering
+\caption{Performance Comparison of Semantic Segmentation on S3DIS}
+\label{tab:s3dis}
+\begin{tabular}{llll}
+\toprule
+\textbf{Source} & \textbf{Model} & \textbf{Architecture} & \textbf{mIoU} \\
 \midrule
-Mamba Baseline & 70.3 & - \\
-+ GGAM & 72.5 & +2.2 \\
-+ GGAM + Shared-param ASD-SSM & 73.4 & +0.9 \\
-+ GGAM + Full ASD-SSM (PointSS) & \textbf{75.2} & +1.8 \\
-\midrule
-\multicolumn{2}{l}{\textbf{Total Improvement}} & \textbf{+4.9} \\
+NeurIPS22 & Point Transformer V2 \cite{ptv2} & Transformer & 72.6 \\
+CVPR23 & PointMetaBase \cite{pmb} & Transformer & 72.0 \\
+ICCV23 & SuperpointTransformer \cite{spt} & Transformer & 68.1 \\
+CVMJ23 & Swin3D \cite{Swin3D} & Transformer & 72.5 \\
+CVPR24 & PPT+SpareUNET \cite{ppt} & Transformer & 72.7 \\
+CVPR24 & OA-CNNs \cite{oacnn} & CNN & 71.1 \\
+CVPR24 & OneFormer3D \cite{OneFormer3D} & Transformer & 72.4 \\
+CVPR24 & Point Transformer V3 \cite{ptv3} & Transformer & 73.2 \\
+AAAI25 & PCM \cite{pcm} & SSM & 69.8 \\
+Mathematics24 & PointMSGT \cite{pointmsgt} & Transformer & 68.6 \\
+Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 66.2 \\
+ & PointSS & SSM & \textbf{75.2} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Experimental results show that the GGAM module contributes +2.2\% mIoU, addressing serialization geometric information loss; the ASD-SSM module contributes an additional +2.7\% mIoU based on GGAM (multi-scale features contribute +0.9\%, adaptive parameter generation contributes +1.8\%), achieving hierarchical multi-scale feature learning.
+\subsubsection{Experiment Results on the ModelNet40 Dataset}
 
-\subsubsection{GGAM Ablation Experiments}
-
-This section systematically validates GGAM's effectiveness in addressing geometric learning difficulties caused by serialization.
-
-\textbf{Quantification of Fragmentation Problem and GGAM Compensation Effect}: We first quantify the K-nearest neighbor fragmentation problem caused by serialization and validate GGAM's compensation capability. On the S3DIS dataset, we statistically analyze the distribution of K=128 nearest neighbors for each point after Hilbert curve serialization. For each point, we calculate the number of fragmented point pairs among its K nearest neighbors (sequence distance $>500$) and categorize points based on fragmentation degree. As shown in \cref{tab:split_and_repair}, categorization is based on each point's fragmented neighbor ratio and segmentation performance for each category of points is statistically analyzed.
+\Cref{tab:ModelNet} summarizes the classification performance on ModelNet40. PointSS achieves an Overall Accuracy (OA) of 96.0\% without pre-training, outperforming the state-of-the-art Transformer-based Point2Vec by 1.2\% and the SSM-based Mamba3D by 1.9\%. This establishes PointSS as the top-performing SSM approach. The superior results compared to masked self-supervised methods indicate that explicit structural modeling tailored to point clouds can effectively enhance global semantic understanding without relying on large-scale pre-training. By preserving local geometric details through multi-scale hierarchical aggregation, the model demonstrates robust discriminative capability in classification tasks.
 
 \begin{table}[!t]
 \centering
-\caption{Point Distribution and GGAM Compensation Effect for Different Fragmentation Degrees}
-\label{tab:split_and_repair}
-\begin{tabular}{@{}llllll@{}}
+\caption{Classification Performance Comparison on ModelNet40}
+\label{tab:ModelNet}
+\begin{tabular}{llll}
 \toprule
-\begin{tabular}[c]{@{}l@{}}Fragmented\\Neighbor Ratio\end{tabular} & \begin{tabular}[c]{@{}l@{}}Point\\Count\end{tabular} & \begin{tabular}[c]{@{}l@{}}Point\\Ratio\end{tabular} & \begin{tabular}[c]{@{}l@{}}Baseline\\IoU\end{tabular} & \begin{tabular}[c]{@{}l@{}}GGAM\\IoU\end{tabular} & \begin{tabular}[c]{@{}l@{}}Absolute\\Gain\end{tabular} \\
+\textbf{Source} & \textbf{Model} & \textbf{Architecture} & \textbf{OA} \\
 \midrule
-0-10\% (Good) & 270K & 67\% & 74.0 & 74.8 & +0.8 \\
-\midrule
-10-20\% (Light) & 101K & 25\% & 63.0 & 67.1 & +4.1 \\
-20-30\% (Moderate) & 32K & 8\% & 62.0 & 70.0 & +8.0 \\
-\midrule
-\textbf{Total} & \textbf{403K} & \textbf{100\%} & \textbf{70.3} & \textbf{72.5} & \textbf{+2.2} \\
+NeurIPS22 & Point Transformer V2 \cite{ptv2} & Transformer & 94.2 \\
+AAAI24 & Point-FEMAE \cite{FEMAE} & Transformer & 94.5 \\
+LNCS24 & Point2Vec \cite{Point2Vec} & Transformer & 94.8 \\
+ACM MM24 & Mamba3D \cite{Mamba3D} & SSM & 94.1 \\
+NIPS24 & PointMamba \cite{PointMamba} & SSM & 93.6 \\
+TIP25 & OTMae3D \cite{OTMae3D} & Transformer & 94.5 \\
+AAAI25 & PCM \cite{pcm} & SSM & 93.4 \\
+Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
+ & PointSS & SSM & \textbf{96.0} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Note: Fragmented neighbor ratio = number of K nearest neighbors with sequence distance $>500$ / K.
+\subsection{Ablation Study}
 
-Experimental results show that under Hilbert curve serialization, 33\% of points (133K/403K) have varying degrees of fragmentation (fragmented neighbor ratio $>10\%$). Fragmentation degree shows significant negative correlation with segmentation performance; when a point's fragmented neighbor ratio increases from 0-10\% to 20-30\%, its segmentation IoU decreases from 74.0\% to 62.0\%, a performance loss of 12.0 percentage points, proving that fragmentation seriously affects Mamba's implicit geometric learning capability. GGAM effectively compensates for this problem by explicitly injecting geometric priors; the more severe the fragmentation, the more significant the absolute improvement from GGAM, increasing from 0.8\% to 8.0\%, proving that global geometric awareness can effectively provide geometric information across sequence distances. Overall, GGAM improves average IoU for all points from 70.3\% to 72.5\%, an absolute improvement of 2.2\%, validating the effectiveness of explicit geometric prior enhancement mechanisms.
+Ablation studies were conducted on the S3DIS dataset using a progressive strategy to verify individual module contributions. First, the effectiveness of GGAM in addressing geometric loss was examined (\Cref{tab:ggam_fragmentation,tab:ggam_category,tab:ggam_components}), followed by the validation of ASD-SSM design choices (\Cref{tab:scale_constraint,tab:param_gen,tab:param_comparison,tab:scale_config}).
 
-\textbf{Compensation Effects on Different Semantic Categories}: Different object categories show significant differences in fragmentation degree and geometric complexity. We analyze GGAM's effects on various categories in S3DIS, as shown in \cref{tab:ggam_per_class}.
+The baseline model utilizes a standard single-scale bidirectional Mamba with shared parameters. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a 2.2\% mIoU improvement. This confirms that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates serialization-induced information loss, thereby enhancing local structural representation.
+
+Building on this, incorporating multi-scale modeling with shared parameters improves performance by 0.9\% to 73.4\% mIoU. However, employing the full ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing an additional 1.8\% gain over the GGAM baseline. This demonstrates that decoupling parameters is crucial for simultaneously optimizing local detail capture and global semantic modeling.
+
+In summary, GGAM and ASD-SSM exhibit strong functional complementarity: GGAM restores geometric integrity, while ASD-SSM balances multi-scale dependencies. Their synergy achieves a total performance improvement of 4.9\% mIoU while maintaining high computational efficiency.
 
 \begin{table}[!t]
 \centering
-\caption{GGAM Effect Analysis on Different Semantic Categories}
-\label{tab:ggam_per_class}
-\begin{tabular}{@{}llllll@{}}
+\caption{Incremental Performance Improvement Path on S3DIS}
+\label{tab:progressive_improvement}
+\begin{tabular}{lll}
 \toprule
-Category & \begin{tabular}[c]{@{}l@{}}Avg Frag.\\Ratio\end{tabular} & \begin{tabular}[c]{@{}l@{}}Baseline\\IoU\end{tabular} & \begin{tabular}[c]{@{}l@{}}GGAM\\IoU\end{tabular} & Gain & \begin{tabular}[c]{@{}l@{}}Geometric\\Feature\end{tabular} \\
+\textbf{Model Configuration} & \textbf{mIoU (\%)} & \textbf{Improvement} \\
 \midrule
-Wall & 18\% & 88.7 & 90.1 & +1.4 & Large plane \\
-Floor & 16\% & 92.3 & 93.5 & +1.2 & Large plane \\
-Ceiling & 19\% & 90.5 & 91.9 & +1.4 & Large plane \\
+Pure Mamba Baseline & 70.3 & - \\
+Baseline + GGAM & 72.5 & +2.2 \\
+Baseline + GGAM + Shared-Parameter ASD-SSM & 73.4 & +0.9 \\
+Baseline + GGAM + Full ASD-SSM (PointSS) & \textbf{75.2} & +1.8 \\
 \midrule
-Window & 42\% & 61.8 & 68.5 & +6.7 & Complex boundary \\
-Door & 38\% & 65.2 & 70.8 & +5.6 & Rect. boundary \\
-Column & 45\% & 54.3 & 60.1 & +5.8 & Slender structure \\
-\midrule
-Table & 29\% & 73.5 & 76.8 & +3.3 & Rect. + legs \\
-Chair & 35\% & 68.9 & 73.2 & +4.3 & Complex structure \\
-Sofa & 33\% & 70.6 & 74.8 & +4.2 & Curved + back \\
-Bookshelf & 31\% & 70.2 & 73.9 & +3.7 & Vertical structure \\
-Clutter & 51\% & 45.7 & 52.4 & +6.7 & Highly complex \\
-\midrule
-\textbf{Average} & \textbf{33.5\%} & \textbf{70.3} & \textbf{72.5} & \textbf{+2.2} & - \\
+\textbf{Total Improvement} & - & \textbf{+4.9} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Note: Average fragmentation ratio = average of fragmented neighbor ratios for all points in that category.
+\subsubsection{Ablation Study of GGAM}
 
-Analysis shows that average fragmentation ratio and GGAM improvement magnitude exhibit positive correlation. Large plane categories (walls, floors, ceilings) have lower average fragmentation ratios (16-19\%) with limited GGAM improvements (+1.2-1.4\%) because these categories have good serialization effects, simple geometric structures, and strong continuity. Boundary-dense categories (windows, doors, columns) show significantly elevated average fragmentation ratios (38-45\%), with GGAM bringing more significant performance improvements (+5.6-6.7\%), proving effective compensation capability of explicit geometric priors for complex boundaries. Medium-complexity furniture categories (tables, chairs, sofas, bookshelves) demonstrate moderate fragmentation ratios (29-35\%) with corresponding performance improvements (+3.3-4.3\%). Particularly noteworthy is that sofas, as complex furniture with curved backs and armrests, have an average fragmentation ratio of 33\%, with GGAM bringing a significant +4.2\% improvement, indicating that the global geometric awareness mechanism can effectively provide geometric information for complex curved structures. For the geometrically most complex clutter category with an average fragmentation ratio as high as 51\%, GGAM still achieves a significant +6.7\% improvement, fully demonstrating that explicit geometric priors can effectively enhance model learning of detailed geometric information. This systematic improvement pattern validates GGAM's design intent: for categories sensitive to geometric structure and easily fragmented by serialization, explicit geometric prior injection can provide more significant performance improvements, while for categories with simple geometric structures and low fragmentation degrees, stable baseline performance is maintained.
+Systematic ablation experiments were conducted to verify the effectiveness of the Global Geometry-Aware Mechanism (GGAM) in mitigating the difficulties of geometric learning introduced by point cloud serialization. All experiments were performed on the S3DIS dataset, with a focus on analyzing the neighborhood fragmentation phenomenon caused by serialization, the compensation capability of GGAM across categories of varying geometric complexity, and the synergistic mechanisms of the internal components within GGAM.
 
-\textbf{GGAM Core Component Ablation}: We conduct progressive ablation on GGAM's five core components to validate each module's contribution, as shown in \cref{tab:ggam_full_ablation}.
+To quantitatively characterize the neighborhood fragmentation issue caused by serialization, the distribution of the 128 spatial neighbors for each point within the sequence was analyzed under Hilbert curve serialization. Specifically, for each point, the proportion of its neighbors with a sequence distance greater than 500 was calculated. Based on this metric, points were categorized into different fragmentation intervals. Subsequently, the segmentation performance of the baseline model versus the model with GGAM was statistically evaluated across these various fragmentation levels, as presented in \Cref{tab:ggam_fragmentation}.
+
+Experimental results indicate that approximately 33\% of points undergo neighborhood fragmentation under Hilbert serialization. As the fragmentation ratio increases from 0--10\% to 20--30\%, baseline performance drops sharply from 74.0 to 62.0, confirming the detrimental impact of serialization on local geometric representation. GGAM effectively mitigates this degradation, exhibiting a positive correlation between fragmentation levels and performance gains. Notably, an absolute gain of 8.0 is observed in the high-fragmentation interval (20--30\%), significantly exceeding improvements in low-fragmentation areas.
 
 \begin{table}[!t]
 \centering
-\caption{GGAM Core Component Progressive Ablation Experiment}
-\label{tab:ggam_full_ablation}
-\begin{tabular}{@{}lllllll@{}}
+\caption{Point Distribution Across Different Fragmentation Levels and the Compensation Effect of GGAM}
+\label{tab:ggam_fragmentation}
+\begin{tabular}{llllll}
 \toprule
-\begin{tabular}[c]{@{}l@{}}Geometric\\Features\end{tabular} & \begin{tabular}[c]{@{}l@{}}Dual\\Serial.\end{tabular} & \begin{tabular}[c]{@{}l@{}}Cross-\\attn\end{tabular} & \begin{tabular}[c]{@{}l@{}}Gated\\Fusion\end{tabular} & $\mathcal{L}_{geo}$ & \begin{tabular}[c]{@{}l@{}}S3DIS\\mIoU\end{tabular} & $\Delta$ \\
+\textbf{Fragmentation} & \textbf{Point} & \textbf{Point} & \textbf{Baseline} & \textbf{GGAM} & \textbf{Absolute} \\
+\textbf{Ratio} & \textbf{Count} & \textbf{Percentage} & \textbf{IoU} & \textbf{IoU} & \textbf{Gain} \\
 \midrule
-$\times$ & $\times$ & $\times$ & $\times$ & $\times$ & 70.3 & Baseline \\
+0-10\% (Low) & 270k & 67\% & 74.0 & 74.8 & 0.8 \\
+10-20\% (Mild) & 101k & 25\% & 63.0 & 67.1 & 4.1 \\
+20-30\% (Moderate) & 32k & 8\% & 62.0 & 70.0 & 8.0 \\
 \midrule
-$\checkmark$ & $\times$ & $\times$ & $\times$ & $\times$ & 71.1 & +0.8 \\
-$\checkmark$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & 71.0 & +0.7 \\
-$\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & 71.9 & +1.6 \\
-$\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & 72.2 & +1.9 \\
-$\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & \textbf{72.5} & \textbf{+2.2} \\
+Total & 403k & 100\% & 70.3 & 72.5 & 2.2 \\
 \bottomrule
 \end{tabular}
+\par\vspace{3pt}
+\footnotesize Note: The fragmentation ratio is defined as the number of points among a point's K-nearest neighbors whose sequence distance exceeds 500, divided by K.
 \end{table}
 
-Component contribution analysis shows strong synergistic effects among modules. Geometric features (curvature + normals) as basic components contribute +0.8\% mIoU, where curvature describes local bending degree and normals describe surface orientation; their combination can comprehensively characterize point cloud geometric structures. Interestingly, dual serialization strategy (Hilbert + Z-order) alone shows slight performance decrease of 0.1\% mIoU (from 71.1 to 71.0), reflecting that computational complexity introduced by dual serialization cannot demonstrate advantages without supporting aggregation mechanisms. However, the addition of cross-attention mechanisms brings a jump improvement (+0.9\% mIoU), improving performance from 71.0 to 71.9, validating the strong synergy between dual serialization and cross-attention—cross-attention can dynamically aggregate complementary information from two sequences, fully leveraging dual serialization advantages. Gated fusion adaptively adjusts feature weights based on local geometric complexity, contributing an additional +0.3\% mIoU. Geometric consistency loss $\mathcal{L}_{geo}$ provides explicit geometric supervision, contributing an additional +0.3\% mIoU; this loss constrains model-predicted geometric properties to be consistent with ground truth, enhancing geometric understanding capabilities. Complete GGAM improves 2.2\% mIoU compared to baseline, validating overall design effectiveness. This ablation path reveals inter-module dependencies: geometric features provide foundation, dual serialization requires cross-attention to function, while gated fusion and geometric loss further optimize on this foundation.
+This trend is further corroborated by category-wise analysis (\Cref{tab:ggam_category}). Large planar structures with high continuity (e.g., walls, floors) show limited gains (1.0--1.4). In contrast, categories featuring complex boundaries and slender structures (e.g., columns, clutter) exhibit higher fragmentation ratios and achieve substantial improvements (5.3--6.5). These findings demonstrate that GGAM is particularly effective at recovering critical geometric information in regions with sharp transitions and dense boundaries.
 
-\subsubsection{ASD-SSM Ablation Experiments}
+\begin{table*}[!t]
+\centering
+\caption{Category-wise Performance Analysis of GGAM on the S3DIS Dataset}
+\label{tab:ggam_category}
+\begin{tabular}{llllll}
+\toprule
+\textbf{Category} & \textbf{Avg. Fragmentation Ratio} & \textbf{Baseline IoU} & \textbf{GGAM IoU} & \textbf{Absolute Gain} & \textbf{Geometric Characteristics} \\
+\midrule
+Floor & 5\% & 92.3 & 93.5 & +1.2 & Large planar surface \\
+Wall & 6\% & 88.7 & 90.1 & +1.4 & Large planar surface \\
+Ceiling & 8\% & 90.5 & 91.9 & +1.4 & Large planar surface \\
+Table & 11\% & 73.5 & 76.6 & +3.1 & Rectangular surface with legs \\
+Bookshelf & 13\% & 70.2 & 73.9 & +3.7 & Vertical structure \\
+Chair & 15\% & 68.9 & 73.2 & +4.3 & Complex structure \\
+Sofa & 15\% & 70.6 & 74.8 & +4.2 & Curved surface with backrest \\
+Door & 17\% & 65.2 & 70.5 & +5.3 & Rectangular boundaries \\
+Column & 18\% & 54.3 & 60.1 & +5.8 & Slender vertical structure \\
+Window & 19\% & 61.8 & 67.3 & +5.5 & Complex boundaries \\
+Clutter & 22\% & 45.7 & 52.2 & +6.5 & Highly complex \\
+\midrule
+Mean & 13.5\% & 70.3 & 72.5 & +2.2 & - \\
+\bottomrule
+\end{tabular}
+\par\vspace{3pt}
+\footnotesize Note: The Avg. Fragmentation Ratio is defined as the mean fragmentation ratio across all points belonging to a specific semantic category.
+\end{table*}
 
-\textbf{Impact of Scale Constraint Factor $\alpha_s$}: To deeply understand the impact of scale constraint factor $\alpha_s$ on model performance, we design systematic ablation experiments. $\alpha_s$ directly controls the upper bound of state transition matrix $\overline{A}_s$ value domain: smaller $\alpha_s$ constrains $\overline{A}_s$ to smaller ranges (such as $[0, 0.3]$), enabling rapid state decay to respond to local variations; larger $\alpha_s$ allows $\overline{A}_s$ to approach 1 (such as $[0, 0.9]$), enabling slow state decay to maintain long-term memory. Different $\alpha_s$ configuration schemes are tested, with results shown in \cref{tab:alpha_ablation}.
+To further verify the independent contributions and synergistic relationships among the constituent components of GGAM, a progressive ablation study was conducted on its core elements, with the results summarized in \Cref{tab:ggam_components}.
+
+As indicated by the experimental results, the introduction of geometric features alone leads to a performance gain of 0.8\% mIoU, suggesting that explicit geometric priors provide a more reliable foundation for modeling local structural information. Conversely, the individual implementation of the dual-serialization strategy yields limited performance improvements or even slight fluctuations. This observation implies that different serialization methods may introduce directional biases or neighborhood perturbations, which fail to produce stable gains without an effective interaction mechanism.
+
+Furthermore, when geometric features are integrated with dual-serialization, the performance improves to 71.9\% mIoU. This indicates that multiple serialization sequences can provide complementary neighborhood information to a certain extent.
+
+Building upon this, the introduction of the cross-sequence attention mechanism increases the model performance to 72.2\% mIoU, demonstrating that cross-sequence interaction plays a pivotal role in aligning complementary geometric information across different serialization patterns. The subsequent addition of the gated fusion mechanism and geometric consistency constraints further elevates the performance to 72.5\% mIoU. The gated mechanism adaptively balances the contributions of different serialization branches based on feature quality, while the geometric consistency constraints suppress unreasonable geometric combinations caused by window-approximated neighborhoods. This progressively enhances the stability and robustness of the feature fusion process.
+
+In summary, the performance gain of GGAM is not driven by a single component but is the result of the synergistic effects of multiple mechanisms. Through geometric prior injection, dual-serialization complementarity, cross-sequence feature interaction, and adaptive fusion constraints, GGAM effectively mitigates the geometric information loss induced by point cloud serialization. Ultimately, an overall improvement of 2.2\% mIoU is achieved on the S3DIS dataset, validating the rationality and effectiveness of the proposed design.
 
 \begin{table}[!t]
 \centering
-\caption{Scale Constraint Factor $\alpha_s$ Ablation Experiment (3-scale Configuration)}
-\label{tab:alpha_ablation}
-\begin{tabular}{@{}llll@{}}
+\caption{Component-wise Ablation Study of the GGAM on the S3DIS Dataset}
+\label{tab:ggam_components}
+\begin{tabular}{cccccc}
 \toprule
-$\alpha_1$ & $\alpha_2$ & $\alpha_3$ & mIoU \\
+\textbf{GF} & \textbf{DS} & \textbf{CSA} & \textbf{GFM} & \textbf{$L_{geo}$} & \textbf{mIoU (\%)} \\
+\midrule
+$\times$ & $\times$ & $\times$ & $\times$ & $\times$ & 70.3 \\
+\checkmark & $\times$ & $\times$ & $\times$ & $\times$ & 71.1 \\
+\checkmark & \checkmark & $\times$ & $\times$ & $\times$ & 71.0 \\
+\checkmark & \checkmark & \checkmark & $\times$ & $\times$ & 71.9 \\
+\checkmark & \checkmark & \checkmark & \checkmark & $\times$ & 72.2 \\
+\checkmark & \checkmark & \checkmark & \checkmark & \checkmark & 72.5 \\
+\bottomrule
+\end{tabular}
+\par\vspace{3pt}
+\footnotesize Notes: GF: Geometric Features; DS: Dual-Serialization; CSA: Cross-Sequence Attention; GFM: Gated Fusion Mechanism; $L_{geo}$: Geometric Consistency Constraint (Loss).
+\end{table}
+
+\subsubsection{ASD-SSM Ablation Study}
+
+Systematic ablation experiments on the S3DIS dataset evaluated key ASD-SSM design choices, focusing on the scale constraint factor, parameter generator, and scale configuration. First, the scale constraint factor was analyzed for its role in regulating the state transition matrix. Smaller factors induce rapid state decay, facilitating the capture of local geometric variations, whereas larger factors delay decay, enhancing the modeling of long-range dependencies and global semantics (\Cref{tab:scale_constraint}).
+
+Experimental results indicate that uniform scale constraint factors consistently underperform compared to differentiated configurations, confirming that distinct scales require specific state-decay characteristics. Optimal performance is achieved when constraint factors increase progressively from fine to coarse scales (0.3, 0.6, 0.9). This validates the design philosophy: fine scales benefit from rapid decay to capture local variations, while coarse scales require slow decay to maintain long-range memory. Reversing this configuration drops performance to 72.9\% mIoU, as excessive memory at fine scales interferes with local modeling, and rapid decay at coarse scales disrupts global consistency.
+
+\begin{table}[!t]
+\centering
+\caption{Ablation Study of Scale Constraint Factors $\alpha_s$ with a 3-Scale Configuration}
+\label{tab:scale_constraint}
+\begin{tabular}{cccc}
+\toprule
+$\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU} \\
 \midrule
 0.3 & 0.3 & 0.3 & 73.8 \\
 0.7 & 0.7 & 0.7 & 74.1 \\
 0.5 & 0.5 & 0.5 & 74.3 \\
-\midrule
 0.3 & 0.5 & 0.7 & 75.0 \\
-\textbf{0.3} & \textbf{0.6} & \textbf{0.9} & \textbf{75.2} \\
+0.3 & 0.6 & 0.9 & 75.2 \\
 0.3 & 0.7 & 0.9 & 75.2 \\
 0.2 & 0.6 & 0.9 & 75.1 \\
 0.4 & 0.6 & 0.9 & 75.0 \\
-\midrule
 0.9 & 0.6 & 0.3 & 72.9 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Experimental results show that when all scales use the same $\alpha_s$ (first three rows), performance is significantly lower than differentiated configurations, proving that different scales indeed require differentiated state decay characteristics. Configurations with $\alpha_s$ increasing from fine to coarse scales (0.3→0.6→0.9) achieve optimal performance, confirming the design principle of "fine scale fast decay ($\overline{A}_1 \in [0,0.3]$), coarse scale slow decay ($\overline{A}_3 \in [0,0.9]$)". Notably, when $\alpha_s$ is configured in reverse (0.9→0.6→0.3), performance drops significantly to 72.9\%, validating the importance of constraint direction. Additionally, non-linear increment (0.3→0.6→0.9) outperforms linear increment (0.3→0.5→0.7), indicating that coarse scales need $\overline{A}_S$ values closer to 1 to achieve stronger long-term memory capabilities.
+Based on these findings, the parameter generator was analyzed (\Cref{tab:param_gen}). By leveraging both global features and scale information, the generator produces scale-dependent parameters that further enhance performance. Comparative schemes demonstrate that integrating both information sources outperforms using either in isolation.
 
-\textbf{Parameter Generator Design Ablation}: ASD-SSM's parameter generator integrates global feature $\mathbf{f}_{global}$ and scale embedding $\mathbf{e}_s$. To validate each component's contribution, we design the following comparative experiments:
+Experimental results indicate that both global features and scale embeddings independently enhance model performance, with global features providing a slightly higher improvement than scale information alone. This suggests that scene-level global semantics provide a critical reference for state parameter generation, enabling the model to adaptively adjust state-updating behaviors across different regions. When global features and scale information are integrated concurrently, the performance gain reaches 1.8\% mIoU, which is substantially higher than the improvement from either source alone, demonstrating a clear synergy in the parameter generation process. Further analysis of different modulation strengths ($\lambda$) reveals that optimal performance is achieved at $\lambda$ = 0.1. Insufficient modulation strength limits the model's adaptive capacity, while excessive strength may introduce unstable perturbations, compromising the smoothness of the state-updating process.
 
-\begin{table}[!t]
+\begin{table*}[!t]
 \centering
-\caption{Parameter Generator Design Ablation Experiment}
-\label{tab:paramgen_design}
-\begin{tabular}{@{}llllll@{}}
+\caption{Ablation Study on the Design of the Parameter Generator}
+\label{tab:param_gen}
+\begin{tabular}{llllll}
 \toprule
-Scheme & \begin{tabular}[c]{@{}l@{}}Global\\Feature\end{tabular} & \begin{tabular}[c]{@{}l@{}}Scale\\Embed.\end{tabular} & \begin{tabular}[c]{@{}l@{}}Modulation\\$\lambda$\end{tabular} & mIoU & $\Delta$ \\
+\textbf{Scheme} & \textbf{Global Features} & \textbf{Scale Embedding} & \textbf{Modulation Strength ($\lambda$)} & \textbf{mIoU (\%)} & \textbf{Gain ($\Delta$)} \\
 \midrule
-Baseline (Shared params) & - & - & - & 73.4 & - \\
-\midrule
-Scheme 1 & $\times$ & $\checkmark$ & 0.1 & 74.1 & +0.7 \\
-Scheme 2 & $\checkmark$ & $\times$ & 0.1 & 74.3 & +0.9 \\
-Scheme 3 & $\checkmark$ & $\checkmark$ & 0.05 & 74.8 & +1.4 \\
-\textbf{Scheme 4} & $\checkmark$ & $\checkmark$ & \textbf{0.1} & \textbf{75.2} & \textbf{+1.8} \\
-Scheme 5 & $\checkmark$ & $\checkmark$ & 0.2 & 74.6 & +1.0 \\
-Scheme 6 & $\checkmark$ & $\checkmark$ & 0.3 & 73.9 & +0.3 \\
+Baseline (Shared) & - & - & - & 73.4 & - \\
+Scheme 1 & $\times$ & \checkmark & 0.1 & 74.1 & +0.7 \\
+Scheme 2 & \checkmark & $\times$ & 0.1 & 74.3 & +0.9 \\
+Scheme 3 & \checkmark & \checkmark & 0.05 & 74.8 & +1.4 \\
+Scheme 4 & \checkmark & \checkmark & 0.1 & 75.2 & +1.8 \\
+Scheme 5 & \checkmark & \checkmark & 0.2 & 74.6 & +1.2 \\
+Scheme 6 & \checkmark & \checkmark & 0.3 & 73.9 & +0.5 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
-From \cref{tab:paramgen_design}, using only scale embedding yields 0.7\% mIoU improvement, proving the importance of assigning unique identities to different scales. Using only global features yields 0.9\% mIoU improvement, indicating that content-adaptive parameter generation is more critical. Using both yields improvement (+1.8\%) greater than the sum of individual uses (+0.7\% + +0.9\% = +1.6\%), demonstrating clear synergistic effects. Regarding modulation intensity ($\lambda$ controls MLP output scaling before sigmoid), $\lambda=0.1$ achieves optimal balance; too small (0.05) causes sigmoid outputs to concentrate too much around 0.5, insufficient scale differentiation; too large (0.2, 0.3) causes sigmoid saturation (approaching 0 or 1), introducing excessive perturbations and affecting training stability.
+Subsequently, ASD-SSM was compared with several common parameterization strategies, as summarized in \Cref{tab:param_comparison}. The Shared Parameter scheme is the most lightweight in terms of parameter count and computational efficiency; however, it fails to capture functional differences across scales, leading to relatively low overall performance. The Independent Parameters scheme achieves the highest segmentation performance but at a significant cost in terms of parameter volume and memory footprint. The Parameter Interpolation approach controls the parameter count through linear generation between scales; yet, linear interpolation struggles to represent complex non-linear relationships across scales, resulting in limited gains. While Low-Rank Adaptation (LoRA) is efficient in parameter count, its static low-rank constraints limit the model's representational capacity. In contrast, by employing a dynamic parameter generation mechanism, ASD-SSM achieves performance comparable to the independent parameter scheme with only an approximately 20\% increase in parameter volume, demonstrating superior parameter efficiency. Notably, the differences in inference time among these methods are negligible, indicating that ASD-SSM significantly improves performance without introducing substantial computational overhead.
 
-\textbf{Comparison of Different Parameterization Methods}: We comprehensively compare ASD-SSM with multiple parameterization strategies, including parameter sharing, fully independent parameters, parameter interpolation, and LoRA-style low-rank adaptation methods. Parameter interpolation trains only coarse and fine parameter sets, generating intermediate scales through linear interpolation. LoRA adaptation borrows low-rank adaptation ideas from natural language processing \cite{lora}, adding parameter offsets for each scale through low-rank matrix decomposition, significantly reducing parameters compared to independent parameters.
-
-\begin{table}[!t]
+\begin{table*}[!t]
 \centering
 \caption{Performance and Efficiency Comparison of Different Parameterization Methods}
-\label{tab:parameterization_comparison}
-\begin{tabular}{@{}lllll@{}}
+\label{tab:param_comparison}
+\begin{tabular}{lllll}
 \toprule
-Parameterization & Params & \begin{tabular}[c]{@{}l@{}}Inference\\Time\end{tabular} & Memory & mIoU \\
+\textbf{Parameterization Method} & \textbf{Params} & \textbf{Inf. Time} & \textbf{GPU Memory} & \textbf{mIoU (\%)} \\
 \midrule
-Shared params & 1.0$\times$ & 11.2ms & 45.5GB & 73.4 \\
-\midrule
-Independent params & 3.0$\times$ & 12.1ms & 51.3GB & 75.8 \\
-Param interpolation & 2.0$\times$ & 11.5ms & 46.8GB & 74.2 \\
-LoRA adaptation & 1.15$\times$ & 11.8ms & 47.2GB & 74.6 \\
-\textbf{ASD-SSM} & \textbf{1.2$\times$} & \textbf{11.9ms} & \textbf{47.8GB} & \textbf{75.2} \\
+Shared Parameters & 1.0$\times$ & 11.2 ms & 45.5 GB & 73.4 \\
+Independent Parameters & 3.0$\times$ & 12.1 ms & 51.3 GB & 75.8 \\
+Parameter Interpolation & 2.0$\times$ & 11.5 ms & 46.8 GB & 74.2 \\
+LoRA Adaptation & 1.15$\times$ & 11.8 ms & 47.2 GB & 74.6 \\
+ASD-SSM (Ours) & 1.2$\times$ & 11.9 ms & 47.8 GB & 75.2 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
-Experimental results show that ASD-SSM achieves performance close to independent parameter schemes (only 0.6\% lower mIoU) with only 20\% additional parameters, demonstrating significantly higher parameter efficiency. In performance-efficiency trade-offs, ASD-SSM performs excellently. Although parameter interpolation is also lightweight, simple linear interpolation cannot capture non-linear relationships between scales, with limited performance improvement (+0.6\% vs +1.8\%). LoRA provides certain adaptation capability through low-rank matrix decomposition, but its static low-rank constraints limit expressive power, while ASD-SSM's dynamic parameter generation mechanism is more flexible, adaptively adjusting based on input content. Notably, inference time increases for all methods are insignificant ($<5\%$), proving the practicality of lightweight parameterization strategies.
+A systematic investigation into scale quantities and window expansion configurations (\Cref{tab:scale_config}) confirms the necessity of hierarchical modeling. Introducing a second scale significantly outperforms the single-scale baseline, while incorporating a third scale yields a further 1.6\%--1.9\% improvement. This suggests that a three-level hierarchy---local, intermediate, and global---provides the most comprehensive structural representation.
 
-\textbf{Systematic Study of Scale Number $S$}: We systematically explore different numbers of scale layers $S$ and corresponding window expansion factors $F$, with results shown in \cref{tab:scale_number}:
+Regarding window expansion, moderate increases enhance context modeling, whereas excessive sizes tend to dilute spatial features. Although four- and five-scale configurations offer marginal gains, they incur substantial computational overhead with diminishing returns. Consequently, the three-scale configuration represents the optimal trade-off between performance and efficiency.
 
 \begin{table}[!t]
 \centering
-\caption{Detailed Ablation Experiment on Scale Number and Configuration}
-\label{tab:scale_number}
-\begin{tabular}{@{}lllll@{}}
+\caption{Detailed Ablation Study of Scale Quantities and Window Configurations}
+\label{tab:scale_config}
+\begin{tabular}{lllll}
 \toprule
-$S$ & $F$ & Params & \begin{tabular}[c]{@{}l@{}}Training\\Time\end{tabular} & mIoU \\
+\textbf{S} & \textbf{F} & \textbf{Params} & \textbf{Train Time} & \textbf{mIoU (\%)} \\
 \midrule
 1 & (1) & 1.0$\times$ & 35h & 72.4 \\
-\midrule
 2 & (1,2) & 1.13$\times$ & 37h & 73.5 \\
 2 & (1,3) & 1.13$\times$ & 38h & 73.8 \\
 2 & (1,4) & 1.13$\times$ & 38h & 73.6 \\
-\midrule
-\textbf{3} & \textbf{(1,2,2)} & \textbf{1.20$\times$} & \textbf{40h} & \textbf{75.2} \\
+3 & (1,2,2) & 1.20$\times$ & 40h & 75.2 \\
 3 & (1,2,3) & 1.20$\times$ & 41h & 75.3 \\
 3 & (1,2,4) & 1.20$\times$ & 41h & 75.0 \\
 3 & (1,3,3) & 1.20$\times$ & 40h & 74.8 \\
-\midrule
 4 & (1,2,2,2) & 1.27$\times$ & 43h & 75.5 \\
 4 & (1,2,2,3) & 1.27$\times$ & 44h & 75.6 \\
 5 & (1,2,2,2,3) & 1.33$\times$ & 46h & 75.5 \\
 \bottomrule
 \end{tabular}
+\par\vspace{3pt}
+\footnotesize Notes: S: Number of scales; F: Scaling factors for window expansion; Params: Relative parameter count; Train Time: Total training duration on the S3DIS dataset.
 \end{table}
-
-Experimental results show that adding a second scale brings significant improvement (+1.1\%~+1.4\%), proving the necessity of multi-scale modeling. Three-scale configuration further improves 1.6\%~1.9\% mIoU compared to two-scale, indicating that three levels (local-intermediate-global) better capture hierarchical structures of point clouds. Regarding window expansion strategy, (1,2,2) configuration outperforms (1,2,3) and (1,2,4), indicating that excessively large windows dilute spatial feature information, causing detail loss. Four-scale and five-scale performance improvements are insignificant ($<0.2\%$) but training time increases significantly ($>20\%$), indicating that three scales have achieved a good performance-efficiency balance.
 
 \subsection{Qualitative Experiments}
 
-We visualize detection results on the S3DIS dataset in \cref{fig:vis}. The circled parts highlight segmentation differences between different models. It can be seen that PointSS has better segmentation effects for objects like windows and columns that require large receptive fields, proving PointSS's advantages in receptive field fusion and multi-level understanding capabilities. Additionally, PointSS demonstrates good performance in fine-grained segmentation such as clutter segmentation, proving the effectiveness of PointSS's multi-scale architecture and geometric feature learning capability, able to preserve model understanding of details.
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=3.5in]{../picture/visualize.JPG}
-\caption{Qualitative comparison on S3DIS. Circled regions show segmentation differences. PointSS demonstrates superior performance on large receptive field objects (windows, columns), complex boundaries (wall-column junctions), and fine-grained small objects (clutter).}
-\label{fig:vis}
-\end{figure}
+Fig.~6 presents a qualitative comparison on the S3DIS dataset, where PointSS demonstrates superior segmentation continuity and precision across complex scenes. For large-scale structures (e.g., windows and columns), the method overcomes serialization-induced discontinuities by leveraging GGAM to recover spatial relationships and ASD-SSM to maintain global context, thereby ensuring structural integrity where baselines often fail. In fine-grained regions such as clutter, the multi-scale architecture effectively captures subtle local variations, while geometric priors enable high-fidelity modeling. Additionally, at sharp boundaries (e.g., wall-column intersections), explicit neighborhood modeling mitigates fragmentation, producing distinct edges compared to the blurred boundaries of baseline methods. Overall, these visualization results align with the quantitative analysis, validating the robustness of PointSS across varying scales and geometric complexities.
 
 \section{Conclusion}
 
-Addressing the geometric information loss and single-granularity long-sequence features issues in existing Mamba-based point cloud analysis methods, this paper proposes PointSS. Through two core modules—Global Geometry-Aware Mechanism (GGAM) and Adaptive Scale-Decoupled State Space Model (ASD-SSM)—PointSS effectively addresses geometric structure fragmentation caused by point cloud serialization and achieves hierarchical multi-scale feature learning. Systematic ablation experiments on the S3DIS dataset show: GGAM improves by 2.2\% mIoU from single-scale bidirectional Mamba baseline (70.3\%) to 72.5\% through dual serialization strategy, cross-attention mechanism, and geometric consistency constraints; ASD-SSM contributes an additional 2.7\% mIoU improvement based on GGAM through a lightweight parameter generator dynamically generating customized parameters for different scales, enabling complete PointSS to reach 75.2\% mIoU, a total improvement of 4.9\% mIoU over baseline. Notably, ASD-SSM achieves performance close to fully independent parameter schemes with only approximately 20\% additional parameters, demonstrating excellent parameter efficiency. Ablation experiments and visualization analysis validate PointSS's advantages in complex boundaries, large receptive field objects, and small target segmentation scenarios. Future work can further explore adaptive serialization strategies, multi-modal information fusion, and lightweight designs for large-scale scenes to address more complex practical application requirements.
+This paper presents PointSS, a novel framework designed to address the geometric degradation and scale inconsistency limitations of State Space Models (SSMs) in point cloud analysis. By integrating the Global Geometry-Aware Mechanism (GGAM), the spatial information loss caused by serialization is effectively compensated for through dual-sequence interaction. Furthermore, the proposed Adaptive Scale-Decoupled State Space Model (ASD-SSM) enables dynamic state decay modeling, successfully balancing local detail capture with global context learning. Extensive experiments on S3DIS and ModelNet40 benchmarks demonstrate that PointSS outperforms existing state-of-the-art methods, exhibiting particular robustness in handling complex boundaries and fragmented geometric structures. This work confirms the potential of combining explicit geometric priors with efficient sequence modeling, providing a solid foundation for future scalable 3D vision applications.
 
 \bibliographystyle{IEEEtran}
 \bibliography{../ref}
