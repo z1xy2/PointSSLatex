@@ -544,7 +544,7 @@ Regarding window expansion, moderate increases enhance context modeling, whereas
 \footnotesize Notes: S: Number of scales; F: Scaling factors for window expansion; Params: Relative parameter count; Train Time: Total training duration on the S3DIS dataset.
 \end{table}
 
-\subsection{Qualitative Experiments}
+\subsection{Qualitative Experiment}
 
 \cref{fig:vis} presents a qualitative comparison on the S3DIS dataset, where PointSS demonstrates superior segmentation continuity and precision across complex scenes. For large-scale structures (e.g., windows and columns), the method overcomes serialization-induced discontinuities by leveraging GGAM to recover spatial relationships and ASD-SSM to maintain global context, thereby ensuring structural integrity where baselines often fail. In fine-grained regions such as clutter, the multi-scale architecture effectively captures subtle local variations, while geometric priors enable high-fidelity modeling. Additionally, at sharp boundaries (e.g., wall-column intersections), explicit neighborhood modeling mitigates fragmentation, producing distinct edges compared to the blurred boundaries of baseline methods. Overall, these visualization results align with the quantitative analysis, validating the robustness of PointSS across varying scales and geometric complexities.
 
