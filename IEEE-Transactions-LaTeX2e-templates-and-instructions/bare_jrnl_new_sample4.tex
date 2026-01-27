@@ -67,7 +67,7 @@ To address these issues, this paper proposes PointSS, an adaptive scale-decouple
 
 \item PointSS outperforms existing Mamba-based methods, achieving 75.2\% mIoU on S3DIS and 96.0\% accuracy on ModelNet40, with ablation studies validating each component.
 \end{enumerate}
-
+Code will be released at https://github.com/z1xy2/PointSS-public.git
 \section{Related Work}
 
 In recent years, the field of point cloud analysis has undergone a significant transition from early methods based on geometric priors to deep learning-driven end-to-end models. Researchers have proposed a series of innovative solutions to address challenges such as the sparsity, disorder, and high-dimensional nature of point cloud data. This section systematically reviews related work across three dimensions: the development of deep learning in point cloud semantic analysis, geometric feature enhancement strategies, and multi-scale feature fusion techniques, while analyzing the core ideas, technical contributions, and limitations of each method.
@@ -340,7 +340,7 @@ Building on this, incorporating multi-scale modeling with shared parameters impr
 
 In summary, GGAM and ASD-SSM exhibit strong functional complementarity: GGAM restores geometric integrity, while ASD-SSM balances multi-scale dependencies. Their synergy achieves a total performance improvement of 4.9\% mIoU while maintaining high computational efficiency.
 
-\begin{table}[!t]
+\begin{table*}[!t]
 \centering
 \caption{INCREMENTAL PERFORMANCE IMPROVEMENT PATH ON THE S3DIS DATASET}
 \label{tab:progressive_improvement}
@@ -356,8 +356,27 @@ Baseline + GGAM + Full ASD-SSM (PointSS) & \textbf{75.2} & +1.8 \\
 \textbf{Total Improvement} & - & \textbf{+4.9} \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
+\begin{table*}[!t]
+	\centering
+	\caption{Point Distribution Across Different Fragmentation Levels and the Compensation Effect of GGAM}
+	\label{tab:ggam_fragmentation}
+	\begin{tabular}{llllll}
+		\toprule
+		\textbf{Fragmentation} & \textbf{Point} & \textbf{Point} & \textbf{Baseline} & \textbf{GGAM} & \textbf{Absolute} \\
+		\textbf{Ratio} & \textbf{Count} & \textbf{Percentage} & \textbf{IoU} & \textbf{IoU} & \textbf{Gain} \\
+		\midrule
+		0-10\% (Low) & 270k & 67\% & 74.0 & 74.8 & 0.8 \\
+		10-20\% (Mild) & 101k & 25\% & 63.0 & 67.1 & 4.1 \\
+		20-30\% (Moderate) & 32k & 8\% & 62.0 & 70.0 & 8.0 \\
+		\midrule
+		Total & 403k & 100\% & 70.3 & 72.5 & 2.2 \\
+		\bottomrule
+	\end{tabular}
+	\par\vspace{3pt}
+	\footnotesize Note: The fragmentation ratio is defined as the number of points among a point's K-nearest neighbors whose sequence distance exceeds 500, divided by K.
+\end{table*}
 \subsubsection{Ablation Study of GGAM}
 
 Systematic ablation experiments were conducted to verify the effectiveness of the Global Geometry-Aware Mechanism (GGAM) in mitigating the difficulties of geometric learning introduced by point cloud serialization. All experiments were performed on the S3DIS dataset, with a focus on analyzing the neighborhood fragmentation phenomenon caused by serialization, the compensation capability of GGAM across categories of varying geometric complexity, and the synergistic mechanisms of the internal components within GGAM.
@@ -366,25 +385,7 @@ To quantitatively characterize the neighborhood fragmentation issue caused by se
 
 Experimental results indicate that approximately 33\% of points undergo neighborhood fragmentation under Hilbert serialization. As the fragmentation ratio increases from 0--10\% to 20--30\%, baseline performance drops sharply from 74.0 to 62.0, confirming the detrimental impact of serialization on local geometric representation. GGAM effectively mitigates this degradation, exhibiting a positive correlation between fragmentation levels and performance gains. Notably, an absolute gain of 8.0 is observed in the high-fragmentation interval (20--30\%), significantly exceeding improvements in low-fragmentation areas.
 
-\begin{table}[!t]
-\centering
-\caption{Point Distribution Across Different Fragmentation Levels and the Compensation Effect of GGAM}
-\label{tab:ggam_fragmentation}
-\begin{tabular}{llllll}
-\toprule
-\textbf{Fragmentation} & \textbf{Point} & \textbf{Point} & \textbf{Baseline} & \textbf{GGAM} & \textbf{Absolute} \\
-\textbf{Ratio} & \textbf{Count} & \textbf{Percentage} & \textbf{IoU} & \textbf{IoU} & \textbf{Gain} \\
-\midrule
-0-10\% (Low) & 270k & 67\% & 74.0 & 74.8 & 0.8 \\
-10-20\% (Mild) & 101k & 25\% & 63.0 & 67.1 & 4.1 \\
-20-30\% (Moderate) & 32k & 8\% & 62.0 & 70.0 & 8.0 \\
-\midrule
-Total & 403k & 100\% & 70.3 & 72.5 & 2.2 \\
-\bottomrule
-\end{tabular}
-\par\vspace{3pt}
-\footnotesize Note: The fragmentation ratio is defined as the number of points among a point's K-nearest neighbors whose sequence distance exceeds 500, divided by K.
-\end{table}
+
 
 This trend is further corroborated by category-wise analysis (\Cref{tab:ggam_category}). Large planar structures with high continuity (e.g., walls, floors) show limited gains (1.0--1.4). In contrast, categories featuring complex boundaries and slender structures (e.g., columns, clutter) exhibit higher fragmentation ratios and achieve substantial improvements (5.3--6.5). These findings demonstrate that GGAM is particularly effective at recovering critical geometric information in regions with sharp transitions and dense boundaries.
 
