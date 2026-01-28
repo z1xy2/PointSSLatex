@@ -22,7 +22,7 @@ Chebyshev Spectral SSM的整体流程包括四个核心模块：（1）序列化
 \end{equation}
 其中$\mathcal{N}_{seq}(i, k) = \{p_{i-k/2}, \ldots, p_{i-1}, p_{i+1}, \ldots, p_{i+k/2}\}$为点$p_i$在序列上前后各$k/2$个点，$k$为序列邻居数（实验中设为16）。边权重采用高斯核：
 \begin{equation}
-W_{ij} = \exp\left(-\frac{\|x_i - x_j\|^2}{2\sigma^2}\right)
+W_{ij} = \exp\left(-\frac{\|\mathbf{p}_i - \mathbf{p}_j\|^2}{2\sigma^2}\right)
 \end{equation}
 其中$\sigma$为尺度参数，设为所有边长度的中位数。
 
@@ -30,14 +30,14 @@ W_{ij} = \exp\left(-\frac{\|x_i - x_j\|^2}{2\sigma^2}\right)
 
 \subsection{Chebyshev频谱分解}
 
-获得邻域图$\mathcal{G}$后，下一步是对点云特征进行频谱分解。设输入特征为$X \in \mathbb{R}^{N \times D}$，我们使用Chebyshev多项式计算$K$个频段的特征表示。
+获得邻域图$\mathcal{G}$后，下一步是对点云特征进行频谱分解。设输入特征为$X \in \mathbb{R}^{N \times C}$，我们使用Chebyshev多项式计算$K$个频段的特征表示。
 
 首先构造归一化拉普拉斯$\tilde{L} = \frac{2L_{norm}}{\lambda_{max}} - I$。实践中，对于归一化拉普拉斯$L_{norm} = I - D^{-1/2}WD^{-1/2}$，其最大特征值理论上不超过2。因此可设$\lambda_{max} = 2$，得到：
 \begin{equation}
 \tilde{L} = L_{norm} - I = -D^{-1/2}WD^{-1/2}
 \end{equation}
 
-对于输入特征矩阵$X \in \mathbb{R}^{N \times D}$，我们递推计算$K$个Chebyshev基作用的结果：
+对于输入特征矩阵$X \in \mathbb{R}^{N \times C}$，我们递推计算$K$个Chebyshev基作用的结果：
 \begin{equation}
 \begin{aligned}
 T_0(\tilde{L})X &= X \\
@@ -51,7 +51,7 @@ T_k(\tilde{L})X &= 2\tilde{L}T_{k-1}(\tilde{L})X - T_{k-2}(\tilde{L})X, \quad k 
 (\tilde{L}X)_i = -\sum_{j \in \mathcal{N}(i)} \frac{W_{ij}}{\sqrt{D_{ii}D_{jj}}} X_j
 \end{equation}
 
-使用scatter操作向量化计算，复杂度为$O(|\mathcal{E}|D) = O(kND)$。对于$K$个频段，总复杂度为$O(KkND) = O(KND)$（$k$为常数）。根据图信号处理理论，不同阶的Chebyshev多项式对应不同的频率特性：随着阶数$k$增大，$T_k(\tilde{L})X$对应的频率逐渐升高，低阶频段倾向于捕获特征的平滑变化，高阶频段倾向于捕获特征的剧烈变化，这种多频段分解为后续的差异化建模奠定了基础。
+使用scatter操作向量化计算，复杂度为$O(|\mathcal{E}|C) = O(kNC)$。对于$K$个频段，总复杂度为$O(KkNC) = O(KNC)$（$k$为常数）。根据图信号处理理论，不同阶的Chebyshev多项式对应不同的频率特性：随着阶数$k$增大，$T_k(\tilde{L})X$对应的频率逐渐升高，低阶频段倾向于捕获特征的平滑变化，高阶频段倾向于捕获特征的剧烈变化，这种多频段分解为后续的差异化建模奠定了基础。
 
 \subsection{频段独立建模}
 
@@ -59,7 +59,7 @@ T_k(\tilde{L})X &= 2\tilde{L}T_{k-1}(\tilde{L})X - T_{k-2}(\tilde{L})X, \quad k 
 
 传统方法使用单一Mamba处理混合频段特征，难以同时适应低频的平滑性和高频的突变性。本文通过为每个频段配备独立的Mamba，使模型能够学习特定频段的最优建模策略，从而更有效地捕获不同频率分量的特征。
 
-对于第$k$个频段的特征$X^{(k)} = T_k(\tilde{L})X \in \mathbb{R}^{N \times D}$，我们使用Point Transformer V3的序列化顺序（已预先计算）将其重排为序列：
+对于第$k$个频段的特征$X^{(k)} = T_k(\tilde{L})X \in \mathbb{R}^{N \times C}$，我们使用Point Transformer V3的序列化顺序（已预先计算）将其重排为序列：
 \begin{equation}
 X^{(k)}_{seq} = X^{(k)}[\pi], \quad \pi = \text{serialized\_order}
 \end{equation}
@@ -100,7 +100,7 @@ Z &= \text{Concat}(X, Y_{multi}) \\
 X' &= X + \hat{X}
 \end{aligned}
 \end{equation}
-其中$\text{Concat}(X, Y_{multi}) \in \mathbb{R}^{N \times 2D}$将原始特征和多频段特征拼接，$\text{MLP}$为2层感知机（隐藏层使用GELU激活），输出维度为$D$。最后通过残差连接得到增强后的特征$X' \in \mathbb{R}^{N \times D}$。
+其中$\text{Concat}(X, Y_{multi}) \in \mathbb{R}^{N \times 2C}$将原始特征和多频段特征拼接，$\text{MLP}$为2层感知机（隐藏层使用GELU激活），输出维度为$C$。最后通过残差连接得到增强后的特征$X' \in \mathbb{R}^{N \times C}$。
 
 该设计有两个优势：（1）拼接操作保留了原始特征信息，避免频谱变换导致的信息损失；（2）残差连接使模型能够自适应地选择频域增强的强度，在不同stage和数据集上具有更好的适应性。
 
