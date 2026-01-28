@@ -53,19 +53,7 @@ T_k(\tilde{L})X &= 2\tilde{L}T_{k-1}(\tilde{L})X - T_{k-2}(\tilde{L})X, \quad k 
 (\tilde{L}X)_i = -\sum_{j \in \mathcal{N}(i)} \frac{W_{ij}}{\sqrt{D_{ii}D_{jj}}} X_j
 \end{equation}
 
-使用scatter操作向量化计算，复杂度为$O(|\mathcal{E}|D) = O(kND)$。对于$K$个频段，总复杂度为$O(KkND) = O(KND)$（$k$为常数）。
-
-\subsubsection{频段特征的语义解释}
-
-每个频段$T_k(\tilde{L})X$具有明确的几何语义：
-\begin{itemize}
-\item \textbf{$k=0$（直流分量）}：$T_0(\tilde{L})X = X$，保留原始特征，捕获点的固有属性
-\item \textbf{$k=1$（低频）}：$T_1(\tilde{L})X = \tilde{L}X$，捕获一阶局部平滑，对应平缓区域（如墙面、地板）
-\item \textbf{$k=2$（中频）}：$T_2(\tilde{L})X$，捕获二阶几何变化，对应曲面弯曲（如圆柱、球体）
-\item \textbf{$k \geq 3$（高频）}：捕获高阶细节和边缘，对应物体边界、角点等几何突变
-\end{itemize}
-
-这种多频段分解自动将点云特征按几何复杂度进行了分层，为后续的差异化建模奠定了基础。
+使用scatter操作向量化计算，复杂度为$O(|\mathcal{E}|D) = O(kND)$。对于$K$个频段，总复杂度为$O(KkND) = O(KND)$（$k$为常数）。根据图信号处理理论，不同阶的Chebyshev多项式对应不同的频率特性：$T_0(\tilde{L})X = X$为直流分量，保留原始特征；随着阶数$k$增大，$T_k(\tilde{L})X$对应的频率逐渐升高。低阶频段（$k=0,1$）倾向于捕获特征的平滑变化，高阶频段（$k \geq 2$）倾向于捕获特征的剧烈变化，这种多频段分解为后续的差异化建模奠定了基础。
 
 \subsection{频段独立建模}
 
