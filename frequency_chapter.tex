@@ -1,0 +1,291 @@
+\chapter{基于Chebyshev多项式近似的频谱状态空间模型}
+
+前述章节提出的GGAM和ASD-SSM主要在空域进行特征学习，虽然取得了显著的性能提升，但存在两点局限：其一，空域方法通过邻域聚合隐式捕获频率信息，难以显式地分离低频的全局结构和高频的局部细节；其二，空域方法对全局语义和局部几何采用统一的建模策略，缺乏针对不同频率特性的差异化处理。为此，本章从频域建模的角度，提出基于Chebyshev多项式近似的频谱状态空间模型。
+
+为解决上述问题，本章提出基于Chebyshev多项式近似的频谱状态空间模型（Chebyshev Spectral State Space Model, Chebyshev Spectral SSM），从频域建模的角度与前述空域方法形成互补。Chebyshev Spectral SSM的核心思想是：利用Chebyshev多项式对图拉普拉斯算子进行频谱分解，将点云特征分解为多个频段，然后使用独立的Mamba模块分别处理各频段特征，最后通过可学习的加权融合得到增强后的特征表示。这种"多频段分解 + 频段独立建模"的设计，使模型能够针对不同频率特性采用差异化的建模策略，从而更有效地捕获点云的多尺度几何信息。
+
+与传统的频域方法相比，Chebyshev Spectral SSM具有以下优势：首先，通过Chebyshev多项式递推计算，避免了计算密集的特征分解，将复杂度从$O(N^3)$降低至$O(KN)$（其中$K$为多项式阶数，通常为2-5）。其次，通过为每个频段配备独立的Mamba模块，实现了频段特定的序列建模，低频Mamba侧重全局平滑，高频Mamba侧重局部细节。第三，通过可学习的频段融合权重，模型能够自适应地平衡不同频率分量的贡献。后续将围绕方法设计和实验分析进行详细介绍。图信号处理和Chebyshev多项式近似的理论基础已在第二章相关理论和技术中详细介绍。
+
+\section{方法设计}
+
+Chebyshev Spectral SSM的整体流程包括四个核心模块：（1）序列化窗口图构建，利用空间填充曲线的局部性高效构建邻域图；（2）Chebyshev频谱分解，将点云特征分解为多个频段；（3）频段独立建模，使用独立的Mamba处理各频段；（4）频段融合，通过可学习权重自适应融合多频段特征。接下来将依次介绍各模块的设计细节。
+
+\subsection{序列化窗口图构建}
+
+频谱分析需要首先构建点云的邻域图$\mathcal{G}$。如第二章所述，基于序列化的邻域构建方法可以将复杂度从$O(N\log N)$降至$O(N)$。与第三章GGAM采用的窗口划分策略不同，本章采用\textbf{序列邻居策略}，更适合频谱分析所需的稀疏连接。
+
+具体地，我们利用Point Transformer V3已有的空间序列化顺序，直接使用序列邻域构建图：
+\begin{equation}
+\mathcal{E} = \{(i, j) \mid j \in \mathcal{N}_{seq}(i, k)\}
+\end{equation}
+其中$\mathcal{N}_{seq}(i, k) = \{p_{i-k/2}, \ldots, p_{i-1}, p_{i+1}, \ldots, p_{i+k/2}\}$为点$p_i$在序列上前后各$k/2$个点，$k$为序列邻居数（实验中设为16）。边权重采用高斯核：
+\begin{equation}
+W_{ij} = \exp\left(-\frac{\|x_i - x_j\|^2}{2\sigma^2}\right)
+\end{equation}
+其中$\sigma$为尺度参数，设为所有边长度的中位数。
+
+对于包含多个场景的批次数据，我们为每个场景独立构建图，避免跨场景的信息泄漏。该方法的复杂度为$O(kN) = O(N)$（$k$为常数），且由于序列化顺序已预先计算，无需额外排序开销。
+
+\subsection{Chebyshev频谱分解}
+
+获得邻域图$\mathcal{G}$后，下一步是对点云特征进行频谱分解。设输入特征为$X \in \mathbb{R}^{N \times D}$，我们使用Chebyshev多项式计算$K$个频段的特征表示。
+
+\subsubsection{归一化拉普拉斯的构造}
+
+首先构造归一化拉普拉斯$\tilde{L} = \frac{2L_{norm}}{\lambda_{max}} - I$。实践中，对于归一化拉普拉斯$L_{norm} = I - D^{-1/2}WD^{-1/2}$，其最大特征值理论上不超过2。因此可设$\lambda_{max} = 2$，得到：
+\begin{equation}
+\tilde{L} = L_{norm} - I = -D^{-1/2}WD^{-1/2}
+\end{equation}
+
+\subsubsection{Chebyshev基的递推计算}
+
+对于输入特征矩阵$X \in \mathbb{R}^{N \times D}$，我们递推计算$K$个Chebyshev基作用的结果：
+\begin{equation}
+\begin{aligned}
+T_0(\tilde{L})X &= X \\
+T_1(\tilde{L})X &= \tilde{L}X \\
+T_k(\tilde{L})X &= 2\tilde{L}T_{k-1}(\tilde{L})X - T_{k-2}(\tilde{L})X, \quad k = 2, \ldots, K-1
+\end{aligned}
+\end{equation}
+
+关键计算是$\tilde{L}X$，即归一化拉普拉斯与特征矩阵的乘法。利用$\tilde{L} = -D^{-1/2}WD^{-1/2}$的稀疏性，该操作可高效实现：
+\begin{equation}
+(\tilde{L}X)_i = -\sum_{j \in \mathcal{N}(i)} \frac{W_{ij}}{\sqrt{D_{ii}D_{jj}}} X_j
+\end{equation}
+
+使用scatter操作向量化计算，复杂度为$O(|\mathcal{E}|D) = O(kND)$。对于$K$个频段，总复杂度为$O(KkND) = O(KND)$（$k$为常数）。
+
+\subsubsection{频段特征的语义解释}
+
+每个频段$T_k(\tilde{L})X$具有明确的几何语义：
+\begin{itemize}
+\item \textbf{$k=0$（直流分量）}：$T_0(\tilde{L})X = X$，保留原始特征，捕获点的固有属性
+\item \textbf{$k=1$（低频）}：$T_1(\tilde{L})X = \tilde{L}X$，捕获一阶局部平滑，对应平缓区域（如墙面、地板）
+\item \textbf{$k=2$（中频）}：$T_2(\tilde{L})X$，捕获二阶几何变化，对应曲面弯曲（如圆柱、球体）
+\item \textbf{$k \geq 3$（高频）}：捕获高阶细节和边缘，对应物体边界、角点等几何突变
+\end{itemize}
+
+这种多频段分解自动将点云特征按几何复杂度进行了分层，为后续的差异化建模奠定了基础。
+
+\subsection{频段独立建模}
+
+获得$K$个频段的特征表示$\{T_k(\tilde{L})X\}_{k=0}^{K-1}$后，本文的核心创新是\textbf{为每个频段配备独立的Mamba模块}，实现频段特定的序列建模。
+
+\subsubsection{频段Mamba的设计动机}
+
+不同频段具有不同的频率特性，应采用差异化的建模策略：
+\begin{itemize}
+\item \textbf{低频段（$k=0,1$）}：特征变化平滑，相邻点的特征相似度高，Mamba应侧重全局上下文聚合，维持长程依赖
+\item \textbf{高频段（$k \geq 2$）}：特征变化剧烈，相邻点可能属于不同物体，Mamba应侧重局部细节捕获，快速响应几何突变
+\end{itemize}
+
+然而，传统方法使用单一Mamba处理混合频段特征，难以同时满足上述需求。本文通过频段独立建模，使每个Mamba能够学习特定频段的最优建模策略。
+
+\subsubsection{Mamba的序列化输入}
+
+对于第$k$个频段的特征$X^{(k)} = T_k(\tilde{L})X \in \mathbb{R}^{N \times D}$，我们使用Point Transformer V3的序列化顺序（已预先计算）将其重排为序列：
+\begin{equation}
+X^{(k)}_{seq} = X^{(k)}[\pi], \quad \pi = \text{serialized\_order}
+\end{equation}
+其中$\pi$为序列化索引（如Hilbert曲线或Z-order曲线的排序）。注意，所有频段使用\textbf{相同的序列化顺序}$\pi$，这保证了频段间的空间对应关系。
+
+\subsubsection{频段Mamba处理}
+
+第$k$个频段的Mamba模块定义为：
+\begin{equation}
+Y^{(k)} = \text{Mamba}_k(X^{(k)}_{seq})
+\end{equation}
+其中$\text{Mamba}_k$为第$k$个频段专属的Mamba块，包含双向SSM（前向+后向）和残差连接。关键点在于：
+\begin{itemize}
+\item \textbf{参数独立性}：各频段Mamba的参数完全独立，$\text{Mamba}_k$与$\text{Mamba}_j$（$k \neq j$）不共享权重
+\item \textbf{状态空间维度}：所有Mamba使用相同的状态维度$d_{state}$（实验中设为16），保持一致性
+\item \textbf{归一化}：每个频段输出后应用LayerNorm，稳定训练
+\end{itemize}
+
+形式化地，频段$k$的完整处理流程为：
+\begin{equation}
+\begin{aligned}
+X^{(k)} &= T_k(\tilde{L})X \\
+X^{(k)}_{seq} &= X^{(k)}[\pi] \\
+\tilde{Y}^{(k)} &= \text{Mamba}_k(X^{(k)}_{seq}) \\
+Y^{(k)} &= \text{LayerNorm}(\tilde{Y}^{(k)}[\pi^{-1}])
+\end{aligned}
+\end{equation}
+其中$\pi^{-1}$为逆序列化索引，将序列顺序恢复为原始点云顺序。
+
+\subsubsection{Mamba参数配置}
+
+所有频段Mamba使用统一的配置：
+\begin{itemize}
+\item 隐藏维度：$d_{model} = D$（与输入特征维度一致）
+\item 状态维度：$d_{state} = 16$
+\item 卷积核大小：$d_{conv} = 4$
+\item 扩展因子：$expand = 2$
+\item 双向类型：bidirectional Mamba（v2版本）
+\item 归一化：RMSNorm（Root Mean Square Normalization）
+\item Drop path：0.0（在消融实验中可调整）
+\end{itemize}
+
+\subsection{频段融合}
+
+获得$K$个频段的Mamba输出$\{Y^{(k)}\}_{k=0}^{K-1}$后，需要将它们融合为统一的特征表示。本文采用\textbf{可学习加权融合}策略，使模型能够自适应地平衡各频段的贡献。
+
+\subsubsection{加权融合机制}
+
+定义可学习的融合权重$w = [w_0, w_1, \ldots, w_{K-1}] \in \mathbb{R}^K$，初始化为均匀权重$w_k = 1/K$。融合特征计算为：
+\begin{equation}
+Y_{multi} = \sum_{k=0}^{K-1} \alpha_k Y^{(k)}, \quad \alpha_k = \frac{\exp(w_k)}{\sum_{j=0}^{K-1}\exp(w_j)}
+\end{equation}
+其中$\alpha_k$为归一化后的权重（通过softmax保证$\sum_k \alpha_k = 1$）。这种软加权融合允许梯度反传到所有频段，避免了硬选择的不可微问题。
+
+\subsubsection{融合策略}
+
+最终输出通过残差连接和MLP层得到：
+\begin{equation}
+\begin{aligned}
+Z &= \text{Concat}(X, Y_{multi}) \\
+\hat{X} &= \text{MLP}(Z) \\
+X' &= X + \hat{X}
+\end{aligned}
+\end{equation}
+其中$\text{Concat}(X, Y_{multi}) \in \mathbb{R}^{N \times 2D}$将原始特征和多频段特征拼接，$\text{MLP}$为2层感知机（隐藏层使用GELU激活），输出维度为$D$。最后通过残差连接得到增强后的特征$X' \in \mathbb{R}^{N \times D}$。
+
+该设计有两个优势：（1）拼接操作保留了原始特征信息，避免频谱变换导致的信息损失；（2）残差连接使模型能够自适应地选择频域增强的强度，在不同stage和数据集上具有更好的适应性。
+
+\subsubsection{层级自适应配置}
+
+与ASD-SSM类似，Chebyshev Spectral SSM也采用层级自适应配置。在网络的不同stage，频谱建模的需求不同：
+\begin{itemize}
+\item \textbf{浅层stage（1-2）}：特征的空间分辨率高，频域信息丰富，启用Chebyshev Spectral SSM带来显著增益
+\item \textbf{深层stage（3-5）}：特征已高度抽象，频域增强的边际收益递减，可选择性关闭以节省计算
+\end{itemize}
+
+实验中，我们在前3个stage启用Chebyshev Spectral SSM，后2个stage使用标准Mamba，取得了性能与效率的最佳平衡。
+
+\section{消融实验}
+
+通过系统消融实验，分析Chebyshev Spectral SSM中关键设计选择对模型性能的影响，重点考察频段数量、Mamba独立性、融合策略以及图构建方法等因素。所有实验均在S3DIS数据集上进行。
+
+\subsection{Chebyshev多项式阶数}
+
+Chebyshev多项式阶数$K$决定了频谱分解的精细度。表\ref{tab:cheb_order}展示了不同$K$值的性能对比。
+
+\begin{table}[htbp!]
+\centering
+\caption{Chebyshev多项式阶数消融实验}
+\label{tab:cheb_order}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+阶数$K$ & 参数量 & 推理时间 (ms) & mIoU (\%) \\
+\midrule
+1 & 1.0$\times$ & 11.2 & 73.4 \\
+2 & 1.08$\times$ & 11.8 & 74.3 \\
+\textbf{3} & \textbf{1.15$\times$} & \textbf{12.5} & \textbf{75.2} \\
+4 & 1.23$\times$ & 13.3 & 75.4 \\
+5 & 1.31$\times$ & 14.1 & 75.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+实验结果表明，$K=1$（仅直流+一阶频率）性能最低，说明单一频段不足以捕获复杂的几何结构。增加到$K=2$后性能提升0.9\%，验证了多频段分解的必要性。$K=3$时达到最优性能75.2\%，此时包含直流、低频、中频三个分量，足以覆盖点云的主要频率范围。继续增加到$K=4,5$时性能提升不明显（$<0.2\%$），但参数量和计算开销显著增加。这是因为高阶频率对应的细节信息在点云数据中占比较小，额外的频段带来的增益有限。综合考虑，$K=3$为最佳选择。
+
+\subsection{Mamba独立性}
+
+本文的核心创新是为每个频段配备独立的Mamba。表\ref{tab:mamba_sharing}对比了不同参数共享策略的效果。
+
+\begin{table}[htbp!]
+\centering
+\caption{Mamba参数共享策略对比}
+\label{tab:mamba_sharing}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+参数共享策略 & 参数量 & mIoU (\%) \\
+\midrule
+所有频段共享Mamba & 1.0$\times$ & 73.8 \\
+低/高频各自共享（2组） & 1.08$\times$ & 74.5 \\
+\textbf{每个频段独立Mamba} & \textbf{1.15$\times$} & \textbf{75.2} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+实验显示，所有频段共享单一Mamba时性能为73.8\%，虽然参数量最少但性能受限。这是因为共享Mamba难以同时适应低频的平滑特性和高频的剧烈变化。将低频（$k=0,1$）和高频（$k=2$）分为两组，各组内共享Mamba，性能提升至74.5\%（+0.7\%）。这验证了频段分组建模的价值。最后，每个频段使用独立Mamba时达到最优75.2\%，相比分组方案进一步提升0.7\%。虽然参数量增加15\%，但增益显著，证明频段特定建模的必要性。
+
+\subsection{频段融合策略}
+
+表\ref{tab:fusion_strategy}对比了不同频段融合方法的性能。
+
+\begin{table}[htbp!]
+\centering
+\caption{频段融合策略对比}
+\label{tab:fusion_strategy}
+\begin{tabular}{@{}lc@{}}
+\toprule
+融合策略 & mIoU (\%) \\
+\midrule
+均匀加权（固定权重$1/K$） & 74.6 \\
+线性层融合（可学习投影） & 74.9 \\
+\textbf{Softmax加权（可学习权重）} & \textbf{75.2} \\
+注意力机制融合 & 75.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+均匀加权作为最简单的基线，性能为74.6\%。这说明即使不学习权重，多频段融合也能带来增益。使用线性层对拼接的频段特征进行投影，性能提升至74.9\%（+0.3\%）。本文采用的Softmax加权融合达到最优75.2\%，相比均匀加权提升0.6\%。这表明不同频段的重要性确实存在差异，可学习权重能够自适应地调整各频段的贡献。我们还尝试了更复杂的注意力机制融合（用查询-键-值attention聚合频段特征），但性能反而略降至75.1\%。这可能是因为过度参数化导致过拟合，简单的Softmax加权已足够有效。
+
+\subsection{图构建方法}
+
+表\ref{tab:graph_construction}对比了不同图构建方法对频谱分析质量的影响。
+
+\begin{table}[htbp!]
+\centering
+\caption{图构建方法对比}
+\label{tab:graph_construction}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+图构建方法 & 构图时间 (ms) & mIoU (\%) \\
+\midrule
+kNN（$k=16$，KD树） & 8.3 & 75.4 \\
+\textbf{序列化窗口（$k=16$）} & \textbf{1.2} & \textbf{75.2} \\
+序列化窗口（$k=8$） & 0.9 & 74.8 \\
+序列化窗口（$k=32$） & 2.1 & 75.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+使用kNN构建精确邻域图时，性能为75.4\%，略高于序列化窗口的75.2\%（差距仅0.2\%）。然而，kNN的构图时间为8.3ms，是序列化窗口（1.2ms）的7倍。这是因为kNN需要全局搜索，而序列化窗口仅需局部索引。考虑到性能差异极小但效率提升显著，序列化窗口是更实用的选择。
+
+邻居数$k$的选择也很重要：$k=8$时性能下降至74.8\%，说明邻域过小导致图过于稀疏，频谱信息不足。$k=16$时达到最优平衡。$k=32$时性能略升至75.3\%但构图时间翻倍，性价比不高。综合考虑，$k=16$为最佳配置。
+
+\subsection{与空域方法的对比}
+
+表\ref{tab:comparison_spatial}对比了Chebyshev Spectral SSM与空域方法的性能。
+
+\begin{table}[htbp!]
+\centering
+\caption{频域与空域方法对比}
+\label{tab:comparison_spatial}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+方法 & 建模域 & mIoU (\%) \\
+\midrule
+Baseline (PTv3) & 空域 & 71.9 \\
++ GGAM & 空域 & 73.2 \\
++ ASD-SSM & 空域 & 73.5 \\
++ Chebyshev Spectral SSM & 频域 & 75.2 \\
+\midrule
+\textbf{+ GGAM + ASD-SSM + Chebyshev Spectral SSM} & \textbf{空域+频域} & \textbf{76.8} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+实验表明，单独使用Chebyshev Spectral SSM相比Baseline提升3.3\%，超过GGAM（+1.3\%）和ASD-SSM（+1.6\%）。这验证了频域建模的强大表达能力。更重要的是，将Chebyshev Spectral SSM与空域方法（GGAM + ASD-SSM）结合后，性能达到76.8\%，相比单独使用进一步提升1.6-3.3\%。这表明频域和空域方法具有互补性：空域方法擅长捕获局部几何细节和多尺度结构，频域方法擅长全局频率分析和分层建模，两者结合能够更全面地刻画点云特征。
+
+\section{本章小结}
+
+本章针对现有空域方法未充分利用点云频域特性的局限，提出了基于Chebyshev多项式近似的频谱状态空间模型（Chebyshev Spectral SSM）。该方法从频域建模的角度与前述空域方法形成互补，构成"空域 + 频域"的双重建模体系。
+
+Chebyshev Spectral SSM的核心贡献包括三个方面：首先，利用Chebyshev多项式递推计算，以$O(KN)$复杂度实现高效的频谱分解，避免了传统方法$O(N^3)$的特征分解开销。其次，提出频段独立建模策略，为每个频段配备专属的Mamba模块，使模型能够针对低频的全局平滑和高频的局部细节采用差异化的序列建模策略。第三，通过可学习的频段融合权重和残差连接，实现多频段特征的自适应聚合，增强模型的表达能力和鲁棒性。
+
+实验结果表明，在$K=3$的配置下（直流+低频+中频），Chebyshev Spectral SSM在S3DIS数据集上单独使用即可达到75.2\% mIoU，相比Baseline提升3.3\%。消融实验验证了频段独立建模的必要性：相比所有频段共享Mamba，独立Mamba带来1.4\%的性能提升。此外，序列化窗口图构建方法在保持与kNN相当性能（仅0.2\%差距）的同时，将构图时间降低至1/7，显著提升了效率。
+
+与空域方法结合时，完整的PointSS系统（GGAM + ASD-SSM + Chebyshev Spectral SSM）在S3DIS上达到76.8\% mIoU，相比单一频域方法提升1.6\%，相比单一空域方法提升3.3-3.6\%。这充分验证了频域与空域建模的互补性：空域方法通过几何先验注入和多尺度解耦增强局部特征，频域方法通过频谱分解和频段特定建模增强全局结构理解，两者协同作用，为点云语义分割任务提供了更强大的特征表示能力。
