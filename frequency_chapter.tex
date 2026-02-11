@@ -14,7 +14,7 @@ Chebyshev Spectral SSM的整体流程包括四个核心模块：（1）序列化
 
 \subsection{序列化窗口图构建}
 
-频谱分析需要首先构建点云的邻域图$\mathcal{G}$。如第二章所述，基于序列化的邻域构建方法可以将复杂度从$O(N\log N)$降至$O(N)$。与第三章GGAM采用的窗口划分策略不同，本章采用序列邻居策略，更适合频谱分析所需的稀疏连接。
+频谱分析需要首先构建点云的邻域关系。如上文所述，基于序列化的邻域构建方法可以将复杂度从$O(N\log N)$降至$O(N)$。与GGAM采用的窗口划分策略不同，本章采用序列邻居策略，更适合频谱分析所需的稀疏连接。
 
 具体地，我们利用Point Transformer V3已有的空间序列化顺序，直接使用序列邻域构建图：
 \begin{equation}
@@ -24,15 +24,17 @@ Chebyshev Spectral SSM的整体流程包括四个核心模块：（1）序列化
 \begin{equation}
 w_{ij} = \exp\left(-\frac{\|\mathbf{p}_i - \mathbf{p}_j\|^2}{2\sigma^2}\right)
 \end{equation}
-其中$\sigma$为尺度参数，设为所有边长度的中位数。
+其中$\sigma$为尺度参数，设为所有边长度的中位数。该权重设计使得空间距离近的点具有更强的连接权重，距离远的点影响快速衰减，为后续频谱分析提供合理的邻域拓扑结构。
 
 对于包含多个场景的批次数据，我们为每个场景独立构建图，避免跨场景的信息泄漏。该方法的复杂度为$O(PN) = O(N)$（$P$为常数），且由于序列化顺序已预先计算，无需额外排序开销。
 
 \subsection{Chebyshev频谱分解}
 
-获得邻域图$\mathcal{G}$后，下一步是对点云特征进行频谱分解。设输入特征为$X \in \mathbb{R}^{N \times C}$，我们使用Chebyshev多项式计算$K$个频段的特征表示。
+获得邻域边集$\mathcal{E}$后，下一步是对点云特征进行频谱分解。设输入特征为$X \in \mathbb{R}^{N \times C}$，我们使用Chebyshev多项式计算$K$个频段的特征表示。
 
-首先构造归一化拉普拉斯$\tilde{L} = \frac{2L_{norm}}{\lambda_{max}} - I$。实践中，对于归一化拉普拉斯$L_{norm} = I - D^{-1/2}\mathbf{W}D^{-1/2}$，其最大特征值理论上不超过2。因此可设$\lambda_{max} = 2$，得到：
+基于边权重$w_{ij}$，构造邻接权重矩阵$\mathbf{W} \in \mathbb{R}^{N \times N}$，其中$\mathbf{W}_{ij} = w_{ij}$若$(i,j) \in \mathcal{E}$，否则为0。度矩阵$D \in \mathbb{R}^{N \times N}$为对角矩阵，对角元素$D_{ii} = \sum_{j \in \mathcal{N}(i)} w_{ij}$表示点$i$的加权度。
+
+为适配Chebyshev多项式对输入特征值范围$[-1, 1]$的要求，需要对归一化拉普拉斯$L_{norm} = I - D^{-1/2}\mathbf{W}D^{-1/2}$进行线性变换。由于$L_{norm}$的特征值范围为$[0, 2]$，构造$\tilde{L} = L_{norm} - I$可将特征值映射到$[-1, 1]$，其中$I$为单位矩阵。代入$L_{norm}$的定义，得到：
 \begin{equation}
 \tilde{L} = L_{norm} - I = -D^{-1/2}\mathbf{W}D^{-1/2}
 \end{equation}
@@ -51,7 +53,7 @@ T_\ell(\tilde{L})X &= 2\tilde{L}T_{\ell-1}(\tilde{L})X - T_{\ell-2}(\tilde{L})X,
 (\tilde{L}X)_i = -\sum_{j \in \mathcal{N}(i)} \frac{w_{ij}}{\sqrt{D_{ii}D_{jj}}} X_j
 \end{equation}
 
-使用scatter操作向量化计算，复杂度为$O(|\mathcal{E}|C) = O(PNC)$。对于$K$个频段，总复杂度为$O(KPNC) = O(KNC)$（$P$为常数）。根据图信号处理理论，不同阶的Chebyshev多项式对应不同的频率特性：随着阶数$\ell$增大，$T_\ell(\tilde{L})X$对应的频率逐渐升高，低阶频段倾向于捕获特征的平滑变化，高阶频段倾向于捕获特征的剧烈变化，这种多频段分解为后续的差异化建模奠定了基础。
+由于使用scatter操作向量化计算，其复杂度为线性。根据图信号处理理论，不同阶的Chebyshev多项式对应不同的频率特性：随着阶数$\ell$增大，$T_\ell(\tilde{L})X$对应的频率逐渐升高，低阶频段倾向于捕获特征的平滑变化，高阶频段倾向于捕获特征的剧烈变化，这种多频段分解为后续的差异化建模奠定了基础。
 
 \subsection{频段独立建模}
 
