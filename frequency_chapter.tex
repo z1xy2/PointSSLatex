@@ -18,23 +18,23 @@ Chebyshev Spectral SSM的整体流程包括四个核心模块：（1）序列化
 
 具体地，我们利用Point Transformer V3已有的空间序列化顺序，直接使用序列邻域构建图：
 \begin{equation}
-\mathcal{E} = \{(i, j) \mid j \in \mathcal{N}_{seq}(i, k)\}
+\mathcal{E} = \{(i, j) \mid j \in \mathcal{N}(i)\}
 \end{equation}
-其中$\mathcal{N}_{seq}(i, k) = \{p_{i-k/2}, \ldots, p_{i-1}, p_{i+1}, \ldots, p_{i+k/2}\}$为点$p_i$在序列上前后各$k/2$个点，$k$为序列邻居数（实验中设为16）。边权重采用高斯核：
+其中$\mathcal{N}(i) = \{p_{i-P/2}, \ldots, p_{i-1}, p_{i+1}, \ldots, p_{i+P/2}\}$为点$p_i$在序列上前后各$P/2$个点。本章沿用$P$表示局部邻域大小。对于序列边界点，采用截断策略处理邻域不足的情况，即边界点的实际邻居数可能少于$P$。边权重采用高斯核：
 \begin{equation}
-W_{ij} = \exp\left(-\frac{\|\mathbf{p}_i - \mathbf{p}_j\|^2}{2\sigma^2}\right)
+w_{ij} = \exp\left(-\frac{\|\mathbf{p}_i - \mathbf{p}_j\|^2}{2\sigma^2}\right)
 \end{equation}
 其中$\sigma$为尺度参数，设为所有边长度的中位数。
 
-对于包含多个场景的批次数据，我们为每个场景独立构建图，避免跨场景的信息泄漏。该方法的复杂度为$O(kN) = O(N)$（$k$为常数），且由于序列化顺序已预先计算，无需额外排序开销。
+对于包含多个场景的批次数据，我们为每个场景独立构建图，避免跨场景的信息泄漏。该方法的复杂度为$O(PN) = O(N)$（$P$为常数），且由于序列化顺序已预先计算，无需额外排序开销。
 
 \subsection{Chebyshev频谱分解}
 
 获得邻域图$\mathcal{G}$后，下一步是对点云特征进行频谱分解。设输入特征为$X \in \mathbb{R}^{N \times C}$，我们使用Chebyshev多项式计算$K$个频段的特征表示。
 
-首先构造归一化拉普拉斯$\tilde{L} = \frac{2L_{norm}}{\lambda_{max}} - I$。实践中，对于归一化拉普拉斯$L_{norm} = I - D^{-1/2}WD^{-1/2}$，其最大特征值理论上不超过2。因此可设$\lambda_{max} = 2$，得到：
+首先构造归一化拉普拉斯$\tilde{L} = \frac{2L_{norm}}{\lambda_{max}} - I$。实践中，对于归一化拉普拉斯$L_{norm} = I - D^{-1/2}\mathbf{W}D^{-1/2}$，其最大特征值理论上不超过2。因此可设$\lambda_{max} = 2$，得到：
 \begin{equation}
-\tilde{L} = L_{norm} - I = -D^{-1/2}WD^{-1/2}
+\tilde{L} = L_{norm} - I = -D^{-1/2}\mathbf{W}D^{-1/2}
 \end{equation}
 
 对于输入特征矩阵$X \in \mathbb{R}^{N \times C}$，我们递推计算$K$个Chebyshev基作用的结果：
@@ -42,55 +42,55 @@ W_{ij} = \exp\left(-\frac{\|\mathbf{p}_i - \mathbf{p}_j\|^2}{2\sigma^2}\right)
 \begin{aligned}
 T_0(\tilde{L})X &= X \\
 T_1(\tilde{L})X &= \tilde{L}X \\
-T_k(\tilde{L})X &= 2\tilde{L}T_{k-1}(\tilde{L})X - T_{k-2}(\tilde{L})X, \quad k = 2, \ldots, K-1
+T_\ell(\tilde{L})X &= 2\tilde{L}T_{\ell-1}(\tilde{L})X - T_{\ell-2}(\tilde{L})X, \quad \ell = 2, \ldots, K-1
 \end{aligned}
 \end{equation}
 
-关键计算是$\tilde{L}X$，即归一化拉普拉斯与特征矩阵的乘法。利用$\tilde{L} = -D^{-1/2}WD^{-1/2}$的稀疏性，该操作可高效实现：
+关键计算是$\tilde{L}X$，即归一化拉普拉斯与特征矩阵的乘法。利用$\tilde{L} = -D^{-1/2}\mathbf{W}D^{-1/2}$的稀疏性，该操作可高效实现：
 \begin{equation}
-(\tilde{L}X)_i = -\sum_{j \in \mathcal{N}(i)} \frac{W_{ij}}{\sqrt{D_{ii}D_{jj}}} X_j
+(\tilde{L}X)_i = -\sum_{j \in \mathcal{N}(i)} \frac{w_{ij}}{\sqrt{D_{ii}D_{jj}}} X_j
 \end{equation}
 
-使用scatter操作向量化计算，复杂度为$O(|\mathcal{E}|C) = O(kNC)$。对于$K$个频段，总复杂度为$O(KkNC) = O(KNC)$（$k$为常数）。根据图信号处理理论，不同阶的Chebyshev多项式对应不同的频率特性：随着阶数$k$增大，$T_k(\tilde{L})X$对应的频率逐渐升高，低阶频段倾向于捕获特征的平滑变化，高阶频段倾向于捕获特征的剧烈变化，这种多频段分解为后续的差异化建模奠定了基础。
+使用scatter操作向量化计算，复杂度为$O(|\mathcal{E}|C) = O(PNC)$。对于$K$个频段，总复杂度为$O(KPNC) = O(KNC)$（$P$为常数）。根据图信号处理理论，不同阶的Chebyshev多项式对应不同的频率特性：随着阶数$\ell$增大，$T_\ell(\tilde{L})X$对应的频率逐渐升高，低阶频段倾向于捕获特征的平滑变化，高阶频段倾向于捕获特征的剧烈变化，这种多频段分解为后续的差异化建模奠定了基础。
 
 \subsection{频段独立建模}
 
-获得$K$个频段的特征表示$\{T_k(\tilde{L})X\}_{k=0}^{K-1}$后，本文为每个频段配备独立的Mamba模块，实现频段特定的序列建模。这一设计源于不同频段的固有特性差异：对于低频段（$k=0,1$），特征变化平滑，相邻点的特征相似度高，长程依赖关系更为重要；而对于高频段（$k \geq 2$），特征变化剧烈，相邻点可能属于不同物体，局部细节和边界信息更为关键。
+获得$K$个频段的特征表示$\{T_\ell(\tilde{L})X\}_{\ell=0}^{K-1}$后，本文为每个频段配备独立的Mamba模块，实现频段特定的序列建模。这一设计源于不同频段的固有特性差异：对于低频段（$\ell=0,1$），特征变化平滑，相邻点的特征相似度高，长程依赖关系更为重要；而对于高频段（$\ell \geq 2$），特征变化剧烈，相邻点可能属于不同物体，局部细节和边界信息更为关键。
 
 传统方法使用单一Mamba处理混合频段特征，难以同时适应低频的平滑性和高频的突变性。本文通过为每个频段配备独立的Mamba，使模型能够学习特定频段的最优建模策略，从而更有效地捕获不同频率分量的特征。
 
-对于第$k$个频段的特征$X^{(k)} = T_k(\tilde{L})X \in \mathbb{R}^{N \times C}$，我们使用Point Transformer V3的序列化顺序（已预先计算）将其重排为序列：
+对于第$\ell$个频段的特征$X^{(\ell)} = T_\ell(\tilde{L})X \in \mathbb{R}^{N \times C}$，我们使用Point Transformer V3的序列化顺序（已预先计算）将其重排为序列：
 \begin{equation}
-X^{(k)}_{seq} = X^{(k)}[\pi], \quad \pi = \text{serialized\_order}
+X^{(\ell)}_{seq} = X^{(\ell)}[\pi], \quad \pi = \text{serialized\_order}
 \end{equation}
 其中$\pi$为序列化索引（如Hilbert曲线或Z-order曲线的排序）。注意，所有频段使用\textbf{相同的序列化顺序}$\pi$，这保证了频段间的空间对应关系。
 
-第$k$个频段的Mamba模块定义为：
+第$\ell$个频段的Mamba模块定义为：
 \begin{equation}
-Y^{(k)} = \text{Mamba}_k(X^{(k)}_{seq})
+Y^{(\ell)} = \text{Mamba}_\ell(X^{(\ell)}_{seq})
 \end{equation}
-其中$\text{Mamba}_k$为第$k$个频段专属的Mamba块，包含双向SSM（前向+后向）和残差连接。在参数设计上，各频段Mamba的参数完全独立，$\text{Mamba}_k$与$\text{Mamba}_j$（$k \neq j$）不共享权重。为保持一致性，所有Mamba使用相同的状态维度$d_{state}$（实验中设为16）。同时，每个频段输出后应用LayerNorm，稳定训练过程。
+其中$\text{Mamba}_\ell$为第$\ell$个频段专属的Mamba块，包含双向SSM（前向+后向）和残差连接。在参数设计上，各频段Mamba的参数完全独立，$\text{Mamba}_\ell$与$\text{Mamba}_j$（$\ell \neq j$）不共享权重。为保持一致性，所有Mamba使用相同的状态维度$d_{state}$（实验中设为16）。同时，每个频段输出后应用LayerNorm，稳定训练过程。
 
-形式化地，频段$k$的完整处理流程为：
+形式化地，频段$\ell$的完整处理流程为：
 \begin{equation}
 \begin{aligned}
-X^{(k)} &= T_k(\tilde{L})X \\
-X^{(k)}_{seq} &= X^{(k)}[\pi] \\
-\tilde{Y}^{(k)} &= \text{Mamba}_k(X^{(k)}_{seq}) \\
-Y^{(k)} &= \text{LayerNorm}(\tilde{Y}^{(k)}[\pi^{-1}])
+X^{(\ell)} &= T_\ell(\tilde{L})X \\
+X^{(\ell)}_{seq} &= X^{(\ell)}[\pi] \\
+\tilde{Y}^{(\ell)} &= \text{Mamba}_\ell(X^{(\ell)}_{seq}) \\
+Y^{(\ell)} &= \text{LayerNorm}(\tilde{Y}^{(\ell)}[\pi^{-1}])
 \end{aligned}
 \end{equation}
 其中$\pi^{-1}$为逆序列化索引，将序列顺序恢复为原始点云顺序。
 
 \subsection{频段融合}
 
-获得$K$个频段的Mamba输出$\{Y^{(k)}\}_{k=0}^{K-1}$后，需要将它们融合为统一的特征表示。本文采用可学习加权融合策略，使模型能够自适应地平衡各频段的贡献。
+获得$K$个频段的Mamba输出$\{Y^{(\ell)}\}_{\ell=0}^{K-1}$后，需要将它们融合为统一的特征表示。本文采用可学习加权融合策略，使模型能够自适应地平衡各频段的贡献。
 
-定义可学习的融合权重$w = [w_0, w_1, \ldots, w_{K-1}] \in \mathbb{R}^K$，初始化为均匀权重$w_k = 1/K$。融合特征计算为：
+定义可学习的融合权重$\boldsymbol{\beta} = [\beta_0, \beta_1, \ldots, \beta_{K-1}] \in \mathbb{R}^K$，初始化为均匀权重$\beta_\ell = 1/K$。融合特征计算为：
 \begin{equation}
-Y_{multi} = \sum_{k=0}^{K-1} \alpha_k Y^{(k)}, \quad \alpha_k = \frac{\exp(w_k)}{\sum_{j=0}^{K-1}\exp(w_j)}
+Y_{multi} = \sum_{\ell=0}^{K-1} \alpha_\ell Y^{(\ell)}, \quad \alpha_\ell = \frac{\exp(\beta_\ell)}{\sum_{j=0}^{K-1}\exp(\beta_j)}
 \end{equation}
-其中$\alpha_k$为归一化后的权重（通过softmax保证$\sum_k \alpha_k = 1$）。这种软加权融合允许梯度反传到所有频段，避免了硬选择的不可微问题。
+其中$\alpha_\ell$为归一化后的权重（通过softmax保证$\sum_\ell \alpha_\ell = 1$）。这种软加权融合允许梯度反传到所有频段，避免了硬选择的不可微问题。
 
 最终输出通过残差连接和MLP层得到：
 \begin{equation}
@@ -154,7 +154,7 @@ Chebyshev多项式阶数$K$决定了频谱分解的精细度。表\ref{tab:cheb_
 \end{tabular}
 \end{table}
 
-实验显示，所有频段共享单一Mamba时性能受限，虽然参数量最少但难以同时适应低频的平滑特性和高频的剧烈变化。将低频（$k=0,1$）和高频（$k=2$）分为两组，各组内共享Mamba，性能有所提升，验证了频段分组建模的价值。每个频段使用独立Mamba时达到最优性能，相比分组方案进一步改善。虽然参数量增加15\%，但增益显著，证明频段特定建模的必要性。
+实验显示，所有频段共享单一Mamba时性能受限，虽然参数量最少但难以同时适应低频的平滑特性和高频的剧烈变化。将低频（$\ell=0,1$）和高频（$\ell=2$）分为两组，各组内共享Mamba，性能有所提升，验证了频段分组建模的价值。每个频段使用独立Mamba时达到最优性能，相比分组方案进一步改善。虽然参数量增加15\%，但增益显著，证明频段特定建模的必要性。
 
 \subsection{频段融合策略}
 
