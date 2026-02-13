@@ -20,12 +20,13 @@
 2. 第2章 相关工作 - 文献综述
 3. 第3章 GGAM - 顺带介绍整体架构
 4. 第4章 ASD-SSM
-5. 第5章 masa
+5. 第5章 待定
 5. 第6章 实验 - 实验结果与分析
 6. 第7章 结论 - 总结
 
 # 生成内容注意
  不要用\item \textbf{MASA配置}:，\item \textbf这样子的item条目，这种表述很占地方且不符合我的论文风格，直接用普通段落描述即可。
+不要有太多小标题，把所有\subsubsection去掉，要么将这种变为段首加粗，要么就不要了，你自己选择
 
 # 代码
 原代码仓库在本地的
@@ -35,8 +36,9 @@ pointcept/models/point_transformer_v3/point_transformer_v3m1_base.py
 用于训练的数据结构在
 pointcept/models/utils/structure.py
 
-毕设相较于小论文，新加了创新点：masa，分支在masa-implementation
-注意：masa（第五章）是我在毕设里新加的创新点，和ASD-SSM不是一个东西，不要搞混。
+毕设相较于小论文，新加了创新点：频谱，分支在feature/geometry-semantic-dual-path
+这部分频域的内容（基于Chebyshev多项式近似的频谱状态空间模型）写在[frequency_chapter.tex](frequency_chapter.tex)，继承到bishe.tex里了
+注意：频谱（第五章）是我在毕设里新加的创新点，和ASD-SSM不是一个东西，不要搞混。
 小论文用的分支是feature/asd-ssm
 
 # 引用格式统一
@@ -53,7 +55,7 @@ booktitle = {Proceedings of the IEEE International Conference on Computer Vision
 期刊用journal字段
 
 ## 作者
-姓在前，名在后，名要写全名
+姓在前，名在后，名要写全名，名要把连字符去掉，比如Huang, Chang-Qin，要改为Huang, Changqin
 Yu, Xumin and Tang, Lulu and Rao, Yongming and Huang, Tiejun and Zhou, Jie and Lu, Jiwen
 
 ## 页码
@@ -76,3 +78,10 @@ Yu, Xumin and Tang, Lulu and Rao, Yongming and Huang, Tiejun and Zhou, Jie and L
 我在ref.bib添加了@inproceedings{pcm ,的引用，参照claude.md的格式统一部分帮我修正一下格式
 
 我当前的内容写在elsarticle-template-num.tex，但是我现在要投其他期刊IEEE-Transactions-LaTeX2e-templates-and-instructions，其tex文件在[IEEE-Transactions-LaTeX2e-templates-and-instructions](IEEE-Transactions-LaTeX2e-templates-and-instructions)，你帮我把东西腾过去，并翻译为英文，注意要符合点云的专业术语表述
+
+IEEE-Transactions-LaTeX2e-templates-and-instructions下，我的新翻译的论文PointSS(2).pdf已经写好，我想投稿tnnls，其latex格式如bare_jrnl_new_sample4.tex，上面有我之前写的内容，之前的翻译的不好，现在是弃稿（但是你可以参照上面的一些东西，比如文章引用名等），我想将我新翻译的文章原封不动地转移到tnnls要求的tex文件上，格式不用管（tex已经提供），你能否帮我转移？
+
+对于我的
+[bare_jrnl_new_sample4.tex](IEEE-Transactions-LaTeX2e-templates-and-instructions/bare_jrnl_new_sample4.tex)
+我需要你作为一个假如说对点云领域并不了解的论文审稿人，你看看我的论文语言表述是否清楚明白
+我老师给我提了一种修改建议，就是我可以参照别人的论文是怎么表达的，套到我的论文中，因为我想表达的每一句，其实在其他论文中都应该有相似的表达。你帮我一句句核对一下，看看每一句是否清楚明白，并且尽量帮我找到其他论文中相似的表达，并给出这篇论文的信息。
