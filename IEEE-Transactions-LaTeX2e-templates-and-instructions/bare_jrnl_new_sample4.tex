@@ -36,11 +36,24 @@
 \maketitle
 
 \begin{abstract}
-State Space Models (SSMs) offer linear complexity for point cloud analysis but often suffer from geometric information loss and insufficient multi-scale representation due to the irregularity of 3D data serialization. To address these limitations, this paper proposes PointSS, a geometry-aware multi-scale state space framework. First, we introduce a Global Geometry-Aware Mechanism (GGAM) that mitigates the structural degradation caused by serialization. By incorporating spatial priors and a dual-serialization strategy, GGAM effectively recovers local geometric relationships and enhances boundary consistency. Second, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM) featuring a dynamic parameter generation mechanism. This approach decouples feature modeling across scales, allowing the model to simultaneously capture fine-grained local details and long-range global dependencies. The proposed method integrates efficiently with standard encoder-decoder architectures without relying on pre-trained models. Extensive experiments on the S3DIS and ModelNet40 datasets demonstrate that PointSS achieves state-of-the-art performance in semantic segmentation and classification tasks, exhibiting superior robustness to serialization perturbations while maintaining computational efficiency.
+  Recently, State Space Models (SSMs) have exhibited strong global modeling
+capabilities and linear computational complexity for point cloud analysis.
+However, they often suffer from the loss of spatial proximity and insufficient
+hierarchical feature representations due to serializing 3D point clouds into
+1D sequences. To address these issues, this paper proposes PointSS, a
+geometry-aware multi-scale state space framework. PointSS explicitly injects
+geometric priors to alleviate the loss of spatial proximity. Leveraging these
+geometric priors, we design an Adaptive Scale-Decoupled State Space Model
+(ASD-SSM) featuring a dynamic parameter generation mechanism. This
+scale-decoupled approach enables hierarchical feature learning, allowing the
+model to simultaneously capture fine-grained local details and long-range
+global dependencies. Extensive experiments on the S3DIS and ModelNet40
+datasets demonstrate that PointSS achieves state-of-the-art performance in
+semantic segmentation and classification tasks while maintaining high computational efficiency.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Geometry-Aware Feature Learning, Multi-Scale Representation, Point Cloud Serialization, Semantic Segmentation, State Space Models
+Geometry-Aware Feature Learning, Multi-Scale Representation, Point Cloud Serialization,  Point Cloud Analysis, State Space Models
 \end{IEEEkeywords}
 
 \section{Introduction}
