@@ -83,34 +83,27 @@ making their context crucial for accurate segmentation.
 	\label{fig:analysis}
 \end{figure}
 
-  Existing SSM-based methods lack adaptive multi-scale feature learning due to their uniform parameter design. These methods either employ the same SSM
-parameters across all scales, which prevents fine scales from specializing
-in geometric details and coarse scales from capturing semantic context, or
-allocate separate parameters for each scale, which becomes computationally
-prohibitive as the number of hierarchical levels increases. Moreover, these
-fixed parameters cannot adapt to varying local geometric characteristics,
-treating all regions identically regardless of their structural complexity.
-This results in single-granularity representations and poor hierarchical
-consistency in complex scenes.
+Existing SSM-based methods struggle to establish effective hierarchical representations due to their reliance on fixed, content-independent parameters. Specifically, single-scale models (e.g., PointMamba\cite{PointMamba}) operate at a uniform spatial resolution, inherently preventing the network from simultaneously capturing fine-grained geometric details and broad semantic context. Conversely, hierarchical approaches (e.g., PCM\cite{pcm})) allocate separate parameters for each downsampled scale. While this captures multi-scale features, these parameters remain spatially invariant—meaning they cannot dynamically adapt to varying local geometric characteristics (e.g., flat surfaces vs. sharp boundaries). Furthermore, allocating independent parameters for every scale introduces prohibitive parameter growth and significant memory overhead. Consequently, the lack of dynamic, geometry-aware parameterization fundamentally limits the capacity of existing SSMs to accurately model complex 3D scenes.
 
 
   \begin{enumerate}
 	\item We propose a Global Geometry-Aware Mechanism (GGAM) that injects
 	explicit geometric priors through windowed neighborhoods and dual-
-	serialization fusion, recovering spatial structure and providing
-	geometric guidance for scale-adaptive learning.
+	serialization fusion, effectively mitigating the loss of spatial proximity
+	and providing reliable geometric guidance for scale-adaptive learning.
 	
-	\item We design an Adaptive Scale-
-	Decoupled State Space Model (ASD-SSM) featuring  dynamic
-	parameter generation. By adapting parameters to local geometric
-	characteristics, ASD-SSM enables fine scales to focus on geometric
-	details while coarse scales capture semantic context, achieving robust
-	hierarchical representation.
+	\item We design an Adaptive Scale-Decoupled State Space Model (ASD-SSM)
+	featuring a dynamic parameter generation mechanism. By adapting SSM
+	parameters to local geometric characteristics, ASD-SSM enables fine scales
+	to capture geometric details while coarse scales model semantic context,
+	achieving effective hierarchical representations in a highly parameter-
+	efficient manner.
 	
-	\item Extensive experiments demonstrate that PointSS achieves state-of-
-	the-art performance, reaching 75.2\% mIoU on S3DIS and 96.0\% accuracy
-	on ModelNet40, with ablation studies validating the effectiveness of
-	geometry-aware multi-scale learning.
+	\item Extensive experiments demonstrate that PointSS achieves state-of-the-
+	art performance, reaching 75.2\% mIoU on S3DIS and 96.0\% accuracy on
+	ModelNet40 while maintaining linear complexity. Comprehensive ablation
+	studies further validate the effectiveness of our geometry-aware multi-scale
+	design.
 \end{enumerate}
 Code will be released at https://github.com/z1xy2/PointSS-public.git
 \section{Related Work}
