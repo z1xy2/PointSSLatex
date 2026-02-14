@@ -59,27 +59,58 @@ Geometry-Aware Feature Learning, Multi-Scale Representation, Point Cloud Seriali
 \section{Introduction}
 \IEEEPARstart{P}{oint} clouds are fundamental for 3D perception but pose a challenge to feature extraction due to their sparsity and unstructured nature. Pioneering works such as PointNet and PointNet++ \cite{pointnet,PointNet++} established efficient point-wise processing paradigms. Despite efficiency, their limited ability to capture local structures often leads to sub-optimal prediction accuracy. To address this limitation, Transformers \cite{pt,ptv2,ptv3} subsequently improved semantic representation via self-attention; however, their quadratic complexity $\mathcal{O}(N^2)$ creates scalability bottlenecks.
 
-Recently, State Space Models (SSMs) \cite{ssm,Mamba}, exemplified by PointMamba \cite{PointMamba} and PCM \cite{pcm}, have gained attention due to their linear complexity. Despite efficiency, serializing 3D point clouds into
-1D sequences results in the loss of spatial proximity. The root of geometric loss lies in the conflict between Mamba's linear state transition and 3D spatial proximity. Serialization using space-filling curves inevitably creates ``fracture points"---neighbors that are spatially close but sequentially distant. In Mamba's recurrent mechanism, information from these distant points decays before reaching the center point, preventing the effective recovery of local attributes like surface normals and curvature. As illustrated in \cref{fig:analysis}, this information loss is particularly detrimental at object boundaries (e.g., wall-pillar junctions), where spatially adjacent yet sequentially distant context is crucial for accurate segmentation.
+  Recently, State Space Models (SSMs) \cite{ssm,Mamba}, exemplified by
+PointMamba \cite{PointMamba} and PCM \cite{pcm}, have gained attention
+due to their linear complexity. However, serializing 3D point clouds into
+1D sequences will inevitably sacrifice spatial proximity. As illustrated
+in \cref{fig:analysis}, some neighboring points can be far apart
+after serialization---points that are spatially close may become
+distant in the sequence. Such a loss of
+proximity is difficult to mitigate in Mamba's recurrent mechanism,
+where the contribution from distant points diminishes before reaching
+the current position, preventing effective modeling of local geometric
+features such as surface normals and curvature. This issue becomes even
+worse at object boundaries (e.g., wall-pillar junctions), where
+spatially adjacent points may be far apart in the serialized sequence,
+making their context crucial for accurate segmentation.
+
+
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{../picture/analysis.JPG}
-	\caption{Visualization of geometric structure loss after serialization. Left: Point cloud serialization. Right: Segmentation prediction results.}
+	\caption{Visualization of the spatial proximity loss after serialization. Left: Point sequence after serialization. Right: Segmentation prediction results.}
 	\label{fig:analysis}
 \end{figure}
 
-The limitations of existing methods stem from coupling serialization strategies with linear modeling. First, to enhance the local-preserving property of serialization, existing methods introduce structured preprocessing (e.g., space-filling curves with fixed traversal orders). However, such deterministic ordering inevitably causes models to learn order-dependent patterns, making them sensitive to input permutations---when the point cloud arrangement changes, significant discrepancies emerge in the output. Second, within the linear state space framework, it is difficult to assign adaptive learning weights to points with varying spatial distances or structural relationships within the same neighborhood. This limitation prevents the model from simultaneously balancing fine-grained geometric detail capture from proximate points and high-level semantic aggregation from distant contexts, resulting in single-granularity feature representation and insufficient hierarchical consistency, particularly in large-scale complex scenes.
+  Existing SSM-based methods lack adaptive multi-scale feature learning due to their uniform parameter design. These methods either employ the same SSM
+parameters across all scales, which prevents fine scales from specializing
+in geometric details and coarse scales from capturing semantic context, or
+allocate separate parameters for each scale, which becomes computationally
+prohibitive as the number of hierarchical levels increases. Moreover, these
+fixed parameters cannot adapt to varying local geometric characteristics,
+treating all regions identically regardless of their structural complexity.
+This results in single-granularity representations and poor hierarchical
+consistency in complex scenes.
 
 
-To address these issues, this paper proposes PointSS, an adaptive scale-decoupled state space framework. The main contributions are:
-
-\begin{enumerate}
-\item Explicit geometric priors are injected via windowed neighborhoods and dual-serialization fusion. This compensates for serialization-induced fragmentation and enhances boundary characterization.
-
-\item A dynamic parameter generation mechanism enables fine scales to capture local variations and coarse scales to model long-range dependencies, achieving robust hierarchical representation efficiently.
-
-\item PointSS outperforms existing Mamba-based methods, achieving 75.2\% mIoU on S3DIS and 96.0\% accuracy on ModelNet40, with ablation studies validating each component.
+  \begin{enumerate}
+	\item We propose a Global Geometry-Aware Mechanism (GGAM) that injects
+	explicit geometric priors through windowed neighborhoods and dual-
+	serialization fusion, recovering spatial structure and providing
+	geometric guidance for scale-adaptive learning.
+	
+	\item We design an Adaptive Scale-
+	Decoupled State Space Model (ASD-SSM) featuring  dynamic
+	parameter generation. By adapting parameters to local geometric
+	characteristics, ASD-SSM enables fine scales to focus on geometric
+	details while coarse scales capture semantic context, achieving robust
+	hierarchical representation.
+	
+	\item Extensive experiments demonstrate that PointSS achieves state-of-
+	the-art performance, reaching 75.2\% mIoU on S3DIS and 96.0\% accuracy
+	on ModelNet40, with ablation studies validating the effectiveness of
+	geometry-aware multi-scale learning.
 \end{enumerate}
 Code will be released at https://github.com/z1xy2/PointSS-public.git
 \section{Related Work}
