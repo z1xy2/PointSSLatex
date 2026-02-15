@@ -106,17 +106,22 @@ Existing SSM-based methods struggle to establish effective hierarchical represen
 	design.
 \end{enumerate}
 Code will be released at https://github.com/z1xy2/PointSS-public.git
+
+
 \section{Related Work}
-
-In recent years, the field of point cloud analysis has undergone a significant transition from early methods based on geometric priors to deep learning-driven end-to-end models. Researchers have proposed a series of innovative solutions to address challenges such as the sparsity, disorder, and high-dimensional nature of point cloud data. This section systematically reviews related work across three dimensions: the development of deep learning in point cloud semantic analysis, geometric feature enhancement strategies, and multi-scale feature fusion techniques, while analyzing the core ideas, technical contributions, and limitations of each method.
-
 \subsection{Deep Learning-based Point Cloud Semantic Analysis}
+PointNet \cite{pointnet} pioneered handling the unordered nature of point clouds via symmetric functions. To overcome its limited capacity for local detail modeling, PointNet++ \cite{PointNet++} proposed hierarchical sampling. Subsequent works like DGCNN \cite{DGCNN} and FusionNet \cite{FusionNet} enhanced local feature modeling via dynamic graphs and multi-scale fusion. However, these convolution-based methods remain constrained by limited receptive fields, limiting effective hierarchical feature construction.
 
-PointNet \cite{pointnet} pioneered handling point cloud disorder via symmetric functions but lacked local detail modeling, a limitation addressed by PointNet++ \cite{PointNet++} through hierarchical sampling. Subsequent works like DGCNN \cite{DGCNN} and FusionNet \cite{FusionNet} enhanced adaptability via dynamic graphs and multi-scale fusion. However, these convolution-based methods remain constrained by fixed receptive fields, limiting effective hierarchical feature construction.
+Transformers enabled effective global context modeling by leveraging self-attention mechanisms. Point Transformer \cite{pt} integrated positional encoding for spatial awareness, while PTv3 \cite{ptv3} achieved state-of-the-art performance using simplified serialization methods. Despite their advantages, the quadratic complexity $\mathcal{O}(N^2)$ creates bottlenecks for large-scale processing. This forces these models to rely on coarse-grained representations, inherently compromising fine-grained local geometric    
+details.
 
-Transformers revolutionized the field by leveraging self-attention for global dependency modeling. Point Transformer \cite{pt} integrated positional encoding for spatial awareness, while PTv3 \cite{ptv3} achieved state-of-the-art performance using simplified serialization. Despite their advantages, the quadratic complexity O(N$^2$) creates bottlenecks for large-scale processing, and their global focus often reduces sensitivity to fine-grained local details.
+State Space Models (SSMs) \cite{Mamba} offer a promising alternative with linear complexity. Methods like PointMamba \cite{PointMamba} and PCM \cite{pcm} adapt SSMs by serializing 3D clouds into 1D sequences.   However, this adaptation introduces two key challenges. First,
+serialization methods disrupt the spatial relationships between
+neighboring points critical for local geometric structure, resulting in
+spatial proximity loss. Second, uniform serialization struggles to
+capture both fine-grained local features and long-range contextual
+dependencies, limiting its ability to handle multi-scale representations.
 
-State Space Models (SSMs) \cite{Mamba} offer a promising alternative with linear complexity. Methods like PointMamba \cite{PointMamba} and PCM \cite{pcm} adapt SSMs by serializing 3D clouds into 1D sequences. However, this adaptation introduces two key challenges: ``geometric fragmentation," where fixed serialization separates spatially adjacent points crucial for local structure (e.g., normals), and single-granularity representation, where linear scanning struggles to balance high-frequency local details with long-range semantic associations.
 
 \subsection{Point Cloud Analysis via Geometric Feature Enhancement}
 
