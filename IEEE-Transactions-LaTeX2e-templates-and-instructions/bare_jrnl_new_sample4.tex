@@ -141,9 +141,42 @@ with learned deep features while maintaining computational efficiency
 remains a significant challenge.
 
 
-\subsection{Multi-Scale Representation in Point Cloud Analysis}
-% 前面保留你原本关于 FPN 和近期注意力的描述，然后自然过渡到这段：
-Multi-scale feature fusion is fundamental to hierarchical representation learning in point cloud analysis, with PointNet++ \cite{PointNet++} establishing the foundation through hierarchical downsampling and local feature aggregation across scales. Recent SSM-based methods have demonstrated strong global modeling capabilities with linear complexity. However, they struggle with effective multi-scale representations. PointMamba \cite{PointMamba} adopts a non-hierarchical architecture operating at a uniform spatial resolution, limiting its ability to capture fine-grained local details and broad semantic context simultaneously. While PCM \cite{pcm} introduces hierarchical structures through progressive downsampling, it employs spatially invariant parameters across different local regions at each scale, preventing dynamic adaptation to varying local geometric characteristics while incurring memory overhead. This inherently limits their effectiveness in multi-scale feature learning across complex 3D scenes.
+  \subsection{Multi-Scale Representation in Point Cloud Analysis}
+
+Multi-scale feature fusion has been fundamental to point cloud analysis since
+PointNet++ \cite{PointNet++}, which introduced hierarchical set abstraction
+layers for progressive downsampling and local feature aggregation. Subsequent
+works have explored various fusion strategies: FusionNet \cite{FusionNet}
+employs dense skip connections across hierarchical levels, while Transformer-
+based methods like PTv2 \cite{ptv2} and PTv3 \cite{ptv3} adopt U-Net
+architectures with hierarchical attention mechanisms. These approaches
+demonstrate the importance of explicit multi-scale modeling for balancing
+local geometric details and global semantic understanding.
+
+Recent SSM-based methods have attempted to bring linear complexity to point
+cloud analysis. PointMamba \cite{PointMamba} takes a minimalist approach with
+a plain, non-hierarchical Mamba backbone, relying on space-filling curves
+(Z-order and Hilbert) for the serialization of point clouds. This design prioritizes
+simplicity and global modeling efficiency but processes all points at a single
+feature granularity, lacking the explicit hierarchical structure proven
+effective by prior works. In contrast, PCM \cite{pcm} introduces a hierarchical
+framework through progressive downsampling combined with Consistent Traverse
+Serialization (CTS). PCM generates six serialization variants by permuting
+coordinate orders and employs separate Mamba parameters for each downsampled
+scale. While this multi-scale design improves upon PointMamba's single-scale
+limitation, PCM's parameters remain shared across all spatial locations within
+each scale. Consequently, the model applies uniform state transitions regardless
+of local point distributions—whether processing densely sampled flat regions or
+sparsely distributed boundary areas. Additionally, maintaining independent
+parameter sets for each scale and each serialization variant significantly
+increases memory footprint and parameter count.
+
+These design choices reveal a fundamental trade-off in SSM-based point cloud
+methods: simplicity and parameter efficiency (PointMamba) versus multi-scale
+capability but with spatial invariance and memory overhead (PCM). Neither
+approach achieves input-dependent, scale-adaptive parameterization that can
+dynamically adjust to local geometric characteristics while maintaining
+computational efficiency across hierarchical scales.
 
 
 
