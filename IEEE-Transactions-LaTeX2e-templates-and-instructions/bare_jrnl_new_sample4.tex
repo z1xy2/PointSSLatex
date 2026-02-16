@@ -152,10 +152,10 @@ architectures with hierarchical attention mechanisms. These approaches
 demonstrate the importance of  multi-scale modeling.
 
 Recent SSM-based methods have attempted to bring linear complexity to point
-cloud analysis. PointMamba \cite{PointMamba} takes a minimalist approach with
-a plain, non-hierarchical Mamba backbone, employing space-filling curves
-(Z-order and Hilbert) for point cloud serialization. This design prioritizes
-simplicity and global modeling efficiency but processes all points at a single
+cloud analysis. PointMamba \cite{PointMamba} employs a plain, non-hierarchical
+Mamba backbone, utilizing space-filling curves (Z-order and Hilbert) for
+point cloud serialization. This design prioritizes
+simplicity and efficient modeling of global dependencies but processes all points at a single
 feature granularity, lacking the explicit hierarchical structure proven
 effective by prior works. In contrast, PCM \cite{pcm} introduces hierarchical
 downsampling to capture multi-scale features. While this addresses PointMamba's
