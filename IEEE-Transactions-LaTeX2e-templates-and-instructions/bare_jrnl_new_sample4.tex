@@ -158,29 +158,15 @@ a plain, non-hierarchical Mamba backbone, employing space-filling curves
 (Z-order and Hilbert) for point cloud serialization. This design prioritizes
 simplicity and global modeling efficiency but processes all points at a single
 feature granularity, lacking the explicit hierarchical structure proven
-effective by prior works. In contrast, PCM \cite{pcm} introduces a hierarchical
-framework through progressive downsampling combined with Consistent Traverse
-Serialization (CTS). PCM generates six serialization variants by permuting
-coordinate orders (xyz, xzy, yxz, etc.), which are processed through shared
-Mamba parameters distinguished by order prompts. While this multi-serialization
-strategy helps capture spatial relationships from different perspectives, PCM
-allocates separate parameter sets for each downsampled scale to handle
-multi-scale features. Critically, within each scale, these parameters remain
-spatially invariant—applying identical state transitions to all points
-regardless of local geometric characteristics. For instance, flat surfaces
-and sharp boundaries are processed with the same weights, preventing dynamic
-adaptation to varying local geometries. Furthermore, allocating independent
-parameters for each scale incurs substantial parameter growth and memory
-overhead.
-
-These design choices reveal a fundamental trade-off in current SSM-based
-point cloud methods: PointMamba achieves simplicity and parameter efficiency
-at the cost of single-scale limitation, while PCM introduces multi-scale
-capability but suffers from spatially invariant parameterization and increased
-memory consumption. This gap motivates the need for dynamic, scale-adaptive
-parameterization that can adjust to local geometric characteristics while
-maintaining parameter efficiency across hierarchical scales.
-
+effective by prior works. In contrast, PCM \cite{pcm} introduces hierarchical
+downsampling to capture multi-scale features. While this addresses PointMamba's
+single-scale limitation, PCM allocates separate parameter sets for each scale,
+with the state transition parameters remaining input-invariant across all
+spatial locations within each scale. Consequently, the model applies identical
+state transitions to all points—processing flat surfaces and sharp boundaries
+with the same transition dynamics—preventing adaptation to local geometric
+variations. Furthermore, allocating independent parameters for each scale
+incurs substantial parameter growth and memory overhead.
 
 
 \section{Method}
