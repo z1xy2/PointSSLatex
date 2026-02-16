@@ -148,35 +148,38 @@ PointNet++ \cite{PointNet++}, which introduced hierarchical set abstraction
 layers for progressive downsampling and local feature aggregation. Subsequent
 works have explored various fusion strategies: FusionNet \cite{FusionNet}
 employs dense skip connections across hierarchical levels, while Transformer-
-based methods like PTv2 \cite{ptv2} and PTv3 \cite{ptv3} adopt U-Net
+based methods such as PTv2 \cite{ptv2} and PTv3 \cite{ptv3} adopt U-Net
 architectures with hierarchical attention mechanisms. These approaches
-demonstrate the importance of explicit multi-scale modeling for balancing
-local geometric details and global semantic understanding.
+demonstrate the importance of  multi-scale modeling.
 
 Recent SSM-based methods have attempted to bring linear complexity to point
 cloud analysis. PointMamba \cite{PointMamba} takes a minimalist approach with
-a plain, non-hierarchical Mamba backbone, relying on space-filling curves
-(Z-order and Hilbert) for the serialization of point clouds. This design prioritizes
+a plain, non-hierarchical Mamba backbone, employing space-filling curves
+(Z-order and Hilbert) for point cloud serialization. This design prioritizes
 simplicity and global modeling efficiency but processes all points at a single
 feature granularity, lacking the explicit hierarchical structure proven
 effective by prior works. In contrast, PCM \cite{pcm} introduces a hierarchical
 framework through progressive downsampling combined with Consistent Traverse
 Serialization (CTS). PCM generates six serialization variants by permuting
-coordinate orders and employs separate Mamba parameters for each downsampled
-scale. While this multi-scale design improves upon PointMamba's single-scale
-limitation, PCM's parameters remain shared across all spatial locations within
-each scale. Consequently, the model applies uniform state transitions regardless
-of local point distributions—whether processing densely sampled flat regions or
-sparsely distributed boundary areas. Additionally, maintaining independent
-parameter sets for each scale and each serialization variant significantly
-increases memory footprint and parameter count.
+coordinate orders (xyz, xzy, yxz, etc.), which are processed through shared
+Mamba parameters distinguished by order prompts. While this multi-serialization
+strategy helps capture spatial relationships from different perspectives, PCM
+allocates separate parameter sets for each downsampled scale to handle
+multi-scale features. Critically, within each scale, these parameters remain
+spatially invariant—applying identical state transitions to all points
+regardless of local geometric characteristics. For instance, flat surfaces
+and sharp boundaries are processed with the same weights, preventing dynamic
+adaptation to varying local geometries. Furthermore, allocating independent
+parameters for each scale incurs substantial parameter growth and memory
+overhead.
 
-These design choices reveal a fundamental trade-off in SSM-based point cloud
-methods: simplicity and parameter efficiency (PointMamba) versus multi-scale
-capability but with spatial invariance and memory overhead (PCM). Neither
-approach achieves input-dependent, scale-adaptive parameterization that can
-dynamically adjust to local geometric characteristics while maintaining
-computational efficiency across hierarchical scales.
+These design choices reveal a fundamental trade-off in current SSM-based
+point cloud methods: PointMamba achieves simplicity and parameter efficiency
+at the cost of single-scale limitation, while PCM introduces multi-scale
+capability but suffers from spatially invariant parameterization and increased
+memory consumption. This gap motivates the need for dynamic, scale-adaptive
+parameterization that can adjust to local geometric characteristics while
+maintaining parameter efficiency across hierarchical scales.
 
 
 
