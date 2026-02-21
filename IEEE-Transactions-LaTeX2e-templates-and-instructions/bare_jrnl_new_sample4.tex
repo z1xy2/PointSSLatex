@@ -202,7 +202,7 @@ where $k$ denotes the position index in the serialized sequence, $x_k$ represent
 
 In this recurrent mechanism, each state $x_k$ depends on the previous state $x_{k-1}$ and current input $u_k$, establishing sequential dependencies. As discussed in Section I, serialization inevitably sacrifices spatial proximity—spatially adjacent points often become distant in the sequence. This loss of proximity prevents the recurrent state update from effectively aggregating information across spatial neighbors, limiting the model's ability to capture local geometric structures such as surface normals and curvature.
 
-To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to explicitly inject geometric priors into the model. The overall design of GGAM is illustrated in \cref{fig:ggam}, which primarily consists of two parts: point cloud graph construction with geometric feature extraction, and geometric feature enhancement and fusion.
+To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to explicitly inject geometric priors into the model. As illustrated in \cref{fig:ggam}, GGAM consists of two parts: (1) Graph Construction and Geometric Feature Extraction, and (2) Geometric Feature Enhancement and Fusion. The first part constructs a local graph from the serialized point sequence and extracts a geometric feature vector for each point. To capture complementary spatial structure, this process runs in parallel on two serialization streams—Z-order encoding and Hilbert encoding—yielding two independent sets of geometric features. The second part enhances and fuses these dual-stream features through a cross-attention mechanism and an adaptive gating strategy.
 
 \begin{figure}[htbp]
 	\centering
@@ -211,53 +211,68 @@ To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to 
 	\label{fig:ggam}
 \end{figure}
 
-Traditional methods for point cloud graph construction and geometric relationship computation (such as curvature and surface normals) typically rely on K-Nearest Neighbor (KNN) searches. However, the computational complexity of KNN searches is prohibitively high, especially when processing large-scale point cloud data. To address this issue, an efficient edge construction and curvature/normal computation method based on serialization is proposed.
+Traditional methods for computing geometric relationships (e.g., curvature and surface normals) rely on K-Nearest Neighbor (KNN) searches, whose computational complexity is prohibitively high for large-scale point clouds. Instead, we propose a serialization-based approach that constructs local neighborhoods and computes geometric features directly from the serialized sequence.
 
-Given the point cloud $\{p_1, p_2, \ldots, p_N\}$ and its serialized sequence $Q = \{q_1, q_2, \ldots, q_N\}$, the sequence is partitioned into non-overlapping windows:
+Given the point cloud $\{p_1, p_2, \ldots, p_N\}$, let $\pi$ be the permutation induced by the serialization (e.g., Z-order or Hilbert curve). The serialized sequence is defined as $Q = (p_{\pi(1)}, p_{\pi(2)}, \ldots, p_{\pi(N)})$, where $q_i \triangleq p_{\pi(i)}$ denotes the $i$-th point in the serialized order. The sequence is then partitioned into non-overlapping windows:
 \begin{equation}
-W_m = \{q_{(m-1) \cdot P + 1}, q_{(m-1) \cdot P + 2}, \ldots, q_{m \cdot P}\}
+W_m = (q_{(m-1) \cdot P + 1}, q_{(m-1) \cdot P + 2}, \ldots, q_{m \cdot P})
 \end{equation}
-where $m = 1, 2, \ldots, \lfloor N/P \rfloor$ represents the window index, and $P$ denotes the patch size. During the partitioning process, cases may arise where the number of points in the final window is less than $P$. In such instances, a window padding strategy is employed, where points from the penultimate window are padded into the final window. Detailed implementation is provided in the Window Partitioning section.
+where $m = 1, 2, \ldots, \lfloor N/P \rfloor$ is the window index and $P$ is the window size. If the last window has fewer than $P$ points, it is padded with points from the preceding window to maintain local continuity.
 
-For any point $p_i$, let its position after serialization be pos($i$). The neighborhood of this point is defined as the window to which it belongs:
+For any point $p_i$, let $\text{pos}(i)$ denote its position in the serialized sequence. Its local neighborhood is defined as the window it belongs to:
 \begin{equation}
 \mathcal{N}_P(p_i) = W_{\lfloor \frac{\text{pos}(i)-1}{P} \rfloor + 1}
 \end{equation}
 
-Based on the windowed neighborhoods, the edge connections of the point cloud are constructed. For points within each window $W_m$, a fully connected graph is established:
+Within each window $W_m$, a fully connected graph is established over all points in the window:
 \begin{equation}
 \mathcal{E}_m = \{(q_i, q_j): q_i, q_j \in W_m, i \neq j\}
 \end{equation}
+Each node in this graph represents a point, and each edge connects a pair of co-window points. Compared to KNN, this construction reduces neighborhood complexity from $\mathcal{O}(N\log N)$ to $\mathcal{O}(N)$. This efficiency gain is not merely a compromise: Point Transformer V3 \cite{ptv3} showed that the computation saved by efficient neighborhood search can be reinvested to expand model capacity (e.g., enlarging the receptive field from 16 to 1024 points), ultimately outperforming KNN-based methods on multiple benchmarks.
 
-Compared to traditional KNN methods, the windowed neighborhood construction method adopts an efficiency-oriented design philosophy, trading the precision of local neighborhoods for a significant increase in computational efficiency (reducing complexity from O($N$log$N$) to O($N$)). This trade-off strategy is inspired by Point Transformer V3 \cite{ptv3}, which demonstrated that computational resources saved through efficient neighborhood search can be reallocated to expand the model scale (e.g., expanding the receptive field from 16 to 1024 points), ultimately outperforming KNN-based methods across multiple benchmarks.
-
-Based on the constructed windowed neighborhoods, an 8-dimensional feature vector is extracted for each edge $(q_i, q_j)$ to fully describe the geometric relationship between point pairs and construct the point cloud graph. In this graph structure, nodes represent individual points, and edges represent the geometric relationships between pairs of points. The inherent properties of the edge construction in the point cloud graph provide distinct advantages for extracting geometric information. The edge feature vector $\mathbf{f}_{ij}$ consists of the following components:
+For each edge $(q_i, q_j)$, an 8-dimensional geometric feature vector is extracted:
 \begin{equation}
-\mathbf{f}_{ij} = [\Delta\mathbf{p}_{ij}, \alpha_{ij}, \boldsymbol{\kappa}] \in \mathbb{R}^8
+\mathbf{f}_{ij} = [\Delta\mathbf{p}_{ij},\ \alpha_{ij},\ \boldsymbol{\kappa}] \in \mathbb{R}^8
 \end{equation}
-where $\Delta\mathbf{p}_{ij} = \mathbf{p}_j - \mathbf{p}_i$ is the relative coordinate vector (3D), and $\alpha_{ij}$ represents the directional relationship feature (3D). The latter is calculated from the difference between the average surface normal within the window and the normalized relative position vector, serving to characterize the deviation of the edge direction relative to the local surface normal. $\boldsymbol{\kappa}$ denotes two types of curvature (2D): the surface variation rate and the Gaussian curvature. After passing through a Multi-Layer Perceptron (MLP), edge features are aggregated into point features by accumulating all incident edge features and dividing by the number of neighboring edges, thereby achieving mean aggregation. For point $p_i$, the aggregated point feature is denoted as $\mathbf{H}$.
+where $\Delta\mathbf{p}_{ij} = \mathbf{p}_j - \mathbf{p}_i$ is the relative coordinate vector (3D). $\alpha_{ij}$ (3D) is a directional feature computed as the difference between the mean surface normal of the window and the normalized edge direction $\Delta\mathbf{p}_{ij}/\|\Delta\mathbf{p}_{ij}\|$; it measures how much the edge deviates from the local surface. $\boldsymbol{\kappa}$ (2D) encodes two curvature measures: the surface variation rate and the Gaussian curvature.
 
-The geometric feature enhancement and fusion module consists of three parts: a cross-attention mechanism based on dual-spatial encoding, adaptive gated fusion, and geometric consistency constraints.
+Each edge feature is passed through an MLP, and the results are aggregated per point via mean pooling over all incident edges:
+\begin{equation}
+\mathbf{H}_i = \frac{1}{|\mathcal{N}_P(p_i)|} \sum_{j:\,(i,j)\in\mathcal{E}} \text{MLP}(\mathbf{f}_{ij})
+\end{equation}
+The resulting feature $\mathbf{H}_i$ summarizes the local geometric context of point $p_i$. Since graph construction runs in parallel on Z-order and Hilbert serializations, each point obtains two independent geometric features, $\mathbf{H}_z$ and $\mathbf{H}_h$, which are passed to the second part of GGAM.
 
-Since the aforementioned process is computed in parallel using point clouds serialized via Z-order encoding and Hilbert encoding, each point respectively obtains features $\mathbf{H}_z$ and $\mathbf{H}_h$. These two encoding methods produce different spatial neighborhood relationships and node permutation orders. Due to its recursive binary partitioning characteristic, Z-order encoding exhibits strong spatial clustering at local scales, enabling effective detection of geometric boundaries and local variations. In contrast, the Hilbert curve possesses superior spatial continuity preservation, which better maintains the overall coherence of geometric structures during serialization. Following standard practice, $Q$, $K$, and $V$ are generated within each encoding sequence for self-attention computation, allowing nodes to focus on their neighboring node features under that specific encoding. This yields results $A_z$ and $A_h$ for the Z-order and Hilbert sequences, respectively. Subsequently, a cross-attention mechanism is established between the two encoding sequences to generate $A'_z$ and $A'_h$, ensuring that the feature representations of the same point under two different spatial orderings can mutually enhance each other. Finally, more informative and robust node representations are obtained through feature fusion, the specific process of which is illustrated in \cref{fig:ggam}. The fusion results in the dual-serialization enhanced features $\mathbf{H}''_z$ and $\mathbf{H}''_h$.
+The Geometric Feature Enhancement and Fusion module processes $\mathbf{H}_z$ and $\mathbf{H}_h$ through three sequential steps: self-attention within each stream, cross-attention between streams, and adaptive gated fusion.
 
-After obtaining the enhanced features, a final fusion step is designed. To integrate the two features more intelligently, an adaptive gated unit is developed. It receives the concatenated features and generates a weight for each feature stream (Z-order and Hilbert):
+The two serialization encodings capture complementary spatial structures. Z-order encoding uses recursive binary partitioning, which produces strong local clustering and is well-suited for detecting geometric boundaries and local shape variations. Hilbert encoding provides better spatial continuity, helping to preserve the overall coherence of geometric structures across the sequence. Rather than treating these two views independently, we enrich each stream by letting it attend to the other.
+
+Concretely, self-attention is first applied within each stream to aggregate local context:
+\begin{equation}
+A_z = \text{Attention}(Q_z, K_z, V_z), \quad A_h = \text{Attention}(Q_h, K_h, V_h)
+\end{equation}
+Cross-attention is then applied between the two streams, allowing each point's representation in one encoding to query the other:
+\begin{equation}
+A'_z = \text{Attention}(Q_z, K_h, V_h), \quad A'_h = \text{Attention}(Q_h, K_z, V_z)
+\end{equation}
+The self-attention and cross-attention outputs are combined to produce enhanced features $\mathbf{H}''_z$ and $\mathbf{H}''_h$, as detailed in \cref{fig:ggam}.
+
+To adaptively combine the two enhanced features, an adaptive gated unit generates a scalar weight for each stream:
 \begin{equation}
 [\alpha_z, \alpha_h] = \text{Softmax}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
 \end{equation}
-where $\|$ denotes the concatenation operation. The final fused feature $\mathbf{H}_{\text{fused}}$ is obtained via weighted summation:
+where $\|$ denotes concatenation. The fused feature is then:
 \begin{equation}
 \mathbf{H}_{\text{fused}} = \alpha_z \odot \mathbf{H}''_z + \alpha_h \odot \mathbf{H}''_h
 \end{equation}
-where $\odot$ denotes the element-wise multiplication.
+where $\odot$ denotes element-wise multiplication.
 
-Since the curvature and surface normals in this method are calculated at the neighborhood granularity, the results are less precise compared to point-wise calculations. Following the introduction of dual-branch learning, a geometric consistency module is incorporated to ensure that the fused features still conform to the geometric laws of the physical world. This module learns a consistency factor $\boldsymbol{\gamma} \in [0, 1]$, which is applied to the fused features:
+Since curvature and surface normals are estimated at window granularity rather than per point, they may carry noise from points near window boundaries. To prevent such noise from propagating into the fused features, a geometric consistency module is incorporated. It learns a soft gating factor $\boldsymbol{\gamma} \in [0, 1]$ that selectively suppresses unreliable feature components:
 \begin{align}
 \boldsymbol{\gamma} &= \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h])) \\
 \mathbf{H}_{\text{final}} &= \mathbf{H}_{\text{fused}} \odot \boldsymbol{\gamma}
 \end{align}
 
-This constraint acts as a soft filter, suppressing geometrically inconsistent feature combinations that may arise during the fusion process. Ultimately, $\mathbf{H}_{\text{final}}$ serves as the output of the GGAM module, incorporating geometry-aware features.
+The output $\mathbf{H}_{\text{final}}$ retains feature components that are consistent with the underlying geometric structure while attenuating potentially noisy ones, and is passed to subsequent layers as the geometry-aware point feature.
 
 
 \subsection{Adaptive Scale-Decoupled State Space Model (ASD-SSM)}
