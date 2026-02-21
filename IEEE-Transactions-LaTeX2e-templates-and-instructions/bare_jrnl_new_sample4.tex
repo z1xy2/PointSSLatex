@@ -172,9 +172,9 @@ incurs substantial parameter growth and memory overhead.
 
 \subsection{Framework Overview}
 
-The overall architecture of the PointSS model is illustrated in \cref{fig:architecture}. After data augmentation, the point cloud is serialized into a 1D sequence\cite{ptv3}. We then employ the Global Geometry-Aware Mechanism (GGAM) to capture global geometric priors from the serialized sequence. The feature learning component adopts a PointNet-based U-shaped encoder-decoder architecture. To ensure each patch contains an equal number of points, some points may appear in multiple patches (highlighted in orange). The learned features are subsequently fed into a prediction head to produce the final segmentation or classification results. Compared to PCM, this scheme performs serialization only once at the beginning, enabling direct downsampling via pooling on the serialized point cloud rather than performing re-serialization at each downsampling stage. This approach significantly reduces computational complexity.
+The overall architecture of the PointSS model is illustrated in \cref{fig:architecture}. After data augmentation, the point cloud is serialized into a 1D sequence\cite{ptv3}. We then employ the Global Geometry-Aware Mechanism (GGAM) to extract explicit geometric priors from the serialized sequence. The feature learning component adopts a PointNet-based U-shaped encoder-decoder architecture. To ensure each patch contains an equal number of points, some points may appear in multiple patches (highlighted in orange). The learned features are subsequently fed into a prediction head to produce the final segmentation or classification results. Compared to PCM, this scheme performs serialization only once at the beginning, enabling direct downsampling via pooling on the serialized point cloud rather than performing re-serialization at each downsampling stage. This approach significantly reduces computational complexity.
 
-\cref{fig:coder} illustrates the encoder architecture. ASD-SSM is integrated into both the encoder and decoder for hierarchical feature learning. The decoder mirrors the encoder structure but replaces pooling with upsampling. Through skip connections from encoder stages, the decoder integrates multi-scale features during the upsampling process.
+\cref{fig:coder} illustrates the encoder architecture. ASD-SSM is integrated into both the encoder and decoder for hierarchical feature learning. The decoder adopts a symmetric structure to the encoder but replaces pooling with upsampling. Through skip connections from encoder stages, the decoder integrates multi-scale features during the upsampling process.
 
 \begin{figure}[htbp]
 	\centering
@@ -194,13 +194,15 @@ The overall architecture of the PointSS model is illustrated in \cref{fig:archit
 
 \subsection{Global Geometry-Aware Mechanism (GGAM)}
 
-The difficulty in geometric learning within Mamba-based point cloud analysis methods, as previously discussed, stems fundamentally from the contradiction between the state space model mechanism of Mamba and the geometric characteristics of point clouds. Mamba performs sequence modeling through the following discretized state space equations:
+The difficulty in geometric learning within Mamba-based point cloud analysis methods stems from the inherent mismatch between state space model mechanisms and 3D geometric structures. Mamba performs sequence modeling through the following discretized state space equations:
 \begin{equation}
 x_k = \bar{A}x_{k-1} + \bar{B}u_k, \quad y_k = \bar{C}x_k + \bar{D}u_k
 \end{equation}
-where, $k$ denotes the position index after serialization, $x_k$ is the state vector at the $k$-th position, $u_k$ is the input vector, $y_k$ is the output vector, and $\bar{A}$, $\bar{B}$, $\bar{C}$, $\bar{D}$ are the system matrices. During serialization, geometrically adjacent points are separated into ``fracture points" due to serialization rules. Consequently, the state vector $x_k$ struggles to establish associations between these fracture points during linear transmission. This makes it difficult for the model to implicitly learn complete geometric structural features, particularly critical geometric information such as surface normals and curvature that rely on spatial neighborhood definitions.
+where $k$ denotes the position index in the serialized sequence, $x_k$ represents the state vector at position $k$, $u_k$ is the input feature vector, $y_k$ is the output feature vector, and $\bar{A}$, $\bar{B}$, $\bar{C}$, $\bar{D}$ are learnable parameters for state transition, input projection, output projection, and residual connection, respectively.
 
-To address this, the Global Geometry-Aware Mechanism (GGAM) is designed to compensate for the geometric learning difficulties of Mamba by explicitly extracting point cloud geometric priors and establishing global associations, thereby providing rich geometric information for the subsequent encoder and decoder. The overall design of GGAM is illustrated in \cref{fig:ggam}, which primarily consists of two parts: point cloud graph construction with geometric feature extraction, and geometric feature enhancement and fusion.
+Under this recurrent formulation, the state vector $x_k$ at each position is computed based solely on the previous state $x_{k-1}$ and the current input $u_k$. As discussed in Section I, serialization disrupts spatial proximity, causing spatially adjacent points to become sequentially distant. Consequently, the recurrent state propagation cannot effectively establish associations across these scattered neighbors, limiting the model's ability to capture complete geometric structures.
+
+To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to explicitly inject geometric priors into the model. The overall design of GGAM is illustrated in \cref{fig:ggam}, which primarily consists of two parts: point cloud graph construction with geometric feature extraction, and geometric feature enhancement and fusion.
 
 \begin{figure}[htbp]
 	\centering
