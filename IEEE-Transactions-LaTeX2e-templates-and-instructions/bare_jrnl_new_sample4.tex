@@ -238,7 +238,7 @@ where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vect
 \end{equation}
 $\cos\theta_i$ measures how much the edge direction $\Delta q_{ij}$ deviates from the tangent plane at $q_i$: it is near zero on smooth regions and grows large near geometric edges, with $\cos\theta_j$ defined analogously at $q_j$. $\kappa_i, \kappa_j \in \mathbb{R}$ denote the surface curvatures at the two endpoints.
 
-The normal-based components—$\mathbf{n}_i \cdot \mathbf{n}_j$, $\cos\theta_i$, $\cos\theta_j$, $\kappa_i$, and $\kappa_j$—are all rotation-invariant geometric quantities, making them rotation-invariant by design~\cite{clusterNet, riconv}: rotating the point cloud globally leaves these values unchanged. In contrast, raw normal vectors rotate with the point cloud and do not share this invariance. Such rotation invariance has been shown to enhance model robustness against orientation variations~\cite{clusterNet, riconv}.
+The normal-based components—$\mathbf{n}_i \cdot \mathbf{n}_j$, $\cos\theta_i$, $\cos\theta_j$, $\kappa_i$, and $\kappa_j$—are all rotation-invariant geometric quantities by design~\cite{clusterNet, riconv}: rotating the point cloud globally leaves these values unchanged. In contrast, raw normal vectors rotate with the point cloud and do not share this invariance. Such rotation invariance has been shown to enhance model robustness to rotational variations~\cite{clusterNet, riconv}.
 
 Each edge feature is passed through an MLP, and for each point $q_i$, the outputs are aggregated via mean pooling over its neighbor set $\mathcal{N}(q_i)$:
 \begin{equation}
