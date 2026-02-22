@@ -228,11 +228,11 @@ For each point $q_i$, its neighborhood $\mathcal{N}(q_i)$ is the set of all othe
 \mathcal{N}(q_i) = \bigl\{q_j : q_j \in W_m,\ j \neq i\bigr\}, \quad m = \left\lceil \frac{i}{P} \right\rceil
 \end{equation}
 
-Within each window $W_m$, a fully connected graph is established over all co-window points:
+Within each window $W_m$, a fully connected graph is established among all points in $W_m$. The edge set $\mathcal{E}_m$ is defined as:
 \begin{equation}
 \mathcal{E}_m = \{(q_i, q_j): q_i, q_j \in W_m,\ i \neq j\}
 \end{equation}
-Each node represents a point, and each edge connects a pair of points within the same window. Compared to KNN, this construction reduces neighborhood complexity from $\mathcal{O}(N\log N)$ to $\mathcal{O}(N)$. This efficiency gain is not merely a compromise: Point Transformer V3 \cite{ptv3} showed that the computation saved by efficient neighborhood search can be reinvested to expand model capacity (e.g., enlarging the receptive field from 16 to 1024 points), ultimately outperforming KNN-based methods on multiple benchmarks.
+Compared to KNN, this construction reduces neighborhood complexity from $\mathcal{O}(N\log N)$ to $\mathcal{O}(N)$. This efficiency gain is not merely a compromise: Point Transformer V3 \cite{ptv3} showed that the computation saved by efficient neighborhood search can be reinvested to expand model capacity (e.g., enlarging the receptive field from 16 to 1024 points), ultimately outperforming KNN-based methods on multiple benchmarks.
 
 For each edge $(q_i, q_j) \in \mathcal{E}_m$, an 8-dimensional geometric feature vector is extracted:
 \begin{equation}
