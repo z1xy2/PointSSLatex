@@ -221,7 +221,7 @@ where $q_i := p_{\pi(i)}$ denotes the $i$-th point in the serialized order. The 
 \begin{equation}
 W_m = (q_{(m-1) \cdot P + 1}, q_{(m-1) \cdot P + 2}, \ldots, q_{m \cdot P})
 \end{equation}
-where $m = 1, 2, \ldots, \lfloor N/P \rfloor$ is the window index and $P$ is the window size. If the last window has fewer than $P$ points, it is padded with points from the preceding window to maintain local continuity.
+where $m = 1, 2, \ldots, \lfloor N/P \rfloor$ is the window index and $P$ is the window size. If the last window has fewer than $P$ points, it is padded following the strategy of PTv3~\cite{ptv3}.
 
 For each point $q_i$, its neighborhood $\mathcal{N}(q_i)$ consists of all other points within the same window, forming a fully connected local graph:
 \begin{equation}
@@ -248,28 +248,28 @@ The resulting feature $\mathbf{H}_i \in \mathbb{R}^C$ encodes the local geometri
 
 The Geometric Feature Enhancement and Fusion module processes $\mathbf{H}_z$ and $\mathbf{H}_h$ through three sequential steps: self-attention within each stream, cross-attention between streams, and adaptive gated fusion.
 
-Each stream is first normalized via LayerNorm before computing attention, where $\text{Attention}(Q, K, V) = \text{Softmax}(QK^\top / \sqrt{d})V$ with $d$ being the key dimension. Self-attention is then applied within each normalized stream:
+Each stream is first normalized via LayerNorm before computing attention, where $\text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{Softmax}(\mathbf{Q}\mathbf{K}^\top / \sqrt{d})\mathbf{V}$. Self-attention is then applied within each normalized stream:
 \begin{equation}
 \begin{aligned}
-A_z = \text{Attention}(\mathbf{H}_z, \mathbf{H}_z, \mathbf{H}_z), \\
-A_h = \text{Attention}(\mathbf{H}_h, \mathbf{H}_h, \mathbf{H}_h)
+\mathbf{A}_z = \text{Attention}(\mathbf{H}_z, \mathbf{H}_z, \mathbf{H}_z), \\
+\mathbf{A}_h = \text{Attention}(\mathbf{H}_h, \mathbf{H}_h, \mathbf{H}_h)
 \end{aligned}
 \end{equation}
 with residual connections:
 \begin{equation}
-\mathbf{H}'_z = \mathbf{H}_z + A_z, \quad \mathbf{H}'_h = \mathbf{H}_h + A_h
+\mathbf{H}'_z = \mathbf{H}_z + \mathbf{A}_z, \quad \mathbf{H}'_h = \mathbf{H}_h + \mathbf{A}_h
 \end{equation}
 Cross-attention is then applied, where each stream retains its own queries while the keys and values are exchanged between streams:
 \begin{equation}
 \begin{aligned}
-A'_z = \text{Attention}(\mathbf{H}'_z, \mathbf{H}'_h, \mathbf{H}'_h), \\
-A'_h = \text{Attention}(\mathbf{H}'_h, \mathbf{H}'_z, \mathbf{H}'_z)
+\mathbf{A}'_z = \text{Attention}(\mathbf{H}'_z, \mathbf{H}'_h, \mathbf{H}'_h), \\
+\mathbf{A}'_h = \text{Attention}(\mathbf{H}'_h, \mathbf{H}'_z, \mathbf{H}'_z)
 \end{aligned}
 \end{equation}
 The final output is obtained via residual addition:
 \begin{equation}
 \begin{aligned}
-\mathbf{H}''_z = \mathbf{H}'_z + A'_z, \quad \mathbf{H}''_h = \mathbf{H}'_h + A'_h
+\mathbf{H}''_z = \mathbf{H}'_z + \mathbf{A}'_z, \quad \mathbf{H}''_h = \mathbf{H}'_h + \mathbf{A}'_h
 \end{aligned}
 \end{equation}
 
@@ -279,9 +279,9 @@ To adaptively combine the two enhanced features, an adaptive gated unit generate
 \end{equation}
 where $\|$ denotes concatenation. The fused feature is then:
 \begin{equation}
-\mathbf{H}_{\text{fused}} = \alpha_z \odot \mathbf{H}''_z + \alpha_h \odot \mathbf{H}''_h
+\mathbf{H}_{\text{fused}} = \alpha_z \mathbf{H}''_z + \alpha_h \mathbf{H}''_h
 \end{equation}
-where $\odot$ denotes element-wise multiplication.
+where $\alpha_z, \alpha_h \in \mathbb{R}$ are scalar weights satisfying $\alpha_z + \alpha_h = 1$, broadcast uniformly across all channels.
 
 To further refine the fused features, a geometric consistency module introduces a learnable scalar gate $\gamma \in [0,1]$ that adaptively controls the overall magnitude of $\mathbf{H}_{\text{fused}}$:
 \begin{equation}
