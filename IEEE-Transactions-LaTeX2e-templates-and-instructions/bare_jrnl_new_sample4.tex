@@ -235,13 +235,15 @@ Within each window $W_m$, a fully connected graph is established among all point
 
 For each edge $(q_i, q_j) \in \mathcal{E}_m$, an 8-dimensional geometric feature vector is extracted:
 \begin{equation}
-\mathbf{f}_{ij} = [\Delta q_{ij},\ \mathbf{d}_{ij},\ \boldsymbol{\kappa}] \in \mathbb{R}^8
+\mathbf{f}_{ij} = [\Delta q_{ij},\ \mathbf{n}_i \cdot \mathbf{n}_j,\ \cos\theta_i,\ \cos\theta_j,\ \kappa_i,\ \kappa_j] \in \mathbb{R}^8
 \end{equation}
-where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vector. $\mathbf{d}_{ij} \in \mathbb{R}^3$ measures the angular deviation between the edge direction and the local surface normal:
+where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vector; $\mathbf{n}_i, \mathbf{n}_j \in \mathbb{R}^3$ are the surface normals at $q_i$ and $q_j$, estimated via PCA over the local window. $\mathbf{n}_i \cdot \mathbf{n}_j \in \mathbb{R}$ is their dot product, measuring the normal consistency between the two endpoints—near smooth surfaces it approaches 1, while near geometric boundaries or creases it drops significantly. $\cos\theta_i$ and $\cos\theta_j$ are the cosines of the angles between the edge direction and the surface normal at each endpoint:
 \begin{equation}
-\mathbf{d}_{ij} = \bar{\mathbf{n}}_m - \frac{\Delta q_{ij}}{\|\Delta q_{ij}\|}
+\cos\theta_i = \frac{\mathbf{n}_i \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}, \quad \cos\theta_j = \frac{\mathbf{n}_j \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}
 \end{equation}
-where $\bar{\mathbf{n}}_m$ is the mean surface normal estimated over window $W_m$. $\boldsymbol{\kappa} \in \mathbb{R}^2$ encodes two window-level curvature measures: the surface variation rate and the Gaussian curvature.
+When the edge lies tangent to the surface, both values are close to zero; when the edge crosses a surface boundary, the two values differ markedly. $\kappa_i, \kappa_j \in \mathbb{R}$ are the surface curvatures at the two endpoints, reflecting the local shape at each end of the edge.
+
+All components of $\mathbf{f}_{ij}$ are scalar quantities derived from inner products and angles rather than raw normal vectors, making the feature vector rotation-invariant by design~\cite{clusterNet, riconv}: rotating the point cloud globally leaves all values unchanged. This contrasts with approaches that directly incorporate raw normal vectors, whose values are tied to the global coordinate frame and thus vary with input orientation.
 
 Each edge feature is passed through an MLP, and the outputs are aggregated per point via mean pooling over its neighborhood:
 \begin{equation}
