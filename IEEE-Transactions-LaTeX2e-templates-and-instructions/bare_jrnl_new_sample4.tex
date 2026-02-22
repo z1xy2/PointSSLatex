@@ -283,7 +283,7 @@ where $\|$ denotes concatenation. The fused feature is then:
 \end{equation}
 where $\alpha_z, \alpha_h \in \mathbb{R}$ are scalar weights satisfying $\alpha_z + \alpha_h = 1$, broadcast uniformly across all channels.
 
-To further refine the fused features, a geometric consistency constraint module evaluates the agreement between the two streams: when the dual-stream features are consistent, the gate preserves the fused representation; when they exhibit significant discrepancy—indicating potentially unreliable geometric combinations introduced by window-approximated neighborhoods—the gate selectively suppresses the output. Specifically, a learnable scalar gate $\gamma \in [0,1]$ is derived from the concatenation of both streams:
+To suppress unreliable combinations when the two streams disagree, a geometric consistency constraint module computes a scalar gate $\gamma \in [0,1]$ from both streams:
 \begin{equation}
 \gamma = \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
 \end{equation}
