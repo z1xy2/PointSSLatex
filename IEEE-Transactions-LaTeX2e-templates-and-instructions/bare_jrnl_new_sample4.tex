@@ -236,7 +236,7 @@ where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vect
 \begin{equation}
 \cos\theta_i = \frac{\mathbf{n}_i \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}, \quad \cos\theta_j = \frac{\mathbf{n}_j \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}
 \end{equation}
-When $\Delta q_{ij}$ lies tangent to the local surface—and therefore nearly perpendicular to the surface normal—both cosines are close to zero. When $\Delta q_{ij}$ crosses a surface boundary, the two normals make different angles with $\Delta q_{ij}$, causing the two cosines to differ markedly. $\kappa_i, \kappa_j \in \mathbb{R}$ are the surface curvatures at the two endpoints, reflecting the local shape at each end of the edge.
+$\cos\theta_i$ measures how much the edge direction $\Delta q_{ij}$ deviates from the tangent plane at $q_i$: it is near zero on smooth regions and grows large near geometric edges or creases. $\cos\theta_j$ captures the same quantity from the perspective of $q_j$. $\kappa_i, \kappa_j \in \mathbb{R}$ denote the surface curvatures at the two endpoints.
 
 The normal-based components—$\mathbf{n}_i \cdot \mathbf{n}_j$, $\cos\theta_i$, $\cos\theta_j$, $\kappa_i$, and $\kappa_j$—are all rotation-invariant geometric quantities, making them rotation-invariant by design~\cite{clusterNet, riconv}: rotating the point cloud globally leaves these values unchanged. In contrast, raw normal vectors rotate with the point cloud and do not share this invariance.
 
@@ -244,22 +244,20 @@ Each edge feature is passed through an MLP, and for each point $q_i$, the output
 \begin{equation}
 \mathbf{H}_i = \frac{1}{|\mathcal{N}(q_i)|} \sum_{q_j \in \mathcal{N}(q_i)} \text{MLP}(\mathbf{f}_{ij})
 \end{equation}
-The resulting feature $\mathbf{H}_i \in \mathbb{R}^C$ encodes the local geometric context of $q_i$. Since graph construction runs in parallel on Z-order and Hilbert serialization methods, each point obtains two independent geometric feature vectors, $\mathbf{H}_z$ and $\mathbf{H}_h$, which are passed to the second part of GGAM.
+The resulting feature $\mathbf{H}_i \in \mathbb{R}^C$ encodes the local geometric context of $q_i$. Since Z-order serialization method favors local clustering while Hilbert serialization method better preserves spatial continuity, graph construction runs in parallel on both serializations, yielding two complementary geometric feature vectors $\mathbf{H}_z$ and $\mathbf{H}_h$ per point, which are passed to the second part of GGAM.
 
 The Geometric Feature Enhancement and Fusion module processes $\mathbf{H}_z$ and $\mathbf{H}_h$ through three sequential steps: self-attention within each stream, cross-attention between streams, and adaptive gated fusion.
 
-The two serializations capture complementary spatial structures. Z-order encoding uses recursive binary partitioning, producing strong local clustering that is well-suited for detecting geometric boundaries and local shape variations. Hilbert encoding preserves better spatial continuity, maintaining the overall coherence of geometric structures. Rather than treating these two views independently, we enrich each stream by letting it attend to the other.
-
-Each stream is first normalized before computing attention. Let $\hat{\mathbf{H}}_z = \text{LayerNorm}(\mathbf{H}_z)$ and $\hat{\mathbf{H}}_h = \text{LayerNorm}(\mathbf{H}_h)$. Self-attention is then applied within each normalized stream:
+Each stream is first normalized via LayerNorm before computing attention. Self-attention is then applied within each normalized stream:
 \begin{equation}
 \begin{aligned}
-A_z = \text{Attention}(\hat{\mathbf{H}}_z, \hat{\mathbf{H}}_z, \hat{\mathbf{H}}_z), \\
-A_h = \text{Attention}(\hat{\mathbf{H}}_h, \hat{\mathbf{H}}_h, \hat{\mathbf{H}}_h)
+A_z = \text{Attention}(\mathbf{H}_z, \mathbf{H}_z, \mathbf{H}_z), \\
+A_h = \text{Attention}(\mathbf{H}_h, \mathbf{H}_h, \mathbf{H}_h)
 \end{aligned}
 \end{equation}
 with residual connections:
 \begin{equation}
-\mathbf{H}'_z = \hat{\mathbf{H}}_z + A_z, \quad \mathbf{H}'_h = \hat{\mathbf{H}}_h + A_h
+\mathbf{H}'_z = \mathbf{H}_z + A_z, \quad \mathbf{H}'_h = \mathbf{H}_h + A_h
 \end{equation}
 Cross-attention is then applied, where each stream retains its own queries while the keys and values are exchanged between streams:
 \begin{equation}
@@ -285,12 +283,12 @@ where $\|$ denotes concatenation. The fused feature is then:
 \end{equation}
 where $\odot$ denotes element-wise multiplication.
 
-To further refine the fused features, a geometric consistency module introduces a learnable gating factor $\boldsymbol{\gamma} \in [0,1]$, allowing the model to adaptively calibrate each feature dimension of $\mathbf{H}_{\text{fused}}$:
+To further refine the fused features, a geometric consistency module introduces a learnable scalar gate $\gamma \in [0,1]$ that adaptively controls the overall magnitude of $\mathbf{H}_{\text{fused}}$:
 \begin{equation}
-\boldsymbol{\gamma} = \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
+\gamma = \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
 \end{equation}
 \begin{equation}
-\mathbf{H}_{\text{final}} = \mathbf{H}_{\text{fused}} \odot \boldsymbol{\gamma}
+\mathbf{H}_{\text{final}} = \mathbf{H}_{\text{fused}} \odot \gamma
 \end{equation}
 
 $\mathbf{H}_{\text{final}}$ is then passed to subsequent layers as the geometry-aware point representation.
