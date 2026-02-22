@@ -223,17 +223,12 @@ W_m = (q_{(m-1) \cdot P + 1}, q_{(m-1) \cdot P + 2}, \ldots, q_{m \cdot P})
 \end{equation}
 where $m = 1, 2, \ldots, \lfloor N/P \rfloor$ is the window index and $P$ is the window size. If the last window has fewer than $P$ points, it is padded with points from the preceding window to maintain local continuity.
 
-For each point $q_i$, its neighborhood $\mathcal{N}(q_i)$ is the set of all other points within the same window:
+For each point $q_i$, its neighborhood $\mathcal{N}(q_i)$ consists of all other points within the same window, forming a fully connected local graph:
 \begin{equation}
-\mathcal{N}(q_i) = \bigl\{q_j : q_j \in W_m,\ j \neq i\bigr\}, \quad m = \left\lceil \frac{i}{P} \right\rceil
+\mathcal{N}(q_i) = \left\{q_j : q_j \in W_{\lceil i/P \rceil},\ j \neq i\right\}
 \end{equation}
 
-Within each window $W_m$, a fully connected graph is established among all points in $W_m$. The edge set $\mathcal{E}_m$ is defined as:
-\begin{equation}
-\mathcal{E}_m = \{(q_i, q_j): q_i, q_j \in W_m,\ i \neq j\}
-\end{equation}
-
-For each edge $(q_i, q_j) \in \mathcal{E}_m$, an 8-dimensional geometric feature vector is extracted:
+For each pair $(q_i, q_j)$ with $q_j \in \mathcal{N}(q_i)$, an 8-dimensional geometric feature vector is extracted:
 \begin{equation}
 \mathbf{f}_{ij} = [\Delta q_{ij},\ \mathbf{n}_i \cdot \mathbf{n}_j,\ \cos\theta_i,\ \cos\theta_j,\ \kappa_i,\ \kappa_j] \in \mathbb{R}^8
 \end{equation}
