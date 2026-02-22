@@ -291,12 +291,14 @@ where $\|$ denotes concatenation. The fused feature is then:
 where $\odot$ denotes element-wise multiplication.
 
 To further refine the fused features, a geometric consistency module introduces a learnable gating factor $\boldsymbol{\gamma} \in [0,1]$, allowing the model to adaptively calibrate each feature dimension of $\mathbf{H}_{\text{fused}}$:
-\begin{align}
+\begin{equation}
+\begin{aligned}
 \boldsymbol{\gamma} &= \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h])) \\
 \mathbf{H}_{\text{final}} &= \mathbf{H}_{\text{fused}} \odot \boldsymbol{\gamma}
-\end{align}
+\end{aligned}
+\end{equation}
 
-The output $\mathbf{H}_{\text{final}}$ retains feature components that are consistent with the underlying geometric structure while attenuating potentially noisy ones, and is passed to subsequent layers as the geometry-aware point feature.
+$\mathbf{H}_{\text{final}}$ is then passed to subsequent layers as the geometry-aware point representation.
 
 
 \subsection{Adaptive Scale-Decoupled State Space Model (ASD-SSM)}
