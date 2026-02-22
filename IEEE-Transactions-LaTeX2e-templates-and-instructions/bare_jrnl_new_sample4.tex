@@ -290,7 +290,7 @@ where $\|$ denotes concatenation. The fused feature is then:
 \end{equation}
 where $\odot$ denotes element-wise multiplication.
 
-Since curvature and surface normals are estimated at window granularity rather than per point, they may carry noise from points near window boundaries. To prevent such noise from propagating into the fused features, a geometric consistency module is incorporated. It learns a soft gating factor $\boldsymbol{\gamma} \in [0, 1]$ that selectively suppresses unreliable feature components:
+To further refine the fused features, a geometric consistency module introduces a learnable gating factor $\boldsymbol{\gamma} \in [0,1]$, allowing the model to adaptively calibrate each feature dimension of $\mathbf{H}_{\text{fused}}$:
 \begin{align}
 \boldsymbol{\gamma} &= \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h])) \\
 \mathbf{H}_{\text{final}} &= \mathbf{H}_{\text{fused}} \odot \boldsymbol{\gamma}
