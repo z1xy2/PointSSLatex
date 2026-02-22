@@ -213,7 +213,7 @@ To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to 
 
 Traditional methods for computing geometric relationships (e.g., curvature and surface normals) rely on K-Nearest Neighbor (KNN) searches, whose computational complexity is prohibitively high for large-scale point clouds. Inspired by Point Transformer V3 \cite{ptv3}, which showed that serialization-based windowed neighborhoods can replace KNN while reducing complexity from $\mathcal{O}(N\log N)$ to $\mathcal{O}(N)$ without sacrificing performance, we adopt this construction to enable efficient geometric feature extraction.
 
-Given the point cloud $\{p_1, p_2, \ldots, p_N\}$, the serialization method sorts these points into a sequence according to a space-filling curve. For example, a Z-order serialization of five points might yield $Q = (p_3, p_5, p_2, p_1, p_4)$, where the position of each point in $Q$ corresponds to its traversal position along the curve. In general, let $\pi$ be the permutation induced by the serialization. The serialized sequence is defined as:
+Given the point cloud $\{p_1, p_2, \ldots, p_N\}$, the serialization method sorts these points into a sequence according to a space-filling curve. For example, a Z-order serialization of five points might yield $Q = (p_3, p_5, p_2, p_1, p_4)$, where the index of each point in $Q$ reflects the order in which the curve visits it. In general, let $\pi$ be the permutation induced by the serialization. The serialized sequence is defined as:
 \begin{equation}
 Q = (p_{\pi(1)}, p_{\pi(2)}, \ldots, p_{\pi(N)})
 \end{equation}
@@ -232,11 +232,11 @@ For each pair $(q_i, q_j)$ with $q_j \in \mathcal{N}(q_i)$, an 8-dimensional geo
 \begin{equation}
 \mathbf{f}_{ij} = [\Delta q_{ij},\ \mathbf{n}_i \cdot \mathbf{n}_j,\ \cos\theta_i,\ \cos\theta_j,\ \kappa_i,\ \kappa_j] \in \mathbb{R}^8
 \end{equation}
-where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vector; $\mathbf{n}_i, \mathbf{n}_j \in \mathbb{R}^3$ are the surface normals at $q_i$ and $q_j$, estimated via PCA over the local window. $\mathbf{n}_i \cdot \mathbf{n}_j \in \mathbb{R}$ is their dot product, measuring the normal consistency between the two endpoints—near smooth surfaces it approaches 1, while near geometric boundaries or creases it drops sharply. $\cos\theta_i$ and $\cos\theta_j$ are the cosines of the angles between $\Delta q_{ij}$ and the surface normals $\mathbf{n}_i$ and $\mathbf{n}_j$, respectively:
+where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vector; $\mathbf{n}_i, \mathbf{n}_j \in \mathbb{R}^3$ are the surface normals at $q_i$ and $q_j$, estimated via PCA over the local window. $\mathbf{n}_i \cdot \mathbf{n}_j \in \mathbb{R}$ is their dot product, measuring the normal consistency between the two endpoints—near smooth surfaces it approaches 1, while near geometric boundaries it drops sharply. $\cos\theta_i$ and $\cos\theta_j$ are the cosines of the angles between $\Delta q_{ij}$ and the surface normals $\mathbf{n}_i$ and $\mathbf{n}_j$, respectively:
 \begin{equation}
 \cos\theta_i = \frac{\mathbf{n}_i \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}, \quad \cos\theta_j = \frac{\mathbf{n}_j \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}
 \end{equation}
-$\cos\theta_i$ measures how much the edge direction $\Delta q_{ij}$ deviates from the tangent plane at $q_i$: it is near zero on smooth regions and grows large near geometric edges or creases. $\cos\theta_j$ captures the same quantity from the perspective of $q_j$. $\kappa_i, \kappa_j \in \mathbb{R}$ denote the surface curvatures at the two endpoints.
+$\cos\theta_i$ measures how much the edge direction $\Delta q_{ij}$ deviates from the tangent plane at $q_i$: it is near zero on smooth regions and grows large near geometric edges, with $\cos\theta_j$ defined analogously at $q_j$. $\kappa_i, \kappa_j \in \mathbb{R}$ denote the surface curvatures at the two endpoints.
 
 The normal-based components—$\mathbf{n}_i \cdot \mathbf{n}_j$, $\cos\theta_i$, $\cos\theta_j$, $\kappa_i$, and $\kappa_j$—are all rotation-invariant geometric quantities, making them rotation-invariant by design~\cite{clusterNet, riconv}: rotating the point cloud globally leaves these values unchanged. In contrast, raw normal vectors rotate with the point cloud and do not share this invariance.
 
@@ -248,7 +248,7 @@ The resulting feature $\mathbf{H}_i \in \mathbb{R}^C$ encodes the local geometri
 
 The Geometric Feature Enhancement and Fusion module processes $\mathbf{H}_z$ and $\mathbf{H}_h$ through three sequential steps: self-attention within each stream, cross-attention between streams, and adaptive gated fusion.
 
-Each stream is first normalized via LayerNorm before computing attention. Self-attention is then applied within each normalized stream:
+Each stream is first normalized via LayerNorm before computing attention, where $\text{Attention}(Q, K, V) = \text{Softmax}(QK^\top / \sqrt{d})V$ with $d$ being the key dimension. Self-attention is then applied within each normalized stream:
 \begin{equation}
 \begin{aligned}
 A_z = \text{Attention}(\mathbf{H}_z, \mathbf{H}_z, \mathbf{H}_z), \\
