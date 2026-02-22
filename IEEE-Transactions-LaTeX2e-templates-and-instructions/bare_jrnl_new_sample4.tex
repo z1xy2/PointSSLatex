@@ -292,10 +292,10 @@ where $\odot$ denotes element-wise multiplication.
 
 To further refine the fused features, a geometric consistency module introduces a learnable gating factor $\boldsymbol{\gamma} \in [0,1]$, allowing the model to adaptively calibrate each feature dimension of $\mathbf{H}_{\text{fused}}$:
 \begin{equation}
-\begin{aligned}
-\boldsymbol{\gamma} &= \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h])) \\
-\mathbf{H}_{\text{final}} &= \mathbf{H}_{\text{fused}} \odot \boldsymbol{\gamma}
-\end{aligned}
+\boldsymbol{\gamma} = \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
+\end{equation}
+\begin{equation}
+\mathbf{H}_{\text{final}} = \mathbf{H}_{\text{fused}} \odot \boldsymbol{\gamma}
 \end{equation}
 
 $\mathbf{H}_{\text{final}}$ is then passed to subsequent layers as the geometry-aware point representation.
