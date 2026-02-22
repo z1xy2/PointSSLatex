@@ -172,7 +172,7 @@ incurs substantial parameter growth and memory overhead.
 
 \subsection{Framework Overview}
 
-The overall architecture of the PointSS model is illustrated in \cref{fig:architecture}. After data augmentation, the point cloud is serialized into a 1D sequence\cite{ptv3}. We then employ the Global Geometry-Aware Mechanism (GGAM) to extract explicit geometric priors from the serialized sequence. The feature learning component adopts a PointNet-based U-shaped encoder-decoder architecture. To ensure each patch contains an equal number of points, some points may appear in multiple patches (highlighted in orange). The learned features are subsequently fed into a prediction head to produce the final segmentation or classification results. Compared to PCM, this scheme performs serialization only once at the beginning, enabling direct downsampling via pooling on the serialized point cloud rather than performing re-serialization at each downsampling stage. This approach significantly reduces computational complexity.
+The overall architecture of the PointSS model is illustrated in \cref{fig:architecture}. After data augmentation, the point cloud is serialized into a 1D sequence\cite{ptv3}. We then employ the Global Geometry-Aware Mechanism (GGAM) to extract explicit geometric priors from the serialized sequence. The feature learning component adopts a PointNet-based U-shaped encoder-decoder architecture. To ensure each patch contains an equal number of points, some points may appear in multiple patches (highlighted in orange). The learned features are subsequently fed into a prediction head to produce the final segmentation or classification results. Compared to PCM, this scheme performs serialization only once at the beginning, enabling  downsampling via pooling on the serialized point cloud rather than performing re-serialization at each downsampling stage. This approach significantly reduces computational complexity.
 
 \cref{fig:coder} illustrates the encoder architecture. ASD-SSM is integrated into both the encoder and decoder for hierarchical feature learning. The decoder adopts a symmetric structure to the encoder but replaces pooling with upsampling. Through skip connections from encoder stages, the decoder integrates multi-scale features during the upsampling process.
 
@@ -194,11 +194,11 @@ The overall architecture of the PointSS model is illustrated in \cref{fig:archit
 
 \subsection{Global Geometry-Aware Mechanism (GGAM)}
 
-Mamba-based point cloud analysis methods face difficulties in modeling local geometry structure due to the fundamental conflict between sequential state propagation and unordered 3D structure. Mamba processes sequences through the following discretized state space equations:
+Mamba-based point cloud analysis methods face difficulties in modeling local geometry structure due to the conflict between sequential state propagation and unordered 3D structure. Mamba processes sequences through the following discretized state space equations:
 \begin{equation}
 x_k = \bar{A}x_{k-1} + \bar{B}u_k, \quad y_k = \bar{C}x_k + \bar{D}u_k
 \end{equation}
-where $k$ denotes the position index in the serialized sequence, $x_k$ represents the state vector at position $k$, $u_k$ is the input feature vector, $y_k$ is the output feature vector, and $\bar{A}$, $\bar{B}$, $\bar{C}$, $\bar{D}$ are learnable parameters for state transition, input projection, output projection, and residual connection, respectively.
+where $k$ denotes the position index in the serialized sequence, $x_k$ represents the state vector at position $k$, $u_k$ is the input feature vector, $y_k$ is the output feature vector, and $\bar{A}$, $\bar{B}$, $\bar{C}$, $\bar{D}$ are system matrices for state transition, input projection, output projection, and residual connection, respectively.
 
 In this recurrent mechanism, each state $x_k$ depends on the previous state $x_{k-1}$ and current input $u_k$, establishing sequential dependencies. As discussed in Section I, serialization inevitably sacrifices spatial proximity—spatially adjacent points often become distant in the sequence. This loss of proximity prevents the recurrent state update from effectively aggregating information across spatial neighbors, limiting the model's ability to capture local geometric structures such as surface normals and curvature.
 
@@ -213,7 +213,7 @@ To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to 
 
 Traditional methods for computing geometric relationships (e.g., curvature and surface normals) rely on K-Nearest Neighbor (KNN) searches, whose computational complexity is prohibitively high for large-scale point clouds. Inspired by Point Transformer V3 \cite{ptv3}, which showed that serialization-based windowed neighborhoods can replace KNN while reducing complexity from $\mathcal{O}(N\log N)$ to $\mathcal{O}(N)$ without sacrificing performance, we adopt this construction to enable efficient geometric feature extraction.
 
-Given the point cloud $\{p_1, p_2, \ldots, p_N\}$, the serialization method sorts these points into an ordered sequence according to a space-filling curve. For example, a Z-order serialization of five points might yield $Q = (p_3, p_5, p_2, p_1, p_4)$, where the position of each point in $Q$ corresponds to its traversal position along the curve. In general, let $\pi$ be the permutation induced by the serialization. The serialized sequence is defined as:
+Given the point cloud $\{p_1, p_2, \ldots, p_N\}$, the serialization method sorts these points into a sequence according to a space-filling curve. For example, a Z-order serialization of five points might yield $Q = (p_3, p_5, p_2, p_1, p_4)$, where the position of each point in $Q$ corresponds to its traversal position along the curve. In general, let $\pi$ be the permutation induced by the serialization. The serialized sequence is defined as:
 \begin{equation}
 Q = (p_{\pi(1)}, p_{\pi(2)}, \ldots, p_{\pi(N)})
 \end{equation}
