@@ -249,23 +249,35 @@ Each edge feature is passed through an MLP, and for each point $q_i$, the output
 \begin{equation}
 \mathbf{H}_i = \frac{1}{|\mathcal{N}(q_i)|} \sum_{q_j \in \mathcal{N}(q_i)} \text{MLP}(\mathbf{f}_{ij})
 \end{equation}
-The resulting feature $\mathbf{H}_i \in \mathbb{R}^C$ encodes the local geometric context of $q_i$. Since graph construction runs in parallel on Z-order and Hilbert serializations, each point obtains two independent geometric feature vectors, $\mathbf{H}_z$ and $\mathbf{H}_h$, which are passed to the second part of GGAM.
+The resulting feature $\mathbf{H}_i \in \mathbb{R}^C$ encodes the local geometric context of $q_i$. Since graph construction runs in parallel on Z-order and Hilbert serialization methods, each point obtains two independent geometric feature vectors, $\mathbf{H}_z$ and $\mathbf{H}_h$, which are passed to the second part of GGAM.
 
 The Geometric Feature Enhancement and Fusion module processes $\mathbf{H}_z$ and $\mathbf{H}_h$ through three sequential steps: self-attention within each stream, cross-attention between streams, and adaptive gated fusion.
 
 The two serializations capture complementary spatial structures. Z-order encoding uses recursive binary partitioning, producing strong local clustering that is well-suited for detecting geometric boundaries and local shape variations. Hilbert encoding preserves better spatial continuity, maintaining the overall coherence of geometric structures. Rather than treating these two views independently, we enrich each stream by letting it attend to the other.
 
-Let $Q_z, K_z, V_z$ denote the query, key, and value projections of $\mathbf{H}_z$, and $Q_h, K_h, V_h$ those of $\mathbf{H}_h$. Self-attention is first applied within each stream:
+Each stream is first normalized before computing attention. Let $\hat{\mathbf{H}}_z = \text{LayerNorm}(\mathbf{H}_z)$ and $\hat{\mathbf{H}}_h = \text{LayerNorm}(\mathbf{H}_h)$. Self-attention is then applied within each normalized stream:
 \begin{equation}
-A_z = \text{Attention}(Q_z, K_z, V_z), \quad A_h = \text{Attention}(Q_h, K_h, V_h)
+\begin{aligned}
+A_z = \text{Attention}(\hat{\mathbf{H}}_z, \hat{\mathbf{H}}_z, \hat{\mathbf{H}}_z), \\
+A_h = \text{Attention}(\hat{\mathbf{H}}_h, \hat{\mathbf{H}}_h, \hat{\mathbf{H}}_h)
+\end{aligned}
 \end{equation}
-Cross-attention is then applied between the two streams, where each stream uses its own queries but attends to the keys and values of the other:
+with residual connections:
 \begin{equation}
-A'_z = \text{Attention}(Q_z, K_h, V_h), \quad A'_h = \text{Attention}(Q_h, K_z, V_z)
+\mathbf{H}'_z = \hat{\mathbf{H}}_z + A_z, \quad \mathbf{H}'_h = \hat{\mathbf{H}}_h + A_h
 \end{equation}
-The self-attention and cross-attention outputs are combined via residual addition and layer normalization:
+Cross-attention is then applied, where each stream retains its own queries while the keys and values are exchanged between streams:
 \begin{equation}
-\mathbf{H}''_z = \text{LayerNorm}(\mathbf{H}_z + A_z + A'_z), \quad \mathbf{H}''_h = \text{LayerNorm}(\mathbf{H}_h + A_h + A'_h)
+\begin{aligned}
+A'_z = \text{Attention}(\mathbf{H}'_z, \mathbf{H}'_h, \mathbf{H}'_h), \\
+A'_h = \text{Attention}(\mathbf{H}'_h, \mathbf{H}'_z, \mathbf{H}'_z)
+\end{aligned}
+\end{equation}
+The final output is obtained via residual addition:
+\begin{equation}
+\begin{aligned}
+\mathbf{H}''_z = \mathbf{H}'_z + A'_z, \quad \mathbf{H}''_h = \mathbf{H}'_h + A'_h
+\end{aligned}
 \end{equation}
 
 To adaptively combine the two enhanced features, an adaptive gated unit generates a scalar weight for each stream:
