@@ -237,7 +237,7 @@ For each edge $(q_i, q_j) \in \mathcal{E}_m$, an 8-dimensional geometric feature
 \begin{equation}
 \mathbf{f}_{ij} = [\Delta q_{ij},\ \mathbf{d}_{ij},\ \boldsymbol{\kappa}] \in \mathbb{R}^8
 \end{equation}
-where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vector. $\mathbf{d}_{ij} \in \mathbb{R}^3$ is a surface-deviation feature measuring how much the edge direction deviates from the local surface:
+where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vector. $\mathbf{d}_{ij} \in \mathbb{R}^3$ measures the angular deviation between the edge direction and the local surface normal:
 \begin{equation}
 \mathbf{d}_{ij} = \bar{\mathbf{n}}_m - \frac{\Delta q_{ij}}{\|\Delta q_{ij}\|}
 \end{equation}
