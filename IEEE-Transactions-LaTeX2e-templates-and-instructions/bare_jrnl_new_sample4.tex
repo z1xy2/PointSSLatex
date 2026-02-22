@@ -237,15 +237,15 @@ For each edge $(q_i, q_j) \in \mathcal{E}_m$, an 8-dimensional geometric feature
 \begin{equation}
 \mathbf{f}_{ij} = [\Delta q_{ij},\ \mathbf{n}_i \cdot \mathbf{n}_j,\ \cos\theta_i,\ \cos\theta_j,\ \kappa_i,\ \kappa_j] \in \mathbb{R}^8
 \end{equation}
-where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vector; $\mathbf{n}_i, \mathbf{n}_j \in \mathbb{R}^3$ are the surface normals at $q_i$ and $q_j$, estimated via PCA over the local window. $\mathbf{n}_i \cdot \mathbf{n}_j \in \mathbb{R}$ is their dot product, measuring the normal consistency between the two endpoints—near smooth surfaces it approaches 1, while near geometric boundaries or creases it drops significantly. $\cos\theta_i$ and $\cos\theta_j$ are the cosines of the angles between $\Delta q_{ij}$ and the surface normals $\mathbf{n}_i$ and $\mathbf{n}_j$, respectively:
+where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vector; $\mathbf{n}_i, \mathbf{n}_j \in \mathbb{R}^3$ are the surface normals at $q_i$ and $q_j$, estimated via PCA over the local window. $\mathbf{n}_i \cdot \mathbf{n}_j \in \mathbb{R}$ is their dot product, measuring the normal consistency between the two endpoints—near smooth surfaces it approaches 1, while near geometric boundaries or creases it drops sharply. $\cos\theta_i$ and $\cos\theta_j$ are the cosines of the angles between $\Delta q_{ij}$ and the surface normals $\mathbf{n}_i$ and $\mathbf{n}_j$, respectively:
 \begin{equation}
 \cos\theta_i = \frac{\mathbf{n}_i \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}, \quad \cos\theta_j = \frac{\mathbf{n}_j \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}
 \end{equation}
 When $\Delta q_{ij}$ lies tangent to the local surface—and therefore nearly perpendicular to the surface normal—both cosines are close to zero. When $\Delta q_{ij}$ crosses a surface boundary, the two normals make different angles with $\Delta q_{ij}$, causing the two cosines to differ markedly. $\kappa_i, \kappa_j \in \mathbb{R}$ are the surface curvatures at the two endpoints, reflecting the local shape at each end of the edge.
 
-All components of $\mathbf{f}_{ij}$ are scalar quantities derived from inner products and angles rather than raw normal vectors, making the feature vector rotation-invariant by design~\cite{clusterNet, riconv}: rotating the point cloud globally leaves all values unchanged. This contrasts with approaches that directly incorporate raw normal vectors, whose values are tied to the global coordinate frame and thus vary with input orientation.
+The normal-based components—$\mathbf{n}_i \cdot \mathbf{n}_j$, $\cos\theta_i$, $\cos\theta_j$, $\kappa_i$, and $\kappa_j$—are all rotation-invariant geometric quantities, making them rotation-invariant by design~\cite{clusterNet, riconv}: rotating the point cloud globally leaves these values unchanged. In contrast, raw normal vectors rotate with the point cloud and do not share this invariance.
 
-Each edge feature is passed through an MLP, and the outputs are aggregated per point via mean pooling over its neighborhood:
+Each edge feature is passed through an MLP, and for each point $q_i$, the outputs are aggregated via mean pooling over its neighbor set $\mathcal{N}(q_i)$:
 \begin{equation}
 \mathbf{H}_i = \frac{1}{|\mathcal{N}(q_i)|} \sum_{q_j \in \mathcal{N}(q_i)} \text{MLP}(\mathbf{f}_{ij})
 \end{equation}
