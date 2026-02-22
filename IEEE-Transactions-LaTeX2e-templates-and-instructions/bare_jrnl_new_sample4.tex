@@ -235,11 +235,11 @@ Within each window $W_m$, a fully connected graph is established among all point
 
 For each edge $(q_i, q_j) \in \mathcal{E}_m$, an 8-dimensional geometric feature vector is extracted:
 \begin{equation}
-\mathbf{f}_{ij} = [\Delta\mathbf{p}_{ij},\ \mathbf{d}_{ij},\ \boldsymbol{\kappa}] \in \mathbb{R}^8
+\mathbf{f}_{ij} = [\Delta\mathbf{q}_{ij},\ \mathbf{d}_{ij},\ \boldsymbol{\kappa}] \in \mathbb{R}^8
 \end{equation}
-where $\Delta\mathbf{p}_{ij} = \mathbf{p}_j - \mathbf{p}_i \in \mathbb{R}^3$ is the relative position vector. $\mathbf{d}_{ij} \in \mathbb{R}^3$ is a surface-deviation feature measuring how much the edge direction deviates from the local surface:
+where $\mathbf{q}_i \in \mathbb{R}^3$ denotes the 3D coordinates of point $q_i$, and $\Delta\mathbf{q}_{ij} = \mathbf{q}_j - \mathbf{q}_i \in \mathbb{R}^3$ is the relative position vector. $\mathbf{d}_{ij} \in \mathbb{R}^3$ is a surface-deviation feature measuring how much the edge direction deviates from the local surface:
 \begin{equation}
-\mathbf{d}_{ij} = \bar{\mathbf{n}}_m - \frac{\Delta\mathbf{p}_{ij}}{\|\Delta\mathbf{p}_{ij}\|}
+\mathbf{d}_{ij} = \bar{\mathbf{n}}_m - \frac{\Delta\mathbf{q}_{ij}}{\|\Delta\mathbf{q}_{ij}\|}
 \end{equation}
 where $\bar{\mathbf{n}}_m$ is the mean surface normal estimated over window $W_m$. $\boldsymbol{\kappa} \in \mathbb{R}^2$ encodes two window-level curvature measures: the surface variation rate and the Gaussian curvature.
 
