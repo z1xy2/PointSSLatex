@@ -314,9 +314,9 @@ As illustrated in \cref{fig:bss}, the pipeline comprises three stages. First, in
 
 While existing SSM-based methods leverage input-variant $\bar{B}$ and $\bar{C}$ via the selective mechanism, the state transition matrix $\bar{A}$ remains input-invariant—applied uniformly across both spatial locations and scales—overlooking the distinct sequence modeling requirements at different granularities. The diagonal elements of $\bar{A}$ control the state decay rate: values close to 1 yield slow decay (long-term memory), while values close to 0 yield fast decay (rapid response to local variations). Consequently, coarse-scale features require $\bar{A}$ values close to 1 to capture long-range dependencies, whereas fine-scale features require smaller values to respond quickly to local geometric detail.
 
-Scale-aware Parameter Generator: ASD-SSM adaptively generates per-scale state transition parameters $\bar{A}_s$. For a given scale $s$, the point cloud features are partitioned into patches, and the parameter generation process is conducted independently for each patch, producing a patch-specific $\bar{A}_s$ conditioned on the content features of that patch.
+Scale-aware Parameter Generator: ASD-SSM adaptively generates per-scale state transition parameters $\bar{A}_s$. For a given scale $s$, the point cloud features are partitioned into patches, and the parameter generation process is conducted independently for each patch, producing a patch-specific $\bar{A}_s$ conditioned on the patch's content features.
 
-Specifically, we first apply global average pooling over all points within each patch to obtain the patch-level feature $\mathbf{f}_{\text{global}}^{(s)}$, which captures the overall geometric characteristics of the patch (e.g., local structural complexity and density distribution), and then project it to $\mathbb{R}^{C/4}$ via $\text{MLP}_{\text{global}}$:
+Specifically, we first apply global average pooling over all points within each patch to obtain a summary of the patch features $\mathbf{f}_{\text{global}}^{(s)}$, and then project it to $\mathbb{R}^{C/4}$ via $\text{MLP}_{\text{global}}$:
 \begin{equation}
 \tilde{\mathbf{f}}_{\text{global}}^{(s)} = \text{MLP}_{\text{global}}(\mathbf{f}_{\text{global}}^{(s)}) \in \mathbb{R}^{C/4}
 \end{equation}
