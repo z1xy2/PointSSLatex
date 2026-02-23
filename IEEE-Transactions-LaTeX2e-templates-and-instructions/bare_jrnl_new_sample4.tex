@@ -325,7 +325,7 @@ where $\|$ denotes the concatenation operation. For the selective parameters $\b
 
 Scale Constraint Mechanism: To achieve differentiated state decay characteristics, the value range of the state transition matrix $\bar{A}_s$ is explicitly controlled via the scale constraint factor $\alpha_s$. Within the framework of discrete state space models, the state update rule is governed by $\mathbf{h}_k = \bar{A}_s\mathbf{h}_{k-1} + \bar{B}_s\mathbf{u}_k$, where the diagonal elements of $\bar{A}_s$ dictate the state decay rate.
 
-To directly constrain the range of eigenvalues of $\bar{A}_s$, the output of the parameter generator is first mapped to the interval $[0,1]$ via a sigmoid function:
+To directly constrain the value range of $\bar{A}_s$, the output of the parameter generator is first mapped to the interval $[0,1]$ via a sigmoid function:
 \begin{equation}
 \hat{A}_s^{\text{raw}} = \sigma(\lambda \cdot \text{MLP}([\tilde{\mathbf{f}}_{\text{global}}^{(s)} \| \mathbf{e}_s]))
 \end{equation}
