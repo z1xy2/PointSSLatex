@@ -316,12 +316,11 @@ While existing SSM-based methods leverage input-dependent $\bar{B}$ and $\bar{C}
 
 Scale-aware Parameter Generator: ASD-SSM adaptively generates scale-specific state transition parameters $\bar{A}_s$ for different scales. For a given scale $s$, the point cloud features are partitioned into patches, and the parameter generation process is conducted independently for each patch, producing a patch-specific $\bar{A}_s$ conditioned on the content features of that patch.
 
-Specifically, we first apply global average pooling over all points within each patch to obtain the patch-level feature $\mathbf{f}_{\text{global}}^{(s)}$, which captures the overall geometric characteristics of the patch (e.g., local structural complexity and density distribution). A trainable scale embedding $\mathbf{e}_s \in \mathbb{R}^{C/4}$ is maintained for each scale $s$ to encode scale-specific context. For a single patch, the parameter generation process is as follows:
-\begin{align}
-\tilde{\mathbf{f}}_{\text{global}}^{(s)} &= \text{MLP}_{\text{global}}(\mathbf{f}_{\text{global}}^{(s)}) \in \mathbb{R}^{C/4} \\
-\mathbf{c}_s &= \text{MLP}([\tilde{\mathbf{f}}_{\text{global}}^{(s)} \| \mathbf{e}_s]) \in \mathbb{R}^{C/2}
-\end{align}
-where $\|$ denotes the concatenation operation. For the selective parameters $\bar{B}_s$ and $\bar{C}_s$, we follow the standard selective mechanism from the Mamba paper \cite{Mamba}, dynamically generating them from the input content via linear projections.
+Specifically, we first apply global average pooling over all points within each patch to obtain the patch-level feature $\mathbf{f}_{\text{global}}^{(s)}$, which captures the overall geometric characteristics of the patch (e.g., local structural complexity and density distribution), and then project it to $\mathbb{R}^{C/4}$ via $\text{MLP}_{\text{global}}$:
+\begin{equation}
+\tilde{\mathbf{f}}_{\text{global}}^{(s)} = \text{MLP}_{\text{global}}(\mathbf{f}_{\text{global}}^{(s)}) \in \mathbb{R}^{C/4}
+\end{equation}
+A trainable scale embedding $\mathbf{e}_s \in \mathbb{R}^{C/4}$ is maintained for each scale $s$ to encode scale-specific context. For the selective parameters $\bar{B}_s$ and $\bar{C}_s$, we follow the standard selective mechanism from the Mamba paper \cite{Mamba}, dynamically generating them from the input content via linear projections.
 
 Scale Constraint Mechanism: To achieve differentiated state decay characteristics, the value range of the state transition matrix $\bar{A}_s$ is explicitly controlled via the scale constraint factor $\alpha_s$. Within the framework of discrete state space models, the state update rule is governed by $\mathbf{h}_k = \bar{A}_s\mathbf{h}_{k-1} + \bar{B}_s\mathbf{u}_k$, where the diagonal elements of $\bar{A}_s$ dictate the state decay rate.
 
@@ -329,12 +328,12 @@ To directly constrain the value range of $\bar{A}_s$, the output of the paramete
 \begin{equation}
 \hat{A}_s^{\text{raw}} = \sigma(\lambda \cdot \text{MLP}([\tilde{\mathbf{f}}_{\text{global}}^{(s)} \| \mathbf{e}_s]))
 \end{equation}
-where $\sigma(\cdot)$ is the sigmoid activation function, and $\lambda$ is a scaling factor (set to 0.1 in experiments) that controls the amplitude of the MLP output. Then, the scale constraint factor $\alpha_s$ serves as an upper bound to directly control the value range of $\bar{A}_s$:
+where $\sigma(\cdot)$ is the sigmoid activation function, $\|$ denotes concatenation, and $\lambda$ is a scaling factor (set to 0.1 in experiments) that scales the MLP output before the sigmoid. Then, the scale constraint factor $\alpha_s$ serves as an upper bound to directly control the value range of $\bar{A}_s$:
 \begin{equation}
 \bar{A}_s = \alpha_s \cdot \hat{A}_s^{\text{raw}}
 \end{equation}
 
-By setting $\alpha_s$ to increase monotonically from the finest to the coarsest scale (from $\alpha_1 = 0.3$ to $\alpha_S = 0.9$), we impose an explicit constraint: the fine-scale $\bar{A}_1 \in [0, 0.3]$ enables rapid response to local variations, while the coarse-scale $\bar{A}_S \in [0, 0.9]$ maintains long-term memory to capture global context. It should be noted that, although the patch index is omitted in the notation for simplicity, each patch generates a patch-specific parameter $\bar{A}_s^{(m)}$ conditioned on its own content features, where $m$ denotes the patch index. Specifically, $\bar{A}_s^{(m)} = \alpha_s \cdot \hat{A}_s^{\text{raw},(m)}$, where $\hat{A}_s^{\text{raw},(m)} = \sigma(\lambda \cdot \text{MLP}([\tilde{\mathbf{f}}_{\text{global}}^{(s,m)} \| \mathbf{e}_s]))$.
+By setting $\alpha_s$ to increase monotonically from the finest to the coarsest scale (from $\alpha_1 = 0.3$ to $\alpha_S = 0.9$), we impose an explicit constraint: the fine-scale $\bar{A}_1 \in [0, 0.3]$ enables rapid response to local variations, while the coarse-scale $\bar{A}_S \in [0, 0.9]$ maintains long-term memory to capture global context. Note that within each scale, $\bar{A}_s$ is generated independently for each patch based on its local content, rather than shared across the entire scale.
 
 State Space Update: For the point cloud feature sequence within each patch at the $s$-th scale, the state space update follows the standard discretized SSM formulation \cite{Mamba}:
 \begin{align}
