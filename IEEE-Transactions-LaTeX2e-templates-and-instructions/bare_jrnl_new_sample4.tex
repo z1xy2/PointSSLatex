@@ -92,11 +92,11 @@ Existing SSM-based methods struggle to establish effective hierarchical represen
 	and providing reliable geometric guidance for scale-adaptive learning.
 	
 	\item We design an Adaptive Scale-Decoupled State Space Model (ASD-SSM)
-	featuring a dynamic parameter generation mechanism. By adapting SSM
-	parameters to local geometric characteristics, ASD-SSM enables fine scales
-	to capture geometric details while coarse scales model semantic context,
-	achieving effective hierarchical representations in a highly parameter-
-	efficient manner.
+	featuring a dynamic parameter generation mechanism. By adapting state
+	transition parameters $\bar{A}$ to local geometric characteristics, ASD-SSM
+	enables fine scales to capture geometric details while coarse scales model
+	semantic context, achieving effective hierarchical representations in a
+	highly parameter-efficient manner.
 	
 	\item Extensive experiments demonstrate that PointSS achieves state-of-the-
 	art performance, reaching 75.2\% mIoU on S3DIS and 96.0\% accuracy on
@@ -297,9 +297,9 @@ $\mathbf{H}_{\text{final}}$ is then passed to subsequent network as the geometry
 \subsection{Adaptive Scale-Decoupled State Space Model (ASD-SSM)}
 
 \subsubsection{Overall Scheme}
-ASD-SSM resolves the modeling constraints caused by parameter sharing by dynamically generating customized SSM parameters for different scales. This method applies a serialized feature extraction scheme to point cloud tasks, constructing a hierarchical point cloud information matrix by parallelly processing multi-layer scale point clouds and fusing information across levels. This enables the model to capture long-range contextual dependencies in long sequences, ensuring high-level semantic understanding while maintaining high-precision processing of local details.
+ASD-SSM overcomes the input-invariance of existing state transition parameters by introducing a dynamic parameter generation mechanism that adapts $\bar{A}$ to the local geometric content of each patch. This scale-decoupled design enables fine scales to capture geometric details while coarse scales model semantic context, achieving effective hierarchical representations in a parameter-efficient manner.
 
-As illustrated in \cref{fig:bss}, the complete processing pipeline of ASD-SSM consists of three core steps: (1) Window Partitioning, where the point cloud is divided into patches according to different scales; (2) Order Prompting, which injects positional information into the serialized point cloud; and (3) Multi-scale Feature Modeling based on adaptive parameter generation, where SSM parameters are dynamically modulated for different scales via a parameter generator. The figure demonstrates the feature processing flow for $S=3$ scales, with dashed lines separating the patches. The first layer (finest scale) uses a base window size $P$ for serialization. The window expansion factors $F_s$ for the second and third layers are 2 and 4, respectively, resulting in patch sizes of $2P$ and $4P$. Within each layer, an adaptive parameter-generated Mamba is employed for feature extraction, including forward SSM, backward SSM, and residual connections. Upon completion of feature extraction across scales, a concatenation strategy is used to fuse the multi-layer features point-wise. Finally, feature mapping is completed through an MLP and a linear layer to obtain the final point cloud representation Points$' \in \mathbb{R}^{N \times C}$, which incorporates multi-level information.
+As illustrated in \cref{fig:bss}, the pipeline comprises three stages. First, \textbf{Window Partitioning} divides the serialized point cloud into non-overlapping patches; the finest scale ($s=1$) uses a base patch size $P$, while coarser scales apply an expansion factor $F_s$, yielding patch sizes of $2P$ and $4P$ for $s=2$ and $s=3$ in a three-scale ($S=3$) configuration. Second, \textbf{Order Prompting} injects serialization-order information into each patch via learnable prompt vectors. Third, in \textbf{Multi-scale Feature Modeling}, each scale independently extracts features through a bidirectional Mamba whose state-space parameters are dynamically adapted to the scale's geometric context by a dedicated parameter generator. After feature extraction across all scales, the resulting representations are concatenated point-wise and projected back to $C$ dimensions via a linear layer and an MLP, yielding the final point cloud representation $\text{Points}' \in \mathbb{R}^{N \times C}$.
 
 \begin{figure}[htbp]
 	\centering
@@ -308,7 +308,7 @@ As illustrated in \cref{fig:bss}, the complete processing pipeline of ASD-SSM co
 	\label{fig:bss}
 \end{figure}
 
-Notation: In the following descriptions, $s \in \{1, 2, \ldots, S\}$ denotes the scale index of the multi-scale layers, where $s=1$ represents the finest scale (corresponding to the first layer with a window size $P$), and $s=S$ represents the coarsest scale (with a window size $P \times F_s$). $N$ denotes the number of points, and $C$ represents the feature dimension of the point cloud.
+Notation: In the following descriptions, $s \in \{1, 2, \ldots, S\}$ denotes the scale index, where $s=1$ represents the finest scale (patch size $P$) and $s=S$ the coarsest (patch size $P \times F_S$). $N$ denotes the number of points and $C$ the feature dimension.
 
 \subsubsection{Window Partitioning}
 
