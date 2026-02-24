@@ -456,15 +456,15 @@ Baseline + GGAM + ASD-SSM (PointSS) & \textbf{75.2} & +2.7 \\
 \end{table*}
 \subsubsection{Ablation Study of GGAM}
 
-We verify the effectiveness of GGAM through three analyses on the S3DIS dataset: neighborhood fragmentation characterization, category-wise compensation, and component-wise ablation.
+We verify the effectiveness of GGAM through three experiments on the S3DIS dataset.
 
 We analyze neighborhood fragmentation under Hilbert curve serialization by computing, for each point, the proportion of its 128 spatial neighbors with a sequence distance exceeding 500. Points are grouped into fragmentation intervals, and segmentation performance is compared between the baseline and GGAM (\Cref{tab:ggam_fragmentation}).
 
-Experimental results indicate that approximately 33\% of points undergo neighborhood fragmentation under Hilbert serialization. As the fragmentation ratio increases from 0--10\% to 20--30\%, baseline performance drops sharply from 74.0 to 62.0, confirming the detrimental impact of serialization on local geometric representation. GGAM effectively mitigates this degradation, exhibiting a positive correlation between fragmentation levels and performance gains. Notably, an absolute gain of 8.0 is observed in the high-fragmentation interval (20--30\%), significantly exceeding improvements in low-fragmentation areas.
+Experimental results indicate that approximately 33\% of points undergo neighborhood fragmentation under Hilbert serialization. As the fragmentation ratio increases from 0--10\% to 20--30\%, baseline performance drops sharply from 74.0\% to 62.0\%, confirming the detrimental impact of serialization on local geometric representation. GGAM effectively mitigates this degradation, with larger gains at higher fragmentation levels. Notably, an absolute gain of 8.0\% is observed in the high-fragmentation interval (20--30\%), significantly exceeding improvements in low-fragmentation areas.
 
 
 
-This trend is further corroborated by category-wise analysis (\Cref{tab:ggam_category}). Large planar structures with high continuity (e.g., walls, floors) show limited gains (1.0--1.4). In contrast, categories featuring complex boundaries and slender structures (e.g., columns, clutter) exhibit higher fragmentation ratios and achieve substantial improvements (5.3--6.5). These findings demonstrate that GGAM is particularly effective at recovering critical geometric information in regions with sharp transitions and dense boundaries.
+This trend is further corroborated by category-wise analysis (\Cref{tab:ggam_category}). Large planar structures with high continuity (e.g., wall, floor) show limited gains (1.0--1.4\%). In contrast, categories featuring complex boundaries and slender structures (e.g., column, clutter) exhibit higher fragmentation ratios and achieve substantial improvements (5.3--6.5\%). These findings demonstrate that GGAM is particularly effective at mitigating the loss of spatial proximity in regions with sharp transitions and dense boundaries.
 
 \begin{table*}[!t]
 \centering
@@ -493,15 +493,15 @@ Mean & 13.5\% & 70.3 & 72.5 & +2.2 & - \\
 \footnotesize Note: The Avg. Fragmentation Ratio is defined as the mean fragmentation ratio across all points belonging to a specific semantic category.
 \end{table*}
 
-To further verify the independent contributions and synergistic relationships among the constituent components of GGAM, a progressive ablation study was conducted on its core elements, with the results summarized in \Cref{tab:ggam_components}.
+We further ablate the constituent components of GGAM (\Cref{tab:ggam_components}) to verify their individual contributions and synergistic effects.
 
-As indicated by the experimental results, the introduction of geometric features alone leads to a performance gain of 0.8\% mIoU, suggesting that explicit geometric priors provide a more reliable foundation for modeling local structural information. Conversely, the individual implementation of the dual-serialization strategy yields limited performance improvements or even slight fluctuations. This observation implies that different serialization methods may introduce directional biases or neighborhood perturbations, which fail to produce stable gains without an effective interaction mechanism.
+Geometric features alone lead to a 0.8\% mIoU gain, suggesting that explicit geometric priors provide a more reliable foundation for modeling local structural information. Adding dual-serialization without an interaction mechanism yields limited improvement or even slight fluctuation, as different serialization methods may introduce directional biases without an effective fusion strategy.
 
-Furthermore, when geometric features are integrated with dual-serialization, the performance improves to 71.9\% mIoU. This indicates that multiple serialization sequences can provide complementary neighborhood information to a certain extent.
+Furthermore, combining geometric features with dual-serialization yields 71.0\% mIoU, indicating that multiple serialization sequences can provide complementary neighborhood information to a certain extent.
 
-Building upon this, the introduction of the cross-sequence attention mechanism increases the model performance to 72.2\% mIoU, demonstrating that cross-sequence interaction plays a pivotal role in aligning complementary geometric information across different serialization patterns. The subsequent addition of the gated fusion mechanism and geometric consistency constraints further elevates the performance to 72.5\% mIoU. The gated mechanism adaptively balances the contributions of different serialization branches based on feature quality, while the geometric consistency constraints suppress unreasonable geometric combinations caused by window-approximated neighborhoods. This progressively enhances the stability and robustness of the feature fusion process.
+Adding cross-sequence attention further improves performance to 71.9\% mIoU, demonstrating that cross-sequence interaction plays a pivotal role in aligning complementary geometric information across different serialization patterns. Incorporating the gated fusion mechanism and geometric consistency constraint further elevates performance to 72.5\% mIoU, as the gated mechanism adaptively balances contributions from different serialization branches while the consistency constraint suppresses unreasonable geometric combinations caused by window-approximated neighborhoods.
 
-In summary, the performance gain of GGAM is not driven by a single component but is the result of the synergistic effects of multiple mechanisms. Through geometric prior injection, dual-serialization complementarity, cross-sequence feature interaction, and adaptive fusion constraints, GGAM effectively mitigates the geometric information loss induced by serialization. Ultimately, an overall improvement of 2.2\% mIoU is achieved on the S3DIS dataset, validating the rationality and effectiveness of the proposed design.
+The overall 2.2\% mIoU gain demonstrates that these components work synergistically to mitigate the serialization-induced loss of spatial proximity.
 
 \begin{table}[!t]
 \centering
