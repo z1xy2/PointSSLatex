@@ -410,17 +410,17 @@ Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
 
 \subsection{Ablation Study}
 
-Ablation studies were conducted on the S3DIS dataset using a progressive strategy to verify individual module contributions. First, the effectiveness of GGAM in addressing geometric loss was examined (\Cref{tab:ggam_fragmentation,tab:ggam_category,tab:ggam_components}), followed by the validation of ASD-SSM design choices (\Cref{tab:scale_constraint,tab:param_gen,tab:param_comparison,tab:scale_config}).
+Ablation studies were conducted on the S3DIS dataset using a progressive strategy to verify individual module contributions. First, the effectiveness of GGAM in addressing geometric information loss was examined (\Cref{tab:ggam_fragmentation,tab:ggam_category,tab:ggam_components}), followed by the validation of ASD-SSM design choices (\Cref{tab:scale_constraint,tab:param_gen,tab:param_comparison,tab:scale_config}).
 
 The baseline model utilizes a standard single-scale bidirectional Mamba with shared parameters. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a 2.2\% mIoU improvement. This confirms that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates serialization-induced information loss, thereby enhancing local structural representation.
 
-Building on this, incorporating multi-scale modeling with shared parameters improves performance by 0.9\% to 73.4\% mIoU. However, employing the full ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing an additional 1.8\% gain over the GGAM baseline. This demonstrates that decoupling parameters is crucial for simultaneously optimizing local detail capture and global semantic modeling.
+Building on this, incorporating multi-scale modeling with shared parameters improves performance by 0.9\% to 73.4\% mIoU. However, employing the full ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing an additional 1.8\% gain over the shared-parameter baseline. This demonstrates that decoupling parameters is crucial for simultaneously capturing local details and modeling global semantics.
 
-In summary, GGAM and ASD-SSM exhibit strong functional complementarity: GGAM restores geometric integrity, while ASD-SSM balances multi-scale dependencies. Their synergy achieves a total performance improvement of 4.9\% mIoU while maintaining high computational efficiency.
+In summary, GGAM and ASD-SSM exhibit strong functional complementarity: GGAM restores geometric integrity, while ASD-SSM models multi-scale dependencies. Their synergy achieves a total performance improvement of 4.9\% mIoU while maintaining high computational efficiency.
 
 \begin{table*}[!t]
 \centering
-\caption{INCREMENTAL PERFORMANCE IMPROVEMENT PATH ON THE S3DIS DATASET}
+\caption{Incremental performance improvement on the S3DIS dataset}
 \label{tab:progressive_improvement}
 \begin{tabular}{lll}
 \toprule
@@ -457,9 +457,9 @@ Baseline + GGAM + Full ASD-SSM (PointSS) & \textbf{75.2} & +1.8 \\
 \end{table*}
 \subsubsection{Ablation Study of GGAM}
 
-Systematic ablation experiments were conducted to verify the effectiveness of the Global Geometry-Aware Mechanism (GGAM) in mitigating the difficulties of geometric learning introduced by serialization. All experiments were performed on the S3DIS dataset, with a focus on analyzing the neighborhood fragmentation phenomenon caused by serialization, the compensation capability of GGAM across categories of varying geometric complexity, and the synergistic mechanisms of the internal components within GGAM.
+We verify the effectiveness of GGAM through three analyses on the S3DIS dataset: neighborhood fragmentation characterization, category-wise compensation, and component-wise ablation.
 
-To quantitatively characterize the neighborhood fragmentation issue caused by serialization, the distribution of the 128 spatial neighbors for each point within the sequence was analyzed under Hilbert curve serialization. Specifically, for each point, the proportion of its neighbors with a sequence distance greater than 500 was calculated. Based on this metric, points were categorized into different fragmentation intervals. Subsequently, the segmentation performance of the baseline model versus the model with GGAM was statistically evaluated across these various fragmentation levels, as presented in \Cref{tab:ggam_fragmentation}.
+We analyze neighborhood fragmentation under Hilbert curve serialization by computing, for each point, the proportion of its 128 spatial neighbors with a sequence distance exceeding 500. Points are grouped into fragmentation intervals, and segmentation performance is compared between the baseline and GGAM (\Cref{tab:ggam_fragmentation}).
 
 Experimental results indicate that approximately 33\% of points undergo neighborhood fragmentation under Hilbert serialization. As the fragmentation ratio increases from 0--10\% to 20--30\%, baseline performance drops sharply from 74.0 to 62.0, confirming the detrimental impact of serialization on local geometric representation. GGAM effectively mitigates this degradation, exhibiting a positive correlation between fragmentation levels and performance gains. Notably, an absolute gain of 8.0 is observed in the high-fragmentation interval (20--30\%), significantly exceeding improvements in low-fragmentation areas.
 
