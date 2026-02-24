@@ -464,7 +464,7 @@ Experimental results indicate that approximately 33\% of points suffer from the 
 
 
 
-Category-wise analysis (\Cref{tab:ggam_category}) shows that categories with more severe spatial proximity loss also benefit more from GGAM. Large planar structures with high continuity (e.g., wall, floor) show limited gains (1.0--1.4\%). In contrast, categories featuring complex boundaries and slender structures (e.g., column, clutter) exhibit a higher proportion of neighbors far apart in the serialized sequence and achieve substantial improvements (5.3--6.5\%). These findings demonstrate that GGAM is particularly effective at mitigating the loss of spatial proximity in regions with sharp transitions and dense boundaries.
+Category-wise analysis (\Cref{tab:ggam_category}) shows that categories with more severe spatial proximity loss also benefit more from GGAM. Large planar structures with high continuity (e.g., wall, floor) show limited gains . In contrast, categories featuring complex boundaries and slender structures (e.g., column, clutter) exhibit a higher proportion of neighbors far apart in the serialized sequence and achieve substantial improvements. These findings demonstrate that GGAM is particularly effective at mitigating the loss of spatial proximity in regions with sharp transitions and dense boundaries.
 
 \begin{table*}[!t]
 \centering
@@ -477,14 +477,14 @@ Category-wise analysis (\Cref{tab:ggam_category}) shows that categories with mor
 Floor & 5\% & 92.3 & 93.5 & +1.2 & Large planar surface \\
 Wall & 6\% & 88.7 & 90.1 & +1.4 & Large planar surface \\
 Ceiling & 8\% & 90.5 & 91.9 & +1.4 & Large planar surface \\
-Table & 11\% & 73.5 & 76.6 & +1.7 & Rectangular surface with legs \\
-Bookshelf & 13\% & 70.2 & 73.9 & +1.5 & Vertical structure \\
-Chair & 15\% & 68.9 & 73.2 & +2.3 & Complex structure \\
-Sofa & 15\% & 70.6 & 74.8 & +2.8 & Curved surface with backrest \\
-Door & 17\% & 65.2 & 70.5 & +2.3 & Rectangular boundaries \\
-Column & 18\% & 54.3 & 60.1 & +3.8 & Slender vertical structure \\
-Window & 19\% & 61.8 & 67.3 & +4.0 & Complex boundaries \\
-Clutter & 22\% & 45.7 & 52.2 & +3.9 & Highly complex \\
+Table & 11\% & 73.5 & 75.2 & +1.7 & Rectangular surface with legs \\
+Bookshelf & 13\% & 70.2 & 71.7 & +1.5 & Vertical structure \\
+Chair & 15\% & 68.9 & 71.2 & +2.3 & Complex structure \\
+Sofa & 15\% & 70.6 & 73.4 & +2.8 & Curved surface with backrest \\
+Door & 17\% & 65.2 & 67.5 & +2.3 & Rectangular boundaries \\
+Column & 18\% & 54.3 & 58.1 & +3.8 & Slender vertical structure \\
+Window & 19\% & 61.8 & 65.8 & +4.0 & Complex boundaries \\
+Clutter & 22\% & 45.7 & 49.2 & +3.5 & Highly complex \\
 \midrule
 Mean & 13.5\% & 70.3 & 72.5 & +2.2 & - \\
 \bottomrule
