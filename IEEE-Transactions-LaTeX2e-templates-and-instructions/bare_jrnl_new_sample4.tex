@@ -361,11 +361,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mIoU in Area 5, significantly outperforming mainstream methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 2.0\% and the representative state-space method PCM by 5.4\%.
-
-These improvements are primarily attributed to two architectural innovations. First, the Global Geometry-Aware Mechanism (GGAM) mitigates serialization-induced information loss by integrating windowed neighborhoods and dual-serialization fusion. This enhances boundary continuity and semantic consistency, particularly in complex regions with sharp transitions. Second, the Adaptive Scale-Decoupled State Space Model (ASD-SSM) dynamically generates customized parameters across scales. This decoupling enables the simultaneous modeling of long-range global dependencies at coarse scales and rapid local responses at fine scales, overcoming the limitations of single-granularity shared parameters.
-
-Furthermore, PointSS retains the linear time complexity of SSMs. As shown in \cref{tab:param_comparison}, the method maintains high computational efficiency with only a marginal increase in inference time, validating its scalability for large-scale point cloud scenarios.
+\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mIoU on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 2.0\% and the SSM-based PCM by 5.4\%. Furthermore, PointSS retains the linear time complexity of SSMs, maintaining high computational efficiency with only a marginal increase in inference time.
 
 \begin{table}[!t]
 \centering
@@ -373,7 +369,7 @@ Furthermore, PointSS retains the linear time complexity of SSMs. As shown in \cr
 \label{tab:s3dis}
 \begin{tabular}{@{}llll@{}}
 \toprule
-\textbf{Source} & \textbf{Model} & \textbf{Architecture} & \textbf{mIoU} \\ \midrule
+\textbf{Venue} & \textbf{Model} & \textbf{Architecture} & \textbf{mIoU} \\ \midrule
 NeurIPS22 & Point Transformer V2\cite{ptv2} & Transformer & 72.6 \\
 CVPR23 & PointMetaBase\cite{pmb} & Transformer & 72.0 \\
 ICCV23 & SuperpointTransformer\cite{spt} & Transformer & 68.1 \\
@@ -391,7 +387,7 @@ Sci. Rep.25 & PointGA\cite{pointga} & Transformer & 66.2 \\
 
 \subsubsection{Experiment Results on the ModelNet40 Dataset}
 
-\cref{tab:ModelNet} summarizes the classification performance on ModelNet40. PointSS achieves an Overall Accuracy (OA) of 96.0\% without pre-training, outperforming the state-of-the-art Transformer-based Point2Vec by 1.2\% and the SSM-based Mamba3D by 1.9\%. This establishes PointSS as the top-performing SSM approach. The superior results compared to masked self-supervised methods indicate that explicit structural modeling tailored to point clouds can effectively enhance global semantic understanding without relying on large-scale pre-training. By preserving local geometric details through multi-scale hierarchical aggregation, the model demonstrates robust discriminative capability in classification tasks.
+\cref{tab:ModelNet} summarizes the classification performance on ModelNet40. PointSS achieves an Overall Accuracy (OA) of 96.0\% without pre-training, outperforming the Transformer-based Point2Vec by 1.2\% and the SSM-based Mamba3D by 1.9\%, establishing PointSS as the top-performing SSM approach on this benchmark.
 
 \begin{table}[!t]
 \centering
@@ -399,7 +395,7 @@ Sci. Rep.25 & PointGA\cite{pointga} & Transformer & 66.2 \\
 \label{tab:ModelNet}
 \begin{tabular}{@{}llll@{}}
 \toprule
-\textbf{Source} & \textbf{Model} & \textbf{Architecture} & \textbf{OA} \\ \midrule
+\textbf{Venue} & \textbf{Model} & \textbf{Architecture} & \textbf{OA} \\ \midrule
 NeurIPS22 & Point Transformer V2 \cite{ptv2} & Transformer & 94.2 \\
 AAAI24 & Point-FEMAE \cite{FEMAE} & Transformer & 94.5 \\
 LNCS24 & Point2Vec \cite{Point2Vec} & Transformer & 94.8 \\
