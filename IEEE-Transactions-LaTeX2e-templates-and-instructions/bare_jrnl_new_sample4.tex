@@ -343,17 +343,19 @@ Through these mechanisms, ASD-SSM achieves scale-decoupled state-space modeling:
 
 \section{Experiments}
 
-Implementation Details: We conducted benchmark tests for point cloud analysis on the indoor dataset S3DIS and the classification dataset ModelNet40. All experiments were performed on an Nvidia A6000 GPU. For network training, we employed the AdamW optimizer and the OneCycleLR learning rate scheduler, with an initial maximum learning rate of 6e-3. The scheduling mechanism included an early-stage warm-up followed by a cosine annealing cycle. The entire training process spanned 3000 epochs with a batch size of 6, utilizing Automatic Mixed Precision (AMP) to enhance training efficiency.
+\subsection{Implementation Details}
 
-In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The Patch Size was uniformly set to 128, consistent with existing works to ensure a fair comparison. We selected the Cross-Entropy loss as the evaluation criterion, which is the most widely used loss function for classification and segmentation tasks in semantic analysis.
+We conduct experiments for point cloud analysis on the indoor semantic segmentation dataset S3DIS and the 3D object classification dataset ModelNet40. All experiments were performed on an Nvidia A6000 GPU. For network training, we employed the AdamW optimizer and the OneCycleLR learning rate scheduler, with an initial maximum learning rate of $6 \times 10^{-3}$. The scheduling mechanism included a linear warm-up phase followed by a cosine annealing cycle. The model was trained for 3000 epochs with a batch size of 6, utilizing Automatic Mixed Precision (AMP) to enhance training efficiency.
 
-To fairly evaluate the independent contributions of our proposed architectural innovations (GGAM and ASD-SSM), we adopted a train-from-scratch setting, consistent with current Mamba-based methods. This choice ensures that performance gains are solely attributable to architectural improvements, eliminating confounding factors arising from diverse pre-training strategies.
+In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The patch size was uniformly set to 128. We employ cross-entropy as the loss function, which is widely used for classification and segmentation tasks.
+
+To fairly evaluate the independent contributions of our proposed architectural innovations (GGAM and ASD-SSM), we adopted a train-from-scratch setting, consistent with current Mamba-based methods \cite{pcm, PointMamba}. This choice ensures that performance gains are solely attributable to architectural improvements, eliminating confounding factors arising from diverse pre-training strategies.
 
 \subsection{Datasets}
 
-S3DIS: The S3DIS dataset serves as a standard benchmark for indoor semantic segmentation. It contains 272 rooms across six distinct areas, covering 13 semantic categories (e.g., walls, furniture). Each point includes 3D coordinates and RGB information. Following established protocols, Area 5 is selected for result validation.
+\textbf{S3DIS.} The S3DIS dataset serves as a standard benchmark for indoor semantic segmentation. It contains 272 rooms across six distinct areas, covering 13 semantic categories (e.g., walls, furniture). Each point includes 3D coordinates and RGB information. Following standard evaluation protocols, we report results on Area 5.
 
-ModelNet40: This dataset is utilized for 3D object classification, comprising 12,311 CAD models from 40 categories. The data is partitioned into 8,156 training samples and 4,155 testing samples.
+\textbf{ModelNet40.} This dataset is utilized for 3D object classification, comprising 12,311 CAD models from 40 categories. The data is partitioned into 8,156 training samples and 4,155 testing samples.
 
 \subsection{Evaluation Metrics}
 
