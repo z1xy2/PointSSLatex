@@ -349,7 +349,7 @@ We conduct experiments for point cloud analysis on the indoor semantic segmentat
 
 In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The patch size was uniformly set to 128. We employ cross-entropy as the loss function, which is widely used for classification and segmentation tasks.
 
-Following PCM \cite{pcm} and PointMamba \cite{PointMamba}, all models are trained from scratch without pre-training, so that performance gains can be attributed to architectural design rather than pre-training strategies.
+PointSS is trained from scratch without pre-training, so that performance gains can be attributed to architectural design rather than pre-training strategies.
 
 \subsection{Datasets}
 
@@ -379,7 +379,7 @@ Furthermore, PointSS retains the linear time complexity of SSMs. As shown in \cr
 
 \begin{table}[!t]
 \centering
-\caption{Performance Comparison of Semantic Segmentation on S3DIS}
+\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Result reproduced using the official implementation; the median of three independent runs is reported.}
 \label{tab:s3dis}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -392,7 +392,7 @@ CVPR24 & PPT+SpareUNET\cite{ppt} & Transformer & 72.7 \\
 CVPR24 & OA-CNNs\cite{oacnn} & CNN & 71.1 \\
 CVPR24 & OneFormer3D\cite{OneFormer3D} & Transformer & 72.4 \\
 CVPR24 & Point Transformer V3\cite{ptv3} & Transformer & 73.2 \\
-AAAI25 & PCM\cite{pcm} & SSM & 69.8 \\
+AAAI25 & PCM$^\dagger$\cite{pcm} & SSM & 69.8 \\
 Mathematics24 & PointMSGT\cite{pointmsgt} & Transformer & 68.6 \\
 Sci. Rep.25 & PointGA\cite{pointga} & Transformer & 66.2 \\
 & PointSS & SSM & \textbf{75.2} \\ \bottomrule
