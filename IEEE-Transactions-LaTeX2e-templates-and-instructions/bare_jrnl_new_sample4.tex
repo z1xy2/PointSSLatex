@@ -357,16 +357,6 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \textbf{ModelNet40.} ModelNet40 is a standard benchmark for 3D object classification, comprising 12,311 CAD models from 40 categories, split into 8,156 training and 4,155 testing samples.
 
-\subsection{Evaluation Metrics}
-
-mIoU: Mean Intersection over Union (mIoU) is a widely used evaluation metric in tasks such as semantic segmentation to measure the degree of overlap between predicted results and ground truth labels. For each category $c$, the Intersection over Union (IoU) is defined as:
-\begin{equation}
-\text{IoU}_c = \frac{\text{TP}_c}{\text{TP}_c + \text{FP}_c + \text{FN}_c}
-\end{equation}
-where TP$_c$ denotes the number of points correctly predicted as category $c$ (True Positives), FP$_c$ represents the number of points incorrectly predicted as category $c$ (False Positives), and FN$_c$ represents the number of points that truly belong to category $c$ but were not correctly predicted (False Negatives). The mIoU is obtained by taking the arithmetic mean of the IoU values across all semantic categories. Since mIoU provides a more comprehensive reflection of the model's segmentation performance across various classes---especially in cases of imbalanced class distributions---it is more robust than Overall Accuracy. Therefore, this paper adopts mIoU as the primary metric for evaluating point cloud semantic segmentation performance on the S3DIS dataset.
-
-OA: Overall Accuracy (OA) is defined as the ratio of the number of correctly predicted samples to the total number of samples across all point cloud data. It is one of the most intuitive and commonly used performance metrics in classification tasks. This metric effectively reflects the model's discriminative capability at the global classification level. Consequently, this paper utilizes OA as the evaluation metric for point cloud classification performance on the ModelNet40 dataset.
-
 \subsection{Quantitative Experiments}
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
