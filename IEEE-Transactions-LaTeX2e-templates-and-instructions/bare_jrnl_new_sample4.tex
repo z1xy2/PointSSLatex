@@ -464,7 +464,7 @@ Experimental results indicate that approximately 33\% of points suffer from the 
 
 
 
-Category-wise analysis (\Cref{tab:ggam_category}) further confirms this trend at the category level. Large planar structures (e.g., floor, wall) experience less serialization-induced loss of spatial proximity and exhibit limited gains. As the displacement ratio increases, the compensation effect of GGAM becomes more pronounced: categories with complex boundaries or irregular structures (e.g., window, door, board, clutter) show substantially larger improvements. The beam category yields 0\% IoU for both the baseline and GGAM, as beam instances are extremely sparse in the S3DIS Area 5 evaluation set, making it statistically unreliable. These findings confirm that GGAM is particularly effective at compensating for serialization-induced proximity loss in structurally complex regions.
+Category-wise analysis (\Cref{tab:ggam_category}) further confirms this trend at the category level. Large planar structures (e.g., floor, wall) experience less serialization-induced loss of spatial proximity and exhibit limited gains. As the proximity loss ratio increases, the compensation effect of GGAM becomes more pronounced: categories with complex boundaries or irregular structures (e.g., window, door, board, clutter) show substantially larger improvements. The beam category yields 0\% IoU for both the baseline and GGAM, as beam instances are extremely sparse in the S3DIS Area 5 evaluation set, making it statistically unreliable. These findings confirm that GGAM provides more pronounced compensation for serialization-induced proximity loss in structurally complex regions.
 
 \begin{table*}[!t]
 	\centering
