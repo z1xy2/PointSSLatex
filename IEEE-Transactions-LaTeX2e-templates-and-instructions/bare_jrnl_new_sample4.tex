@@ -414,9 +414,9 @@ Ablation studies were conducted on the S3DIS dataset using a progressive strateg
 
 The baseline model utilizes a standard single-scale bidirectional Mamba. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a 2.2\% mIoU improvement. This confirms that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates the serialization-induced loss of spatial proximity, thereby enhancing local structural representation.
 
-Building on this, incorporating multi-scale modeling with shared parameters improves performance by 0.9\% to 73.4\% mIoU. However, employing the full ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing an additional 1.8\% gain over the shared-parameter baseline. This demonstrates that decoupling parameters is crucial for simultaneously capturing local details and modeling global semantics.
+Building on this, employing ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing an additional 2.7\% gain. This demonstrates that scale-decoupled parameterization is crucial for simultaneously capturing local details and modeling global semantics.
 
-In summary, GGAM and ASD-SSM exhibit strong functional complementarity: GGAM restores geometric integrity, while ASD-SSM models multi-scale dependencies. Their synergy achieves a total performance improvement of 4.9\% mIoU while maintaining high computational efficiency.
+GGAM and ASD-SSM are complementary by design, together yielding a total improvement of 4.9\% mIoU.
 
 \begin{table*}[!t]
 \centering
@@ -428,8 +428,7 @@ In summary, GGAM and ASD-SSM exhibit strong functional complementarity: GGAM res
 \midrule
 Pure Mamba Baseline & 70.3 & - \\
 Baseline + GGAM & 72.5 & +2.2 \\
-Baseline + GGAM + Shared-Parameter ASD-SSM & 73.4 & +0.9 \\
-Baseline + GGAM + Full ASD-SSM (PointSS) & \textbf{75.2} & +1.8 \\
+Baseline + GGAM + ASD-SSM (PointSS) & \textbf{75.2} & +2.7 \\
 \midrule
 \textbf{Total Improvement} & - & \textbf{+4.9} \\
 \bottomrule
