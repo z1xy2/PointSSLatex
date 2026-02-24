@@ -452,13 +452,13 @@ Baseline + GGAM + ASD-SSM (PointSS) & \textbf{75.2} & +2.7 \\
 		\bottomrule
 	\end{tabular}
 	\par\vspace{3pt}
-	\footnotesize Note: The proximity loss ratio is defined as the number of points among a point's K-nearest neighbors whose sequence distance exceeds 500, divided by K.
+	\footnotesize Note: The proximity loss ratio is defined as the number of points among a point's K-nearest neighbors whose position in the serialized sequence is more than 300 apart from the center point, divided by K.
 \end{table*}
 \subsubsection{Ablation Study of GGAM}
 
 We verify the effectiveness of GGAM through three experiments on the S3DIS dataset.
 
-We analyze the degree of spatial proximity loss under Hilbert curve serialization by computing, for each point, the proportion of its 128 spatial neighbors with a sequence distance exceeding 500. Points are grouped into proximity loss intervals, and segmentation performance is compared between the baseline and GGAM (\Cref{tab:ggam_fragmentation}).
+To measure the degree of spatial proximity loss after serialization, we search for 128 spatial neighbors for each point (referred to as the center point), and compute the proportion of these neighbors whose position in the serialized sequence is more than 300 apart from the center point. This ratio, termed the proximity loss ratio, is used to group points by their degree of spatial proximity loss and compare segmentation performance between the baseline and GGAM (\Cref{tab:ggam_fragmentation}).
 
 Experimental results indicate that approximately 33\% of points suffer from the loss of spatial proximity under Hilbert serialization. As the proximity loss ratio increases from 0--10\% to 20--30\%, baseline performance drops sharply from 74.0\% to 62.0\%, confirming the detrimental impact of serialization on local geometric representation. GGAM effectively mitigates this degradation, with larger gains at higher proximity loss levels. Notably, an absolute gain of 8.0\% is observed in the high proximity loss interval (20--30\%), significantly exceeding improvements in low proximity loss areas.
 
