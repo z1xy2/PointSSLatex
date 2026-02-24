@@ -452,15 +452,15 @@ Baseline + GGAM + ASD-SSM (PointSS) & \textbf{75.2} & +2.7 \\
 		\bottomrule
 	\end{tabular}
 	\par\vspace{3pt}
-	\footnotesize Note: The displacement ratio is defined as the proportion of a point's K-nearest spatial neighbors whose position in the serialized sequence is more than 300 apart from the center point.
+	\footnotesize Note: The displacement ratio is defined as the proportion of a point's K-nearest spatial neighbors that are more than 300 sequence positions away from the center point in the serialized sequence.
 \end{table*}
 \subsubsection{Ablation Study of GGAM}
 
 We verify the effectiveness of GGAM through three experiments on the S3DIS dataset.
 
-To measure the degree of spatial proximity loss for each point after serialization, we treat it as the center point and search for its 128 spatial neighbors in 3D space, then compute the proportion of these neighbors whose position in the serialized sequence is more than 300 apart from the center point. We use this proportion to group points by their degree of spatial proximity loss and compare segmentation performance between the baseline and GGAM (\Cref{tab:ggam_fragmentation}).
+To measure the degree of spatial proximity loss for each point after serialization, we treat it as the center point and search for its 128 spatial neighbors, then compute the proportion of these neighbors that are more than 300 sequence positions away from the center point in the serialized sequence. We use this proportion to group points by their degree of spatial proximity loss and compare segmentation performance between the baseline and GGAM (\Cref{tab:ggam_fragmentation}).
 
-Experimental results indicate that approximately 33\% of points suffer from the loss of spatial proximity under Hilbert serialization. As this proportion increases from 0--10\% to 20--30\%, baseline performance drops sharply, confirming the detrimental impact of serialization on local geometric representation. GGAM effectively mitigates this degradation, with larger gains at higher levels of spatial proximity loss. Notably, substantial gains are observed in the high proportion group (20--30\%), significantly exceeding improvements in the low proportion group.
+Experimental results indicate that approximately 33\% of points suffer from the loss of spatial proximity under Hilbert serialization. As this proportion increases from 0--10\% to 20--30\%, baseline performance drops sharply, confirming the impact of serialization on local geometric representation. GGAM effectively mitigates this degradation, with larger gains at higher levels of spatial proximity loss. Notably, substantial gains are observed in the high proportion group (20--30\%), significantly exceeding improvements in the low proportion group.
 
 
 
