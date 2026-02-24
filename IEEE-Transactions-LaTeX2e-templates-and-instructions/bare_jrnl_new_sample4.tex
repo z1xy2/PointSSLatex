@@ -437,12 +437,12 @@ Baseline + GGAM + ASD-SSM (PointSS) & \textbf{75.2} & +2.7 \\
 
 \begin{table*}[!t]
 	\centering
-	\caption{Point Distribution Across Different Fragmentation Levels and the Compensation Effect of GGAM}
+	\caption{Point Distribution Across Different Proximity Loss Levels and the Compensation Effect of GGAM}
 	\label{tab:ggam_fragmentation}
 	\begin{tabular}{llllll}
 		\toprule
-		\textbf{Fragmentation} & \textbf{Point} & \textbf{Point} & \textbf{Baseline} & \textbf{GGAM} & \textbf{Absolute} \\
-		\textbf{Ratio} & \textbf{Count} & \textbf{Percentage} & \textbf{IoU (\%)} & \textbf{IoU (\%)} & \textbf{Gain (\%)} \\
+		\textbf{Proximity} & \textbf{Point} & \textbf{Point} & \textbf{Baseline} & \textbf{GGAM} & \textbf{Absolute} \\
+		\textbf{Loss Ratio} & \textbf{Count} & \textbf{Percentage} & \textbf{IoU (\%)} & \textbf{IoU (\%)} & \textbf{Gain (\%)} \\
 		\midrule
 		0-10\% (Low) & 270k & 67\% & 74.0 & 74.8 & 0.8 \\
 		10-20\% (Mild) & 101k & 25\% & 63.0 & 67.1 & 4.1 \\
@@ -452,19 +452,19 @@ Baseline + GGAM + ASD-SSM (PointSS) & \textbf{75.2} & +2.7 \\
 		\bottomrule
 	\end{tabular}
 	\par\vspace{3pt}
-	\footnotesize Note: The fragmentation ratio is defined as the number of points among a point's K-nearest neighbors whose sequence distance exceeds 500, divided by K.
+	\footnotesize Note: The proximity loss ratio is defined as the number of points among a point's K-nearest neighbors whose sequence distance exceeds 500, divided by K.
 \end{table*}
 \subsubsection{Ablation Study of GGAM}
 
 We verify the effectiveness of GGAM through three experiments on the S3DIS dataset.
 
-We analyze neighborhood fragmentation under Hilbert curve serialization by computing, for each point, the proportion of its 128 spatial neighbors with a sequence distance exceeding 500. Points are grouped into fragmentation intervals, and segmentation performance is compared between the baseline and GGAM (\Cref{tab:ggam_fragmentation}).
+We analyze the degree of spatial proximity loss under Hilbert curve serialization by computing, for each point, the proportion of its 128 spatial neighbors with a sequence distance exceeding 500. Points are grouped into proximity loss intervals, and segmentation performance is compared between the baseline and GGAM (\Cref{tab:ggam_fragmentation}).
 
-Experimental results indicate that approximately 33\% of points undergo neighborhood fragmentation under Hilbert serialization. As the fragmentation ratio increases from 0--10\% to 20--30\%, baseline performance drops sharply from 74.0\% to 62.0\%, confirming the detrimental impact of serialization on local geometric representation. GGAM effectively mitigates this degradation, with larger gains at higher fragmentation levels. Notably, an absolute gain of 8.0\% is observed in the high-fragmentation interval (20--30\%), significantly exceeding improvements in low-fragmentation areas.
+Experimental results indicate that approximately 33\% of points suffer from the loss of spatial proximity under Hilbert serialization. As the proximity loss ratio increases from 0--10\% to 20--30\%, baseline performance drops sharply from 74.0\% to 62.0\%, confirming the detrimental impact of serialization on local geometric representation. GGAM effectively mitigates this degradation, with larger gains at higher proximity loss levels. Notably, an absolute gain of 8.0\% is observed in the high proximity loss interval (20--30\%), significantly exceeding improvements in low proximity loss areas.
 
 
 
-This trend is further corroborated by category-wise analysis (\Cref{tab:ggam_category}). Large planar structures with high continuity (e.g., wall, floor) show limited gains (1.0--1.4\%). In contrast, categories featuring complex boundaries and slender structures (e.g., column, clutter) exhibit higher fragmentation ratios and achieve substantial improvements (5.3--6.5\%). These findings demonstrate that GGAM is particularly effective at mitigating the loss of spatial proximity in regions with sharp transitions and dense boundaries.
+This trend is further corroborated by category-wise analysis (\Cref{tab:ggam_category}). Large planar structures with high continuity (e.g., wall, floor) show limited gains (1.0--1.4\%). In contrast, categories featuring complex boundaries and slender structures (e.g., column, clutter) exhibit higher proximity loss ratios and achieve substantial improvements (5.3--6.5\%). These findings demonstrate that GGAM is particularly effective at mitigating the loss of spatial proximity in regions with sharp transitions and dense boundaries.
 
 \begin{table*}[!t]
 \centering
@@ -472,7 +472,7 @@ This trend is further corroborated by category-wise analysis (\Cref{tab:ggam_cat
 \label{tab:ggam_category}
 \begin{tabular}{llllll}
 \toprule
-\textbf{Category} & \textbf{Avg. Fragmentation Ratio} & \textbf{Baseline IoU (\%)} & \textbf{GGAM IoU (\%)} & \textbf{Absolute Gain (\%)} & \textbf{Geometric Characteristics} \\
+\textbf{Category} & \textbf{Avg. Proximity Loss Ratio} & \textbf{Baseline IoU (\%)} & \textbf{GGAM IoU (\%)} & \textbf{Absolute Gain (\%)} & \textbf{Geometric Characteristics} \\
 \midrule
 Floor & 5\% & 92.3 & 93.5 & +1.2 & Large planar surface \\
 Wall & 6\% & 88.7 & 90.1 & +1.4 & Large planar surface \\
@@ -490,7 +490,7 @@ Mean & 13.5\% & 70.3 & 72.5 & +2.2 & - \\
 \bottomrule
 \end{tabular}
 \par\vspace{3pt}
-\footnotesize Note: The Avg. Fragmentation Ratio is defined as the mean fragmentation ratio across all points belonging to a specific semantic category.
+\footnotesize Note: The Avg. Proximity Loss Ratio is defined as the mean proximity loss ratio across all points belonging to a specific semantic category.
 \end{table*}
 
 We further ablate the constituent components of GGAM (\Cref{tab:ggam_components}) to verify their individual contributions and synergistic effects.
