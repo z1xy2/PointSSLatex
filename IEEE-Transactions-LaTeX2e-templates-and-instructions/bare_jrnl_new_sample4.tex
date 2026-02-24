@@ -283,7 +283,7 @@ where $\|$ denotes concatenation. The fused feature is then:
 \end{equation}
 where $\alpha_z, \alpha_h \in \mathbb{R}$ are scalar weights satisfying $\alpha_z + \alpha_h = 1$, broadcast uniformly across all channels.
 
-To further refine the fused features, a geometric consistency constraint module derives a learnable scalar gate $\gamma \in [0,1]$ from both streams to adaptively modulate the fused representation:
+Since the two streams are constructed over different serialization-induced window partitions, their fused representation may contain cross-stream inconsistencies. To mitigate this, a geometric consistency constraint module derives a learnable scalar gate $\gamma \in [0,1]$ from both streams to adaptively modulate the fused representation:
 \begin{equation}
 \gamma = \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
 \end{equation}
@@ -361,7 +361,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mIoU on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 2.0\% and the SSM-based PCM by 5.4\%. Furthermore, PointSS retains the linear time complexity of SSMs, maintaining high computational efficiency with only a marginal increase in inference time.
+\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mean Intersection over Union (mIoU) on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 2.0\% and the SSM-based PCM by 5.4\%. Furthermore, PointSS retains the linear time complexity of SSMs, maintaining high computational efficiency with only a marginal increase in inference time.
 
 \begin{table}[!t]
 \centering
@@ -494,7 +494,7 @@ Mean & 13.5\% & 70.3 & 72.5 & +2.2 & - \\
 \end{table*}
 
 We further ablate the remaining components of GGAM (\Cref{tab:ggam_components}) to verify their individual contributions and synergistic effects. 
-Introducing dual-serialization alone yields limited improvement or even slight fluctuation, as different serialization methods may introduce biases without an effective fusion strategy. Adding cross-sequence attention further yields a marked improvement, demonstrating that cross-sequence interaction plays a role in aligning complementary geometric information across different serialization patterns. Incorporating the gated fusion mechanism and geometric consistency constraint further refines the fused representation, as the gated mechanism adaptively balances contributions from different serialization branches while the consistency constraint suppresses unreasonable geometric combinations caused by window-approximated neighborhoods.
+Introducing dual-serialization alone yields limited improvement or even slight fluctuation, as different serialization methods may introduce biases without an effective fusion strategy. Adding cross-sequence attention further yields a marked improvement, demonstrating that cross-sequence interaction plays a role in aligning complementary geometric information across different serialization patterns. Incorporating the gated fusion mechanism and geometric consistency constraint further refines the fused representation, as the gated mechanism adaptively balances contributions from different serialization branches while the consistency constraint derives a scalar gate from both streams to adaptively modulate the fused representation, mitigating cross-stream inconsistencies introduced by different serialization-induced window partitions.
 
 The overall improvement demonstrates that these components work synergistically to mitigate the serialization-induced loss of spatial proximity.
 
