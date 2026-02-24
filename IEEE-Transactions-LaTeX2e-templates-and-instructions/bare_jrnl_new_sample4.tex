@@ -369,7 +369,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 \label{tab:s3dis}
 \begin{tabular}{@{}llll@{}}
 \toprule
-\textbf{Venue} & \textbf{Model} & \textbf{Architecture} & \textbf{mIoU} \\ \midrule
+\textbf{Venue} & \textbf{Model} & \textbf{Architecture} & \textbf{mIoU (\%)} \\ \midrule
 NeurIPS22 & Point Transformer V2\cite{ptv2} & Transformer & 72.6 \\
 CVPR23 & PointMetaBase\cite{pmb} & Transformer & 72.0 \\
 ICCV23 & SuperpointTransformer\cite{spt} & Transformer & 68.1 \\
@@ -395,7 +395,7 @@ Sci. Rep.25 & PointGA\cite{pointga} & Transformer & 66.2 \\
 \label{tab:ModelNet}
 \begin{tabular}{@{}llll@{}}
 \toprule
-\textbf{Venue} & \textbf{Model} & \textbf{Architecture} & \textbf{OA} \\ \midrule
+\textbf{Venue} & \textbf{Model} & \textbf{Architecture} & \textbf{OA (\%)} \\ \midrule
 NeurIPS22 & Point Transformer V2 \cite{ptv2} & Transformer & 94.2 \\
 AAAI24 & Point-FEMAE \cite{FEMAE} & Transformer & 94.5 \\
 LNCS24 & Point2Vec \cite{Point2Vec} & Transformer & 94.8 \\
@@ -412,7 +412,7 @@ Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
 
 Ablation studies were conducted on the S3DIS dataset using a progressive strategy to verify individual module contributions. First, the effectiveness of GGAM in mitigating the loss of spatial proximity was examined (\Cref{tab:ggam_fragmentation,tab:ggam_category,tab:ggam_components}), followed by the validation of ASD-SSM design choices (\Cref{tab:scale_constraint,tab:param_gen,tab:param_comparison,tab:scale_config}).
 
-The baseline model utilizes a standard single-scale bidirectional Mamba with shared parameters. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a 2.2\% mIoU improvement. This confirms that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates the serialization-induced loss of spatial proximity, thereby enhancing local structural representation.
+The baseline model utilizes a standard single-scale bidirectional Mamba. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a 2.2\% mIoU improvement. This confirms that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates the serialization-induced loss of spatial proximity, thereby enhancing local structural representation.
 
 Building on this, incorporating multi-scale modeling with shared parameters improves performance by 0.9\% to 73.4\% mIoU. However, employing the full ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing an additional 1.8\% gain over the shared-parameter baseline. This demonstrates that decoupling parameters is crucial for simultaneously capturing local details and modeling global semantics.
 
@@ -443,7 +443,7 @@ Baseline + GGAM + Full ASD-SSM (PointSS) & \textbf{75.2} & +1.8 \\
 	\begin{tabular}{llllll}
 		\toprule
 		\textbf{Fragmentation} & \textbf{Point} & \textbf{Point} & \textbf{Baseline} & \textbf{GGAM} & \textbf{Absolute} \\
-		\textbf{Ratio} & \textbf{Count} & \textbf{Percentage} & \textbf{IoU} & \textbf{IoU} & \textbf{Gain} \\
+		\textbf{Ratio} & \textbf{Count} & \textbf{Percentage} & \textbf{IoU (\%)} & \textbf{IoU (\%)} & \textbf{Gain (\%)} \\
 		\midrule
 		0-10\% (Low) & 270k & 67\% & 74.0 & 74.8 & 0.8 \\
 		10-20\% (Mild) & 101k & 25\% & 63.0 & 67.1 & 4.1 \\
@@ -473,7 +473,7 @@ This trend is further corroborated by category-wise analysis (\Cref{tab:ggam_cat
 \label{tab:ggam_category}
 \begin{tabular}{llllll}
 \toprule
-\textbf{Category} & \textbf{Avg. Fragmentation Ratio} & \textbf{Baseline IoU} & \textbf{GGAM IoU} & \textbf{Absolute Gain} & \textbf{Geometric Characteristics} \\
+\textbf{Category} & \textbf{Avg. Fragmentation Ratio} & \textbf{Baseline IoU (\%)} & \textbf{GGAM IoU (\%)} & \textbf{Absolute Gain (\%)} & \textbf{Geometric Characteristics} \\
 \midrule
 Floor & 5\% & 92.3 & 93.5 & +1.2 & Large planar surface \\
 Wall & 6\% & 88.7 & 90.1 & +1.4 & Large planar surface \\
@@ -536,7 +536,7 @@ Experimental results indicate that uniform scale constraint factors consistently
 \label{tab:scale_constraint}
 \begin{tabular}{cccc}
 \toprule
-$\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU} \\
+$\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU (\%)} \\
 \midrule
 0.3 & 0.3 & 0.3 & 73.8 \\
 0.7 & 0.7 & 0.7 & 74.1 \\
