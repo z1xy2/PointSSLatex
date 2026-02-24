@@ -452,19 +452,19 @@ Baseline + GGAM + ASD-SSM (PointSS) & \textbf{75.2} & +2.7 \\
 		\bottomrule
 	\end{tabular}
 	\par\vspace{3pt}
-	\footnotesize Note: The displacement ratio is defined as the proportion of a point's K-nearest spatial neighbors that are more than 300 sequence positions away from the center point in the serialized sequence.
+	\footnotesize Note: The proximity loss ratio is defined as the proportion of a point's K-nearest spatial neighbors that are more than 300 sequence positions away from the center point in the serialized sequence.
 \end{table*}
 \subsubsection{Ablation Study of GGAM}
 
 We verify the effectiveness of GGAM through three experiments on the S3DIS dataset.
 
-To measure the degree of spatial proximity loss for each point after serialization, we treat it as the center point and search for its 128 spatial neighbors, then compute the proportion of these neighbors that are more than 300 sequence positions away from the center point in the serialized sequence. We use this proportion to group points by their degree of spatial proximity loss and compare segmentation performance between the baseline and GGAM (\Cref{tab:ggam_fragmentation}).
+To measure the degree of spatial proximity loss for each point after serialization, we treat it as the center point and search for its 128 spatial neighbors, then compute the proportion of these neighbors that are more than 300 sequence positions away from the center point in the serialized sequence. We term this metric the \textit{proximity loss ratio}. We use it to group points by their degree of spatial proximity loss and compare segmentation performance between the baseline and GGAM (\Cref{tab:ggam_fragmentation}).
 
 Experimental results indicate that approximately 33\% of points suffer from the loss of spatial proximity under Hilbert serialization. As this proportion increases from 0--10\% to 20--30\%, baseline performance drops sharply, confirming the impact of serialization on local geometric representation. GGAM effectively mitigates this degradation. Notably, substantial gains are observed in the high proportion group (20--30\%), significantly exceeding improvements in the low proportion group.
 
 
 
-Category-wise analysis (\Cref{tab:ggam_category}) further confirms this trend at the category level. Large planar structures with high spatial continuity (e.g., floor, wall) have low displacement ratios and exhibit limited gains. As the displacement ratio increases, the compensation effect of GGAM becomes more pronounced: categories with complex boundaries or irregular structures (e.g., window, door, board, clutter) show substantially larger improvements. The beam category yields 0\% IoU for both the baseline and GGAM, as beam instances are extremely sparse in the S3DIS Area 5 evaluation set, making it statistically unreliable. These findings confirm that GGAM is particularly effective at compensating for serialization-induced proximity loss in structurally complex regions.
+Category-wise analysis (\Cref{tab:ggam_category}) further confirms this trend at the category level. Large planar structures (e.g., floor, wall) experience less serialization-induced loss of spatial proximity and exhibit limited gains. As the displacement ratio increases, the compensation effect of GGAM becomes more pronounced: categories with complex boundaries or irregular structures (e.g., window, door, board, clutter) show substantially larger improvements. The beam category yields 0\% IoU for both the baseline and GGAM, as beam instances are extremely sparse in the S3DIS Area 5 evaluation set, making it statistically unreliable. These findings confirm that GGAM is particularly effective at compensating for serialization-induced proximity loss in structurally complex regions.
 
 \begin{table*}[!t]
 	\centering
@@ -472,7 +472,7 @@ Category-wise analysis (\Cref{tab:ggam_category}) further confirms this trend at
 	\label{tab:ggam_category}
 	\begin{tabular}{lllll}
 		\toprule
-		\textbf{Category} & \textbf{Avg. Displacement Ratio} & \textbf{Baseline IoU (\%)} & \textbf{GGAM IoU (\%)} & \textbf{Absolute Gain (\%)} \\
+		\textbf{Category} & \textbf{Avg. Proximity Loss Ratio} & \textbf{Baseline IoU (\%)} & \textbf{GGAM IoU (\%)} & \textbf{Absolute Gain (\%)} \\
 		\midrule
 		Floor     & 5\%    & 97.3  & 98.5  & +1.2 \\
 		Wall      & 6\%    & 84.4  & 85.8  & +1.4 \\
@@ -492,7 +492,7 @@ Category-wise analysis (\Cref{tab:ggam_category}) further confirms this trend at
 		\bottomrule
 	\end{tabular}
 	\par\vspace{3pt}
-	\footnotesize Note: The Avg. Displacement Ratio is defined as the mean displacement ratio across all points belonging to a specific semantic category.
+	\footnotesize Note: The Avg. Proximity Loss Ratio is defined as the mean proximity loss ratio across all points belonging to a specific semantic category.
 \end{table*}
 
 We further ablate the components of GGAM (\Cref{tab:ggam_components}) to verify their individual contributions and synergistic effects. 
