@@ -79,7 +79,7 @@ making their context crucial for accurate segmentation.
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{../picture/analysis.JPG}
-	\caption{Visualization of the spatial proximity loss after serialization. Left: Point sequence after serialization. Right: Segmentation prediction results.}
+	\caption{Visualization of the loss of spatial proximity after serialization. Left: Point sequence after serialization. Right: Segmentation prediction results.}
 	\label{fig:analysis}
 \end{figure}
 Existing SSM-based methods struggle to establish effective hierarchical representations. Specifically, single-scale models (e.g., PointMamba ) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context. Conversely, hierarchical approaches (e.g., PCM ) allocate separate parameters for each downsampled scale. However, their state transition parameters remain input-invariant across spatial locations. This means the network applies the exact same feature aggregation rules across an entire scale, failing to adapt to varying local geometric characteristics—for instance, processing flat surfaces and sharp boundaries identically. Furthermore, allocating independent parameters for every scale introduces prohibitive parameter growth and  memory overhead. Consequently, the lack of dynamic, geometry-aware parameterization fundamentally limits the capacity of existing SSMs to accurately model complex 3D scenes.
@@ -117,7 +117,7 @@ details.
 State Space Models (SSMs) \cite{Mamba} offer a promising alternative with linear complexity. Methods like PointMamba \cite{PointMamba} and PCM \cite{pcm} adapt SSMs by serializing 3D clouds into 1D sequences.   However, this adaptation introduces two key challenges. First,
 serialization methods disrupt the spatial relationships between
 neighboring points critical for local geometric structure, resulting in
-spatial proximity loss. Second, uniform serialization struggles to
+the loss of spatial proximity. Second, uniform serialization struggles to
 capture both fine-grained local features and long-range contextual
 dependencies, limiting its ability to handle multi-scale representations.
 
@@ -410,9 +410,9 @@ Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
 
 \subsection{Ablation Study}
 
-Ablation studies were conducted on the S3DIS dataset using a progressive strategy to verify individual module contributions. First, the effectiveness of GGAM in addressing geometric information loss was examined (\Cref{tab:ggam_fragmentation,tab:ggam_category,tab:ggam_components}), followed by the validation of ASD-SSM design choices (\Cref{tab:scale_constraint,tab:param_gen,tab:param_comparison,tab:scale_config}).
+Ablation studies were conducted on the S3DIS dataset using a progressive strategy to verify individual module contributions. First, the effectiveness of GGAM in mitigating the loss of spatial proximity was examined (\Cref{tab:ggam_fragmentation,tab:ggam_category,tab:ggam_components}), followed by the validation of ASD-SSM design choices (\Cref{tab:scale_constraint,tab:param_gen,tab:param_comparison,tab:scale_config}).
 
-The baseline model utilizes a standard single-scale bidirectional Mamba with shared parameters. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a 2.2\% mIoU improvement. This confirms that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates serialization-induced information loss, thereby enhancing local structural representation.
+The baseline model utilizes a standard single-scale bidirectional Mamba with shared parameters. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a 2.2\% mIoU improvement. This confirms that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates the serialization-induced loss of spatial proximity, thereby enhancing local structural representation.
 
 Building on this, incorporating multi-scale modeling with shared parameters improves performance by 0.9\% to 73.4\% mIoU. However, employing the full ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing an additional 1.8\% gain over the shared-parameter baseline. This demonstrates that decoupling parameters is crucial for simultaneously capturing local details and modeling global semantics.
 
@@ -626,12 +626,12 @@ Regarding window expansion, moderate increases enhance context modeling, whereas
 
 \cref{fig:vis} presents a qualitative comparison on the S3DIS dataset, where PointSS demonstrates superior segmentation continuity and precision across complex scenes. For large-scale structures (e.g., windows and columns), the method overcomes serialization-induced discontinuities by leveraging GGAM to recover spatial relationships and ASD-SSM to maintain global context, thereby ensuring structural integrity where baselines often fail. In fine-grained regions such as clutter, the multi-scale architecture effectively captures subtle local variations, while geometric priors enable high-fidelity modeling. Additionally, at sharp boundaries (e.g., wall-column intersections), explicit neighborhood modeling mitigates fragmentation, producing distinct edges compared to the blurred boundaries of baseline methods. Overall, these visualization results align with the quantitative analysis, validating the robustness of PointSS across varying scales and geometric complexities.
 
-\begin{figure}[htbp]
+\begin{figure*}[!t]
 	\centering
-	\includegraphics[width=\linewidth]{../picture/visualize.JPG}
+	\includegraphics[width=\textwidth]{../picture/visualize.JPG}
 	\caption{Qualitative comparison of semantic segmentation results on the S3DIS dataset.}
 	\label{fig:vis}
-\end{figure}
+\end{figure*}
 
 \section{Conclusion}
 
