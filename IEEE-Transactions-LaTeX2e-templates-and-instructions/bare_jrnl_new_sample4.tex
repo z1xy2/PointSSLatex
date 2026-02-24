@@ -437,7 +437,7 @@ Baseline + GGAM + ASD-SSM (PointSS) & \textbf{75.2} & +2.7 \\
 
 \begin{table*}[!t]
 	\centering
-	\caption{Point Distribution Across Different Proximity Loss Levels and the Compensation Effect of GGAM}
+	\caption{Stratified Analysis of GGAM Effectiveness by Proximity Loss Level}
 	\label{tab:ggam_fragmentation}
 	\begin{tabular}{llllll}
 		\toprule
@@ -464,7 +464,7 @@ Experimental results indicate that approximately 33\% of points suffer from the 
 
 
 
-Category-wise analysis (\Cref{tab:ggam_category}) shows that categories with more severe spatial proximity loss also benefit more from GGAM. Large planar structures with high continuity (e.g., wall, floor) show limited gains . In contrast, categories featuring complex boundaries and slender structures (e.g., column, clutter) exhibit a higher proportion of neighbors far apart in the serialized sequence and achieve substantial improvements. These findings demonstrate that GGAM is particularly effective at mitigating the loss of spatial proximity in regions with sharp transitions and dense boundaries.
+Category-wise analysis (\Cref{tab:ggam_category}) shows that categories with more severe spatial proximity loss also benefit more from GGAM. Large planar structures with high continuity (e.g., wall, floor) show limited gains . In contrast, categories featuring complex boundaries and slender structures (e.g., column, clutter) exhibit a higher proportion of neighbors far apart in the serialized sequence and achieve substantial improvements. These findings demonstrate that GGAM is particularly effective at mitigating the loss of spatial proximity in regions with sharp transitions and boundaries.
 
 \begin{table*}[!t]
 \centering
@@ -493,7 +493,7 @@ Mean & 13.5\% & 70.3 & 72.5 & +2.2 & - \\
 \footnotesize Note: The Avg. Displacement Ratio is defined as the mean displacement ratio across all points belonging to a specific semantic category.
 \end{table*}
 
-We further ablate the remaining components of GGAM (\Cref{tab:ggam_components}) to verify their individual contributions and synergistic effects. 
+We further ablate the components of GGAM (\Cref{tab:ggam_components}) to verify their individual contributions and synergistic effects. 
 Introducing dual-serialization alone yields limited improvement or even slight fluctuation, as different serialization methods may introduce biases without an effective fusion strategy. Adding cross-sequence attention further yields a marked improvement, demonstrating that cross-sequence interaction plays a role in aligning complementary geometric information across different serialization patterns. Incorporating the gated fusion mechanism and geometric consistency constraint further refines the fused representation, as the gated mechanism adaptively balances contributions from different serialization branches while the consistency constraint derives a scalar gate from both streams to adaptively modulate the fused representation, mitigating cross-stream inconsistencies introduced by different serialization-induced window partitions.
 
 The overall improvement demonstrates that these components work synergistically to mitigate the serialization-induced loss of spatial proximity.
