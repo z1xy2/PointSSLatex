@@ -460,7 +460,7 @@ Experimental results indicate that approximately 33\% of points suffer from the 
 
 
 
-Category-wise analysis (\Cref{tab:ggam_category}) further confirms that categories with higher proximity loss ratios benefit more from GGAM. Large planar structures (e.g., floor, wall) experience less serialization-induced loss of spatial proximity and exhibit limited gains. As the proximity loss ratio increases, the compensation effect of GGAM becomes more pronounced: categories with complex boundaries or irregular structures (e.g., window, door, board, clutter) show substantially larger improvements. These findings confirm that GGAM provides more pronounced compensation for serialization-induced proximity loss in structurally complex regions.
+Category-wise analysis (\Cref{tab:ggam_category}) further confirms that categories with higher proximity loss ratios benefit more from GGAM. Large planar structures (e.g., floor, wall) experience less serialization-induced loss of spatial proximity and exhibit limited gains. As the proximity loss ratio increases, the compensation effect of GGAM becomes more pronounced: categories with complex boundaries or irregular structures (e.g., window, door, board, clutter) show substantially larger improvements.
 
 \begin{table*}[!t]
 	\centering
@@ -488,11 +488,11 @@ Category-wise analysis (\Cref{tab:ggam_category}) further confirms that categori
 		\bottomrule
 	\end{tabular}
 	\par\vspace{3pt}
-	\footnotesize Note: The Avg. Proximity Loss Ratio is defined as the mean proximity loss ratio across all points belonging to a specific semantic category. The beam category is excluded from trend analysis, as beam instances are extremely sparse in S3DIS Area 5, yielding near-zero recall for both models.
+	\footnotesize Note: The Avg. Proximity Loss Ratio is defined as the mean proximity loss ratio across all points belonging to a specific semantic category. The beam category is excluded from analysis, as beam instances are extremely sparse in S3DIS Area 5, yielding near-zero recall for both models.
 \end{table*}
 
 We further ablate the components of GGAM (\Cref{tab:ggam_components}) to verify their individual contributions and synergistic effects. 
-Introducing dual-serialization alone yields limited improvement or even slight fluctuation, as different serialization methods may introduce biases without an effective fusion strategy. Adding cross-sequence attention further yields a marked improvement, demonstrating that cross-sequence interaction plays a role in aligning complementary geometric information across different serialization patterns. Incorporating the gated fusion mechanism further refines the fused representation by adaptively balancing contributions from the two serialization branches. Adding the geometric consistency gate yields a further gain, as it derives a scalar gate from both streams to modulate the fused output, mitigating cross-stream inconsistencies arising from different serialization-induced window partitions.
+Introducing dual-serialization alone yields limited improvement or even slight fluctuation, as different serialization methods may introduce biases without an effective fusion strategy. Adding cross-sequence attention further yields a marked improvement, demonstrating that cross-sequence interaction plays a role in aligning complementary geometric information across different serialization patterns. Incorporating the gated fusion mechanism further refines the fused representation by adaptively balancing contributions from the two serialization branches. Adding the geometric consistency gate yields a further gain, as it derives a scalar gate from both streams to modulate the fused output, mitigating cross-stream inconsistencies.
 
 The overall improvement demonstrates that these components work synergistically to mitigate the serialization-induced loss of spatial proximity.
 
