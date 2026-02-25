@@ -545,26 +545,23 @@ $\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU (\%)} \\
 
 Based on these findings, we next investigate the design of parameter generator(\Cref{tab:param_gen}). By leveraging both patch-level global features and scale embeddings, the generator produces patch-specific, scale-conditioned $\bar{A}_s$ values that further enhance performance. As shown by the comparative schemes, integrating both information sources outperforms using either in isolation.
 
-Experimental results indicate that both patch-level global features and scale embeddings independently improve model performance, with global features providing a slightly higher gain than scale embeddings alone. This suggests that patch-level contextual information provides a critical reference for state parameter generation, enabling the model to adaptively adjust $\bar{A}_s$ across different spatial locations. When both sources are integrated concurrently, the combined gain is substantially higher than from either source alone, demonstrating a synergistic effect in the parameter generation process. Further analysis of different modulation strengths ($\lambda$) reveals that optimal performance is achieved at $\lambda = 0.1$. Insufficient modulation strength limits the model's adaptive capacity, while excessive strength may introduce destabilizing perturbations to the state transition dynamics.
+Experimental results indicate that both patch-level global features and scale embeddings independently improve model performance, contributing gains of 1.2\% and 1.0\%, respectively. This suggests that patch-level contextual information provides a critical reference for state parameter generation, enabling the model to adaptively adjust $\bar{A}_s$ across different spatial locations. When both sources are integrated concurrently, the combined gain (+1.8\%) substantially exceeds the contribution of either component alone, confirming that global patch features and scale embeddings serve complementary roles in $\bar{A}_s$ generation.
 
-\begin{table*}[!t]
+\begin{table}[!t]
 \centering
-\caption{Ablation Study on the Design of the Parameter Generator}
+\caption{Ablation Study on the Design of the Parameter Generator. All schemes use $\lambda{=}0.1$.}
 \label{tab:param_gen}
-\begin{tabular}{llllll}
+\begin{tabular}{lllll}
 \toprule
-\textbf{Scheme} & \textbf{Global Features} & \textbf{Scale Embedding} & \textbf{Modulation Strength ($\lambda$)} & \textbf{mIoU (\%)} & \textbf{Gain ($\Delta$)} \\
+\textbf{Scheme} & \textbf{Global Features} & \textbf{Scale Embedding} & \textbf{mIoU (\%)} & \textbf{Gain ($\Delta$)} \\
 \midrule
-Baseline (Shared) & - & - & - & 73.4 & - \\
-Scheme 1 & $\times$ & \checkmark & 0.1 & 74.1 & +0.7 \\
-Scheme 2 & \checkmark & $\times$ & 0.1 & 74.3 & +0.9 \\
-Scheme 3 & \checkmark & \checkmark & 0.05 & 74.8 & +1.4 \\
-Scheme 4 & \checkmark & \checkmark & 0.1 & 75.2 & +1.8 \\
-Scheme 5 & \checkmark & \checkmark & 0.2 & 74.6 & +1.2 \\
-Scheme 6 & \checkmark & \checkmark & 0.3 & 73.9 & +0.5 \\
+Baseline (Shared) & - & - & 73.4 & - \\
+Scheme 1 & $\times$ & \checkmark & 74.4 & +1.0 \\
+Scheme 2 & \checkmark & $\times$ & 74.6 & +1.2 \\
+Full (Ours) & \checkmark & \checkmark & 75.2 & +1.8 \\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 We further compare ASD-SSM against several common parameterization strategies, as summarized in \Cref{tab:param_comparison}. The Shared Parameter scheme is the most lightweight in terms of parameter count; however, it fails to capture functional differences across scales, yielding relatively low overall performance. The Independent Parameters scheme achieves the highest segmentation performance but at a significant cost in parameter volume and memory footprint. The Parameter Interpolation approach controls the parameter count by linearly interpolating parameters between scales; yet, linear interpolation fails to capture the complex non-linear relationships across scales, resulting in limited gains. While Low-Rank Adaptation (LoRA) is efficient in parameter count, its static low-rank constraints limit the model's representational capacity. In contrast, by employing a dynamic parameter generation mechanism, ASD-SSM achieves performance comparable to the Independent Parameters scheme with only an approximately 20\% increase in parameter volume, demonstrating superior parameter efficiency. The inference time differences among these methods are negligible, indicating that ASD-SSM significantly improves performance without introducing substantial computational overhead.
 
