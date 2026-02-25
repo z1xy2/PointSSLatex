@@ -516,7 +516,7 @@ $\times$ & $\times$ & $\times$ & $\times$ & 71.1 \\
 
 \subsubsection{ASD-SSM Ablation Study}
 
-We conduct systematic ablation experiments on S3DIS to evaluate key ASD-SSM design choices: the scale constraint factor, parameter generator, and scale configuration.
+We conduct systematic ablation experiments on S3DIS to evaluate key ASD-SSM design choices.
 
 We first analyze the role of the scale constraint factor $\alpha_s$ in controlling the value range of $\bar{A}_s$. Smaller $\alpha_s$ values constrain $\bar{A}_s$ to a low range, inducing rapid state decay that enables the capture of local geometric detail, whereas larger values allow slow decay, supporting the modeling of long-range dependencies and global semantic context (\Cref{tab:scale_constraint}).
 Experimental results indicate that uniform $\alpha_s$ configurations consistently underperform relative to non-uniform configurations, confirming that distinct scales require scale-specific state-decay characteristics. Optimal performance is achieved when $\alpha_s$ increases progressively from fine to coarse scales (0.3, 0.6, 0.9). This validates the design philosophy: fine scales benefit from rapid decay to capture local geometric detail, while coarse scales require slow decay to maintain long-range state memory. Reversing this configuration leads to a notable performance drop, as excessively long state retention at fine scales interferes with local geometric modeling, while rapid decay at coarse scales disrupts the capture of global semantic context.
@@ -609,7 +609,7 @@ These qualitative results are consistent with the trends observed in the quantit
 
 \section{Conclusion}
 
-This paper presents PointSS, a novel framework designed to address the geometric degradation and scale inconsistency limitations of State Space Models (SSMs) in point cloud analysis. By integrating the Global Geometry-Aware Mechanism (GGAM), the spatial information loss caused by serialization is effectively compensated for through dual-sequence interaction. Furthermore, the proposed Adaptive Scale-Decoupled State Space Model (ASD-SSM) enables dynamic state decay modeling, successfully balancing local detail capture with global context learning. Extensive experiments on S3DIS and ModelNet40 benchmarks demonstrate that PointSS outperforms existing state-of-the-art methods, exhibiting particular robustness in handling complex boundaries and fragmented geometric structures. This work confirms the potential of combining explicit geometric priors with efficient sequence modeling, providing a solid foundation for future scalable 3D vision applications.
+This paper presents PointSS, a geometry-aware multi-scale framework for point cloud analysis built upon State Space Models. GGAM addresses the loss of spatial proximity caused by serialization through windowed neighborhood modeling and dual-serialization fusion, providing reliable geometric guidance throughout the network. ASD-SSM addresses the input-invariant limitation by adapting $\bar{A}$ to local geometric characteristics at each scale, enabling effective hierarchical representations. Experiments on semantic segmentation and 3D object classification benchmarks demonstrate state-of-the-art performance, with particular improvements in boundary regions and fine-grained structures, suggesting that combining explicit geometric priors with adaptive sequence modeling is a promising direction for 3D point cloud analysis.
 
 \bibliographystyle{IEEEtran}
 \bibliography{../ref}
