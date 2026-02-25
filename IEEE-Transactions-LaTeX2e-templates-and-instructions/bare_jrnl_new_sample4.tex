@@ -569,24 +569,24 @@ Regarding window expansion, moderate increases in the expansion factor enhance c
 \centering
 \caption{Detailed Ablation Study of Scale Quantities and Window Configurations}
 \label{tab:scale_config}
-\begin{tabular}{lllll}
+\begin{tabular}{llll}
 \toprule
-\textbf{S} & \textbf{F} & \textbf{Params} & \textbf{Train Time} & \textbf{mIoU (\%)} \\
+\textbf{S} & \textbf{F} & \textbf{Train Time} & \textbf{mIoU (\%)} \\
 \midrule
-1 & (1) & 1.0$\times$ & 35h & 72.5 \\
-2 & (1,2) & 1.13$\times$ & 37h & 73.5 \\
-2 & (1,3) & 1.13$\times$ & 38h & 73.8 \\
-2 & (1,4) & 1.13$\times$ & 38h & 73.1 \\
-3 & (1,2,2) & 1.20$\times$ & 40h & 75.0 \\
-3 & (1,2,3) & 1.20$\times$ & 41h & 75.2 \\
-3 & (1,2,4) & 1.20$\times$ & 41h & 75.1 \\
-3 & (1,3,3) & 1.20$\times$ & 40h & 74.8 \\
-4 & (1,2,2,2) & 1.27$\times$ & 43h & 75.2 \\
-4 & (1,2,2,3) & 1.27$\times$ & 44h & 75.4 \\
+1 & (1) & 35h & 72.5 \\
+2 & (1,2) & 39h & 73.5 \\
+2 & (1,3) & 40h & 73.8 \\
+2 & (1,4) & 40h & 73.1 \\
+3 & (1,2,2) & 45h & 75.0 \\
+3 & (1,2,3) & 46h & 75.2 \\
+3 & (1,2,4) & 46h & 75.1 \\
+3 & (1,3,3) & 45h & 74.8 \\
+4 & (1,2,2,2) & 53h & 75.2 \\
+4 & (1,2,2,3) & 54h & 75.4 \\
 \bottomrule
 \end{tabular}
 \par\vspace{3pt}
-\footnotesize Notes: S: Number of scales; F: Scaling factors for window expansion; Params: Relative parameter count; Train Time: Total training duration on the S3DIS dataset.
+\footnotesize Notes: S: Number of scales; F: Scaling factors for window expansion; Train Time: Total training duration on the S3DIS dataset.
 \end{table}
 
 \subsection{Qualitative Experiment}
