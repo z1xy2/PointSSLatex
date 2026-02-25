@@ -524,26 +524,26 @@ Experimental results indicate that uniform $\alpha_s$ configurations consistentl
 
 \begin{table}[!t]
 \centering
-\caption{Ablation Study of Scale Constraint Factors $\alpha_s$ with a 3-Scale Configuration}
+\caption{Ablation Study of Scale Constraint Factors $\alpha_s$ with a 3-Scale Configuration. Results are the median of three independent runs.}
 \label{tab:scale_constraint}
 \begin{tabular}{cccc}
 \toprule
 $\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU (\%)} \\
 \midrule
-0.3 & 0.3 & 0.3 & 73.8 \\
-0.7 & 0.7 & 0.7 & 74.1 \\
+0.3 & 0.3 & 0.3 & 73.7 \\
+0.7 & 0.7 & 0.7 & 74.0 \\
 0.5 & 0.5 & 0.5 & 74.3 \\
-0.3 & 0.5 & 0.7 & 75.0 \\
+0.3 & 0.5 & 0.7 & 74.9 \\
 0.3 & 0.6 & 0.9 & 75.2 \\
-0.3 & 0.7 & 0.9 & 75.2 \\
-0.2 & 0.6 & 0.9 & 75.1 \\
-0.4 & 0.6 & 0.9 & 74.9 \\
+0.3 & 0.7 & 0.9 & 75.1 \\
+0.2 & 0.6 & 0.9 & 74.9 \\
+0.4 & 0.6 & 0.9 & 75.0 \\
 0.9 & 0.6 & 0.3 & 72.9 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Based on these findings, we next investigate the parameter generator design (\Cref{tab:param_gen}). By leveraging both patch-level global features and scale embeddings, the generator produces patch-specific, scale-conditioned $\bar{A}_s$ values that further enhance performance. As shown by the comparative schemes, integrating both information sources outperforms using either in isolation.
+Based on these findings, we next investigate the design of parameter generator(\Cref{tab:param_gen}). By leveraging both patch-level global features and scale embeddings, the generator produces patch-specific, scale-conditioned $\bar{A}_s$ values that further enhance performance. As shown by the comparative schemes, integrating both information sources outperforms using either in isolation.
 
 Experimental results indicate that both patch-level global features and scale embeddings independently improve model performance, with global features providing a slightly higher gain than scale embeddings alone. This suggests that patch-level contextual information provides a critical reference for state parameter generation, enabling the model to adaptively adjust $\bar{A}_s$ across different spatial locations. When both sources are integrated concurrently, the combined gain is substantially higher than from either source alone, demonstrating a synergistic effect in the parameter generation process. Further analysis of different modulation strengths ($\lambda$) reveals that optimal performance is achieved at $\lambda = 0.1$. Insufficient modulation strength limits the model's adaptive capacity, while excessive strength may introduce destabilizing perturbations to the state transition dynamics.
 
