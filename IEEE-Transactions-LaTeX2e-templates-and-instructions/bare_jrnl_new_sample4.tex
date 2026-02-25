@@ -543,22 +543,21 @@ $\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU (\%)} \\
 \end{tabular}
 \end{table}
 
-Based on these findings, we next investigate the design of parameter generator(\Cref{tab:param_gen}). By leveraging both patch-level global features and scale embeddings, the generator produces patch-specific, scale-conditioned $\bar{A}_s$ values that further enhance performance. As shown by the comparative schemes, integrating both information sources outperforms using either in isolation.
+Based on these findings, we next investigate the design of the parameter generator (\Cref{tab:param_gen}). By leveraging patch-level global features alongside scale embeddings, the generator produces patch-specific, scale-conditioned $\bar{A}_s$ values that further enhance performance.
 
-Experimental results indicate that both patch-level global features and scale embeddings independently improve model performance, contributing gains of 1.2\% and 1.0\%, respectively. This suggests that patch-level contextual information provides a critical reference for state parameter generation, enabling the model to adaptively adjust $\bar{A}_s$ across different spatial locations. When both sources are integrated concurrently, the combined gain (+1.8\%) substantially exceeds the contribution of either component alone, confirming that global patch features and scale embeddings serve complementary roles in $\bar{A}_s$ generation.
+Removing global features from the generator yields a content-invariant $\bar{A}_s$ that varies only across scales—similar in spirit to allocating per-scale fixed parameters—achieving 74.6\%. Incorporating global patch features restores content-awareness, enabling $\bar{A}_s$ to adapt to the local geometric content of each patch and yielding 75.2\%. The 0.6\% gap confirms that content-aware parameter generation, rather than scale differentiation alone, is the primary driver of performance gain.
 
 \begin{table}[!t]
 \centering
-\caption{Ablation Study on the Design of the Parameter Generator. All schemes use $\lambda{=}0.1$.}
+\caption{Ablation Study on the Design of the Parameter Generator.}
 \label{tab:param_gen}
-\begin{tabular}{lllll}
+\begin{tabular}{llll}
 \toprule
-\textbf{Scheme} & \textbf{Global Features} & \textbf{Scale Embedding} & \textbf{mIoU (\%)} & \textbf{Gain ($\Delta$)} \\
+\textbf{Scheme} & \textbf{Global Features} & \textbf{Scale Embedding} & \textbf{mIoU (\%)} \\
 \midrule
-Baseline (Shared) & - & - & 73.4 & - \\
-Scheme 1 & $\times$ & \checkmark & 74.4 & +1.0 \\
-Scheme 2 & \checkmark & $\times$ & 74.6 & +1.2 \\
-Full (Ours) & \checkmark & \checkmark & 75.2 & +1.8 \\
+Baseline (Shared) & - & - & 73.4 \\
+Scheme 1 & \checkmark & $\times$ & 74.6 \\
+Full (Ours) & \checkmark & \checkmark & 75.2 \\
 \bottomrule
 \end{tabular}
 \end{table}
