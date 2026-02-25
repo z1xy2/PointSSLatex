@@ -543,25 +543,6 @@ $\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU (\%)} \\
 \end{tabular}
 \end{table}
 
-Based on these findings, we next investigate the design of the parameter generator (\Cref{tab:param_gen}). By leveraging patch-level global features alongside scale embeddings, the generator produces patch-specific, scale-conditioned $\bar{A}_s$ values that further enhance performance.
-
-Removing global features from the generator yields a content-invariant $\bar{A}_s$ that varies only across scales—similar in spirit to allocating per-scale fixed parameters—achieving 74.6\%. Incorporating global patch features restores content-awareness, enabling $\bar{A}_s$ to adapt to the local geometric content of each patch and yielding 75.2\%. The 0.6\% gap confirms that content-aware parameter generation, rather than scale differentiation alone, is the primary driver of performance gain.
-
-\begin{table}[!t]
-\centering
-\caption{Ablation Study on the Design of the Parameter Generator.}
-\label{tab:param_gen}
-\begin{tabular}{llll}
-\toprule
-\textbf{Scheme} & \textbf{Global Features} & \textbf{Scale Embedding} & \textbf{mIoU (\%)} \\
-\midrule
-Baseline (Shared) & - & - & 73.4 \\
-Scheme 1 & \checkmark & $\times$ & 74.6 \\
-Full (Ours) & \checkmark & \checkmark & 75.2 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
 We further compare ASD-SSM against several common parameterization strategies, as summarized in \Cref{tab:param_comparison}. The Shared Parameter scheme is the most lightweight in terms of parameter count; however, it fails to capture functional differences across scales, yielding relatively low overall performance. The Independent Parameters scheme achieves the highest segmentation performance but at a significant cost in parameter volume and memory footprint. The Parameter Interpolation approach controls the parameter count by linearly interpolating parameters between scales; yet, linear interpolation fails to capture the complex non-linear relationships across scales, resulting in limited gains. While Low-Rank Adaptation (LoRA) is efficient in parameter count, its static low-rank constraints limit the model's representational capacity. In contrast, by employing a dynamic parameter generation mechanism, ASD-SSM achieves performance comparable to the Independent Parameters scheme with only an approximately 20\% increase in parameter volume, demonstrating superior parameter efficiency. The inference time differences among these methods are negligible, indicating that ASD-SSM significantly improves performance without introducing substantial computational overhead.
 
 \begin{table*}[!t]
@@ -580,6 +561,25 @@ ASD-SSM (Ours) & 1.2$\times$ & 11.9 ms & 47.8 GB & 75.2 \\
 \bottomrule
 \end{tabular}
 \end{table*}
+
+Based on these results, we further investigate the internal design of the parameter generator (\Cref{tab:param_gen}). By leveraging patch-level global features alongside scale embeddings, the generator produces patch-specific, scale-conditioned $\bar{A}_s$ values that further enhance performance.
+
+Removing global features from the generator yields a content-invariant $\bar{A}_s$ that varies only across scales—similar in spirit to allocating per-scale fixed parameters—achieving 74.6\%. Incorporating global patch features restores content-awareness, enabling $\bar{A}_s$ to adapt to the local geometric content of each patch and yielding 75.2\%. The 0.6\% gap confirms that content-aware parameter generation, rather than scale differentiation alone, is the primary driver of performance gain.
+
+\begin{table}[!t]
+\centering
+\caption{Ablation Study on the Design of the Parameter Generator.}
+\label{tab:param_gen}
+\begin{tabular}{llll}
+\toprule
+\textbf{Scheme} & \textbf{Global Features} & \textbf{Scale Embedding} & \textbf{mIoU (\%)} \\
+\midrule
+Baseline (Shared) & - & - & 73.4 \\
+Scheme 1 & \checkmark & $\times$ & 74.6 \\
+Full (Ours) & \checkmark & \checkmark & 75.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 We systematically investigate the number of scales $S$ and window expansion configurations (\Cref{tab:scale_config}), confirming the necessity of hierarchical multi-scale modeling. Introducing a second scale yields a 1.4\% improvement over the single-scale baseline, while incorporating a third scale yields a further 1.6\%--1.9\% improvement. This suggests that a three-level hierarchy---local, intermediate, and global---provides the most comprehensive structural representation.
 
