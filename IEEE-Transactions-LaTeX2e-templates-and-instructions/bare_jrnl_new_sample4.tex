@@ -543,24 +543,23 @@ $\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU (\%)} \\
 \end{tabular}
 \end{table}
 
-We further compare ASD-SSM against several common parameterization strategies, as summarized in \Cref{tab:param_comparison}. The Shared Parameter scheme is the most lightweight in terms of parameter count; however, it fails to capture functional differences across scales, yielding relatively low overall performance. The Independent Parameters scheme achieves the highest segmentation performance but at a significant cost in parameter volume and memory footprint. The Parameter Interpolation approach controls the parameter count by linearly interpolating parameters between scales; yet, linear interpolation fails to capture the complex non-linear relationships across scales, resulting in limited gains. While Low-Rank Adaptation (LoRA) is efficient in parameter count, its static low-rank constraints limit the model's representational capacity. In contrast, by employing a dynamic parameter generation mechanism, ASD-SSM achieves performance comparable to the Independent Parameters scheme with only an approximately 20\% increase in parameter volume, demonstrating superior parameter efficiency. The inference time differences among these methods are negligible, indicating that ASD-SSM significantly improves performance without introducing substantial computational overhead.
+We further compare ASD-SSM against several common parameterization strategies, as summarized in \Cref{tab:param_comparison}. The Shared Parameter scheme---in which all three scales share a single $\bar{A}$ matrix---treats all scales identically, failing to adapt to their distinct modeling requirements, yielding the lowest performance. The Independent Parameters scheme achieves the highest segmentation performance, but requires fully independent parameters per scale. The Parameter Interpolation approach linearly interpolates parameters between scales; yet, linear interpolation fails to capture non-linear cross-scale relationships, resulting in limited gains. In contrast, ASD-SSM achieves performance within 0.6\% of the Independent Parameters scheme, demonstrating that dynamic content-aware parameter generation is an effective parameterization strategy.
 
-\begin{table*}[!t]
+\begin{table}[!t]
 \centering
-\caption{Performance and Efficiency Comparison of Different Parameterization Methods}
+\caption{Performance Comparison of Different Parameterization Methods}
 \label{tab:param_comparison}
-\begin{tabular}{lllll}
+\begin{tabular}{ll}
 \toprule
-\textbf{Parameterization Method} & \textbf{Params} & \textbf{Inf. Time} & \textbf{GPU Memory} & \textbf{mIoU (\%)} \\
+\textbf{Parameterization Method} & \textbf{mIoU (\%)} \\
 \midrule
-Shared Parameters & 1.0$\times$ & 11.2 ms & 45.5 GB & 73.4 \\
-Independent Parameters & 3.0$\times$ & 12.1 ms & 51.3 GB & 75.8 \\
-Parameter Interpolation & 2.0$\times$ & 11.5 ms & 46.8 GB & 74.2 \\
-LoRA Adaptation & 1.15$\times$ & 11.8 ms & 47.2 GB & 74.6 \\
-ASD-SSM (Ours) & 1.2$\times$ & 11.9 ms & 47.8 GB & 75.2 \\
+Shared Parameters & 65.4 \\
+Independent Parameters & 75.8 \\
+Parameter Interpolation & 74.2 \\
+ASD-SSM (Ours) & 75.2 \\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 Based on these results, we further investigate the internal design of the parameter generator (\Cref{tab:param_gen}). By leveraging patch-level global features alongside scale embeddings, the generator produces patch-specific, scale-conditioned $\bar{A}_s$ values that further enhance performance.
 
