@@ -596,7 +596,7 @@ For structures with large spatial spans such as windows (upper circle in office\
 
 In regions comprising small, irregular objects such as clutter (lower circle in office\_12 and office\_14), baseline methods tend to confuse these regions with surrounding tables and chairs, resulting in unstable boundary predictions. PointSS leverages the rapid state decay at fine-grained scales within its multi-scale architecture to respond more effectively to local geometric variations, yielding more accurate category predictions in such regions.
 
-At category boundaries such as those between bookcase and wall (office\_13), baseline methods exhibit blurred or misclassified predictions, whereas PointSS produces sharper and more accurate boundaries. The coarse-grained scales in ASD-SSM maintain long-range memory through slow state decay, facilitating the integration of broader semantic context in transition regions and thereby improving the consistency of boundary predictions.
+At category boundaries such as those between bookcase and wall (office\_13), baseline methods exhibit blurred or misclassified predictions, whereas PointSS produces sharper and more accurate boundaries. Through slow state decay, ASD-SSM's coarse-grained scales retain broader contextual information, facilitating the integration of semantic context across transition regions and thereby improving boundary prediction consistency.
 
 These qualitative results are consistent with the trends observed in the quantitative experiments, further validating the effectiveness of PointSS in complex indoor scenes.
 
