@@ -517,9 +517,10 @@ $\times$ & $\times$ & $\times$ & $\times$ & 71.1 \\
 
 \subsubsection{ASD-SSM Ablation Study}
 
-Systematic ablation experiments on the S3DIS dataset evaluated key ASD-SSM design choices, focusing on the scale constraint factor, parameter generator, and scale configuration. First, the scale constraint factor was analyzed for its role in regulating the state transition matrix. Smaller factors induce rapid state decay, facilitating the capture of local geometric variations, whereas larger factors delay decay, enhancing the modeling of long-range dependencies and global semantics (\Cref{tab:scale_constraint}).
+We conduct systematic ablation experiments on S3DIS to evaluate key ASD-SSM design choices: the scale constraint factor, parameter generator, and scale configuration.
 
-Experimental results indicate that uniform scale constraint factors consistently underperform compared to differentiated configurations, confirming that distinct scales require specific state-decay characteristics. Optimal performance is achieved when constraint factors increase progressively from fine to coarse scales (0.3, 0.6, 0.9). This validates the design philosophy: fine scales benefit from rapid decay to capture local variations, while coarse scales require slow decay to maintain long-range memory. Reversing this configuration noticeably drops performance, as excessive memory at fine scales interferes with local modeling, and rapid decay at coarse scales disrupts global consistency.
+We first analyze the role of the scale constraint factor $\alpha_s$ in controlling the value range of $\bar{A}_s$. Smaller $\alpha_s$ values constrain $\bar{A}_s$ to a low range, inducing rapid state decay that enables the capture of local geometric detail, whereas larger values allow slow decay, supporting the modeling of long-range dependencies and global semantic context (\Cref{tab:scale_constraint}).
+Experimental results indicate that uniform $\alpha_s$ configurations consistently underperform relative to non-uniform configurations, confirming that distinct scales require scale-specific state-decay characteristics. Optimal performance is achieved when $\alpha_s$ increases progressively from fine to coarse scales (0.3, 0.6, 0.9). This validates the design philosophy: fine scales benefit from rapid decay to capture local geometric detail, while coarse scales require slow decay to maintain long-range state memory. Reversing this configuration leads to a notable performance drop, as excessively long state retention at fine scales interferes with local geometric modeling, while rapid decay at coarse scales disrupts the capture of global semantic context.
 
 \begin{table}[!t]
 \centering
@@ -536,15 +537,15 @@ $\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU (\%)} \\
 0.3 & 0.6 & 0.9 & 75.2 \\
 0.3 & 0.7 & 0.9 & 75.2 \\
 0.2 & 0.6 & 0.9 & 75.1 \\
-0.4 & 0.6 & 0.9 & 75.0 \\
+0.4 & 0.6 & 0.9 & 74.9 \\
 0.9 & 0.6 & 0.3 & 72.9 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Based on these findings, the parameter generator was analyzed (\Cref{tab:param_gen}). By leveraging both global features and scale information, the generator produces scale-dependent parameters that further enhance performance. Comparative schemes demonstrate that integrating both information sources outperforms using either in isolation.
+Based on these findings, we next investigate the parameter generator design (\Cref{tab:param_gen}). By leveraging both patch-level global features and scale embeddings, the generator produces patch-specific, scale-conditioned $\bar{A}_s$ values that further enhance performance. As shown by the comparative schemes, integrating both information sources outperforms using either in isolation.
 
-Experimental results indicate that both global features and scale embeddings independently enhance model performance, with global features providing a slightly higher improvement than scale information alone. This suggests that scene-level global semantics provide a critical reference for state parameter generation, enabling the model to adaptively adjust state transition parameters across different regions. When global features and scale information are integrated concurrently, the combined gain is substantially higher than from either source alone, demonstrating a clear synergy in the parameter generation process. Further analysis of different modulation strengths ($\lambda$) reveals that optimal performance is achieved at $\lambda$ = 0.1. Insufficient modulation strength limits the model's adaptive capacity, while excessive strength may introduce unstable perturbations, compromising the smoothness of the state transition process.
+Experimental results indicate that both patch-level global features and scale embeddings independently improve model performance, with global features providing a slightly higher gain than scale embeddings alone. This suggests that patch-level contextual information provides a critical reference for state parameter generation, enabling the model to adaptively adjust $\bar{A}_s$ across different spatial locations. When both sources are integrated concurrently, the combined gain is substantially higher than from either source alone, demonstrating a synergistic effect in the parameter generation process. Further analysis of different modulation strengths ($\lambda$) reveals that optimal performance is achieved at $\lambda = 0.1$. Insufficient modulation strength limits the model's adaptive capacity, while excessive strength may introduce destabilizing perturbations to the state transition dynamics.
 
 \begin{table*}[!t]
 \centering
@@ -565,7 +566,7 @@ Scheme 6 & \checkmark & \checkmark & 0.3 & 73.9 & +0.5 \\
 \end{tabular}
 \end{table*}
 
-Subsequently, ASD-SSM was compared with several common parameterization strategies, as summarized in \Cref{tab:param_comparison}. The Shared Parameter scheme is the most lightweight in terms of parameter count and computational efficiency; however, it fails to capture functional differences across scales, leading to relatively low overall performance. The Independent Parameters scheme achieves the highest segmentation performance but at a significant cost in terms of parameter volume and memory footprint. The Parameter Interpolation approach controls the parameter count through linear generation between scales; yet, linear interpolation struggles to represent complex non-linear relationships across scales, resulting in limited gains. While Low-Rank Adaptation (LoRA) is efficient in parameter count, its static low-rank constraints limit the model's representational capacity. In contrast, by employing a dynamic parameter generation mechanism, ASD-SSM achieves performance comparable to the independent parameter scheme with only an approximately 20\% increase in parameter volume, demonstrating superior parameter efficiency. Notably, the differences in inference time among these methods are negligible, indicating that ASD-SSM significantly improves performance without introducing substantial computational overhead.
+We further compare ASD-SSM against several common parameterization strategies, as summarized in \Cref{tab:param_comparison}. The Shared Parameter scheme is the most lightweight in terms of parameter count; however, it fails to capture functional differences across scales, yielding relatively low overall performance. The Independent Parameters scheme achieves the highest segmentation performance but at a significant cost in parameter volume and memory footprint. The Parameter Interpolation approach controls the parameter count by linearly interpolating parameters between scales; yet, linear interpolation fails to capture the complex non-linear relationships across scales, resulting in limited gains. While Low-Rank Adaptation (LoRA) is efficient in parameter count, its static low-rank constraints limit the model's representational capacity. In contrast, by employing a dynamic parameter generation mechanism, ASD-SSM achieves performance comparable to the Independent Parameters scheme with only an approximately 20\% increase in parameter volume, demonstrating superior parameter efficiency. The inference time differences among these methods are negligible, indicating that ASD-SSM significantly improves performance without introducing substantial computational overhead.
 
 \begin{table*}[!t]
 \centering
@@ -584,9 +585,9 @@ ASD-SSM (Ours) & 1.2$\times$ & 11.9 ms & 47.8 GB & 75.2 \\
 \end{tabular}
 \end{table*}
 
-A systematic investigation into scale quantities and window expansion configurations (\Cref{tab:scale_config}) confirms the necessity of hierarchical modeling. Introducing a second scale significantly outperforms the single-scale baseline, while incorporating a third scale yields a further 1.6\%--1.9\% improvement. This suggests that a three-level hierarchy---local, intermediate, and global---provides the most comprehensive structural representation.
+We systematically investigate the number of scales $S$ and window expansion configurations (\Cref{tab:scale_config}), confirming the necessity of hierarchical multi-scale modeling. Introducing a second scale yields a 1.4\% improvement over the single-scale baseline, while incorporating a third scale yields a further 1.6\%--1.9\% improvement. This suggests that a three-level hierarchy---local, intermediate, and global---provides the most comprehensive structural representation.
 
-Regarding window expansion, moderate increases enhance context modeling, whereas excessive sizes tend to dilute spatial features. Although four- and five-scale configurations offer marginal gains, they incur substantial computational overhead with diminishing returns. Consequently, the three-scale configuration represents the optimal trade-off between performance and efficiency.
+Regarding window expansion, moderate increases in the expansion factor enhance context modeling, whereas excessively large windows tend to wash out local geometric detail. Although four- and five-scale configurations offer marginal gains, they incur substantial computational overhead with diminishing returns. Consequently, the three-scale configuration represents the optimal trade-off between performance and efficiency.
 
 \begin{table}[!t]
 \centering
