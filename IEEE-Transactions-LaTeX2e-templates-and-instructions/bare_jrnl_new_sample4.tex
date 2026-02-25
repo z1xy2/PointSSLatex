@@ -491,7 +491,7 @@ Category-wise analysis (\Cref{tab:ggam_category}) further confirms that categori
 	\footnotesize Note: The Avg. Proximity Loss Ratio is defined as the mean proximity loss ratio across all points belonging to a specific semantic category. The beam category is excluded from analysis, as beam instances are extremely sparse in S3DIS Area 5, yielding near-zero recall for both models.
 \end{table*}
 
-We further ablate the components of GGAM (\Cref{tab:ggam_components}) to verify their individual contributions and synergistic effects. 
+We further ablate the components of GGAM (\Cref{tab:ggam_components}) to verify their individual contributions.
 Introducing dual-serialization alone yields limited improvement or even slight fluctuation, as different serialization methods may introduce biases without an effective fusion strategy. Adding cross-sequence attention further yields a marked improvement, demonstrating that cross-sequence interaction plays a role in aligning complementary geometric information across different serialization patterns. Incorporating the gated fusion mechanism further refines the fused representation by adaptively balancing contributions from the two serialization branches. Adding the geometric consistency gate yields a further gain, as it derives a scalar gate from both streams to modulate the fused output, mitigating cross-stream inconsistencies.
 
 The full combination demonstrates that these components function as a coherent whole to mitigate serialization-induced spatial proximity loss.
