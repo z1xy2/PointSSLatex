@@ -412,11 +412,7 @@ Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
 
 Ablation studies were conducted on the S3DIS dataset using a progressive strategy to verify individual module contributions. First, the effectiveness of GGAM in mitigating the loss of spatial proximity was examined (\Cref{tab:ggam_fragmentation,tab:ggam_category,tab:ggam_components}), followed by the validation of ASD-SSM design choices (\Cref{tab:scale_constraint,tab:param_gen,tab:param_comparison,tab:scale_config}).
 
-The baseline model utilizes a standard single-scale bidirectional Mamba. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a notable mIoU improvement. This confirms that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates the serialization-induced loss of spatial proximity, thereby enhancing local structural representation.
-
-Building on this, employing ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing a further marked gain. This demonstrates that scale-decoupled parameterization is crucial for simultaneously capturing local details and modeling global semantics.
-
-As shown in \Cref{tab:progressive_improvement}, the two modules address distinct limitations---GGAM compensates for serialization-induced spatial proximity loss while ASD-SSM enables scale-decoupled state transition modeling---yielding a cumulative gain of 4.9\% mIoU over the baseline.
+The baseline model utilizes a standard single-scale bidirectional Mamba. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a +2.2\% mIoU improvement, confirming that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates serialization-induced spatial proximity loss. Building on this, ASD-SSM with scale-aware parameter generation contributes a further +2.7\%, demonstrating that scale-decoupled parameterization is crucial for simultaneously capturing local details and modeling global semantics. Together, the two modules address distinct limitations and yield a cumulative gain of 4.9\% mIoU over the baseline.
 
 \begin{table*}[!t]
 \centering
@@ -464,7 +460,7 @@ Experimental results indicate that approximately 33\% of points suffer from the 
 
 
 
-Category-wise analysis (\Cref{tab:ggam_category}) further confirms this trend at the category level. Large planar structures (e.g., floor, wall) experience less serialization-induced loss of spatial proximity and exhibit limited gains. As the proximity loss ratio increases, the compensation effect of GGAM becomes more pronounced: categories with complex boundaries or irregular structures (e.g., window, door, board, clutter) show substantially larger improvements. The beam category yields 0\% IoU for both models, as beam instances are extremely sparse in S3DIS Area 5, resulting in near-zero recall for this class. These findings confirm that GGAM provides more pronounced compensation for serialization-induced proximity loss in structurally complex regions.
+Category-wise analysis (\Cref{tab:ggam_category}) further confirms this trend at the category level. Large planar structures (e.g., floor, wall) experience less serialization-induced loss of spatial proximity and exhibit limited gains. As the proximity loss ratio increases, the compensation effect of GGAM becomes more pronounced: categories with complex boundaries or irregular structures (e.g., window, door, board, clutter) show substantially larger improvements. These findings confirm that GGAM provides more pronounced compensation for serialization-induced proximity loss in structurally complex regions.
 
 \begin{table*}[!t]
 	\centering
@@ -492,11 +488,11 @@ Category-wise analysis (\Cref{tab:ggam_category}) further confirms this trend at
 		\bottomrule
 	\end{tabular}
 	\par\vspace{3pt}
-	\footnotesize Note: The Avg. Proximity Loss Ratio is defined as the mean proximity loss ratio across all points belonging to a specific semantic category.
+	\footnotesize Note: The Avg. Proximity Loss Ratio is defined as the mean proximity loss ratio across all points belonging to a specific semantic category. The beam category is excluded from trend analysis, as beam instances are extremely sparse in S3DIS Area 5, yielding near-zero recall for both models.
 \end{table*}
 
 We further ablate the components of GGAM (\Cref{tab:ggam_components}) to verify their individual contributions and synergistic effects. 
-Introducing dual-serialization alone yields limited improvement or even slight fluctuation, as different serialization methods may introduce biases without an effective fusion strategy. Adding cross-sequence attention further yields a marked improvement, demonstrating that cross-sequence interaction plays a role in aligning complementary geometric information across different serialization patterns. Incorporating the gated fusion mechanism and geometric consistency constraint further refines the fused representation, as the gated mechanism adaptively balances contributions from different serialization branches while the consistency constraint derives a scalar gate from both streams to adaptively modulate the fused representation, mitigating cross-stream inconsistencies introduced by different serialization-induced window partitions.
+Introducing dual-serialization alone yields limited improvement or even slight fluctuation, as different serialization methods may introduce biases without an effective fusion strategy. Adding cross-sequence attention further yields a marked improvement, demonstrating that cross-sequence interaction plays a role in aligning complementary geometric information across different serialization patterns. Incorporating the gated fusion mechanism further refines the fused representation by adaptively balancing contributions from the two serialization branches. Adding the geometric consistency gate yields a further gain, as it derives a scalar gate from both streams to modulate the fused output, mitigating cross-stream inconsistencies arising from different serialization-induced window partitions.
 
 The overall improvement demonstrates that these components work synergistically to mitigate the serialization-induced loss of spatial proximity.
 
