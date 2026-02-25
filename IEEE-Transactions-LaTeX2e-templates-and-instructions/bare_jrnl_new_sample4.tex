@@ -416,7 +416,7 @@ The baseline model utilizes a standard single-scale bidirectional Mamba. As show
 
 Building on this, employing ASD-SSM with scale-aware parameter generation boosts performance to 75.2\%, providing a further marked gain. This demonstrates that scale-decoupled parameterization is crucial for simultaneously capturing local details and modeling global semantics.
 
-GGAM and ASD-SSM are complementary by design, together yielding a substantial overall improvement.
+As shown in \Cref{tab:progressive_improvement}, the two modules address distinct limitations---GGAM compensates for serialization-induced spatial proximity loss while ASD-SSM enables scale-decoupled state transition modeling---yielding a cumulative gain of 4.9\% mIoU over the baseline.
 
 \begin{table*}[!t]
 \centering
@@ -464,7 +464,7 @@ Experimental results indicate that approximately 33\% of points suffer from the 
 
 
 
-Category-wise analysis (\Cref{tab:ggam_category}) further confirms this trend at the category level. Large planar structures (e.g., floor, wall) experience less serialization-induced loss of spatial proximity and exhibit limited gains. As the proximity loss ratio increases, the compensation effect of GGAM becomes more pronounced: categories with complex boundaries or irregular structures (e.g., window, door, board, clutter) show substantially larger improvements. The beam category yields 0\% IoU for both the baseline and GGAM, as beam instances are extremely sparse in the S3DIS Area 5 evaluation set, making it statistically unreliable. These findings confirm that GGAM provides more pronounced compensation for serialization-induced proximity loss in structurally complex regions.
+Category-wise analysis (\Cref{tab:ggam_category}) further confirms this trend at the category level. Large planar structures (e.g., floor, wall) experience less serialization-induced loss of spatial proximity and exhibit limited gains. As the proximity loss ratio increases, the compensation effect of GGAM becomes more pronounced: categories with complex boundaries or irregular structures (e.g., window, door, board, clutter) show substantially larger improvements. The beam category yields 0\% IoU for both models, as beam instances are extremely sparse in S3DIS Area 5, resulting in near-zero recall for this class. These findings confirm that GGAM provides more pronounced compensation for serialization-induced proximity loss in structurally complex regions.
 
 \begin{table*}[!t]
 	\centering
@@ -516,7 +516,7 @@ $\times$ & $\times$ & $\times$ & $\times$ & 71.1 \\
 \bottomrule
 \end{tabular}
 \par\vspace{3pt}
-\footnotesize Notes: DS: Dual-Serialization; CSA: Cross-Sequence Attention; GFM: Gated Fusion Mechanism; $L_{geo}$: Geometric Consistency Constraint (Loss). All configurations retain geometric feature extraction as it is a prerequisite of GGAM.
+\footnotesize Notes: DS: Dual-Serialization; CSA: Cross-Sequence Attention; GFM: Gated Fusion Mechanism; $L_{geo}$: Geometric Consistency Constraint (Gate Module). All configurations retain geometric feature extraction as it is a prerequisite of GGAM. The baseline (71.1\%) differs from the pure Mamba baseline in \Cref{tab:progressive_improvement} (70.3\%), as geometric feature extraction is retained in all configurations here.
 \end{table}
 
 \subsubsection{ASD-SSM Ablation Study}
@@ -548,7 +548,7 @@ $\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU (\%)} \\
 
 Based on these findings, the parameter generator was analyzed (\Cref{tab:param_gen}). By leveraging both global features and scale information, the generator produces scale-dependent parameters that further enhance performance. Comparative schemes demonstrate that integrating both information sources outperforms using either in isolation.
 
-Experimental results indicate that both global features and scale embeddings independently enhance model performance, with global features providing a slightly higher improvement than scale information alone. This suggests that scene-level global semantics provide a critical reference for state parameter generation, enabling the model to adaptively adjust state-updating behaviors across different regions. When global features and scale information are integrated concurrently, the combined gain is substantially higher than from either source alone, demonstrating a clear synergy in the parameter generation process. Further analysis of different modulation strengths ($\lambda$) reveals that optimal performance is achieved at $\lambda$ = 0.1. Insufficient modulation strength limits the model's adaptive capacity, while excessive strength may introduce unstable perturbations, compromising the smoothness of the state-updating process.
+Experimental results indicate that both global features and scale embeddings independently enhance model performance, with global features providing a slightly higher improvement than scale information alone. This suggests that scene-level global semantics provide a critical reference for state parameter generation, enabling the model to adaptively adjust state transition parameters across different regions. When global features and scale information are integrated concurrently, the combined gain is substantially higher than from either source alone, demonstrating a clear synergy in the parameter generation process. Further analysis of different modulation strengths ($\lambda$) reveals that optimal performance is achieved at $\lambda$ = 0.1. Insufficient modulation strength limits the model's adaptive capacity, while excessive strength may introduce unstable perturbations, compromising the smoothness of the state transition process.
 
 \begin{table*}[!t]
 \centering
