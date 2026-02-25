@@ -590,7 +590,15 @@ Regarding window expansion, moderate increases in the expansion factor enhance c
 
 \subsection{Qualitative Experiment}
 
-\cref{fig:vis} presents a qualitative comparison on the S3DIS dataset, where PointSS demonstrates superior segmentation continuity and precision across complex scenes. For large-scale structures (e.g., windows and columns), the method overcomes serialization-induced discontinuities by leveraging GGAM to recover spatial relationships and ASD-SSM to maintain global context, thereby ensuring structural integrity where baselines often fail. In fine-grained regions such as clutter, the multi-scale architecture effectively captures subtle local variations, while geometric priors enable high-fidelity modeling. Additionally, at sharp boundaries (e.g., wall-column intersections), explicit neighborhood modeling mitigates fragmentation, producing distinct edges compared to the blurred boundaries of baseline methods. Overall, these visualization results align with the quantitative analysis, validating the robustness of PointSS across varying scales and geometric complexities.
+\cref{fig:vis} presents a comparison of segmentation results among PointSS, Point Transformer, and Point Cloud Mamba across four scenes on the S3DIS dataset. As highlighted by the circles in the figure, PointSS demonstrates clear advantages in the following three types of regions.
+
+For structures with large spatial spans such as windows (upper circle in office\_10), baseline methods produce noticeably fragmented or incomplete predictions; PointSS, by contrast, yields more complete segmentation regions with higher agreement with the ground truth. This improvement is attributed to GGAM's explicit modeling of geometric relationships within windowed neighborhoods, which compensates for the context discontinuity caused by the loss of spatial proximity during serialization.
+
+In regions comprising small, irregular objects such as clutter (lower circle in office\_12 and office\_14), baseline methods tend to confuse these regions with surrounding tables and chairs, resulting in unstable boundary predictions. PointSS leverages the rapid state decay at fine-grained scales within its multi-scale architecture to respond more effectively to local geometric variations, yielding more accurate category predictions in such regions.
+
+At category boundaries such as those between bookcase and wall (office\_13), baseline methods exhibit blurred or misclassified predictions, whereas PointSS produces sharper and more accurate boundaries. The coarse-grained scales in ASD-SSM maintain long-range memory through slow state decay, facilitating the integration of broader semantic context in transition regions and thereby improving the consistency of boundary predictions.
+
+These qualitative results are consistent with the trends observed in the quantitative experiments, further validating the effectiveness of PointSS in complex indoor scenes.
 
 \begin{figure*}[!t]
 	\centering
