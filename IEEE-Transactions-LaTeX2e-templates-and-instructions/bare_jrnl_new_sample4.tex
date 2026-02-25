@@ -543,7 +543,7 @@ $\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU (\%)} \\
 \end{tabular}
 \end{table}
 
-We further compare ASD-SSM against several common parameterization strategies, as summarized in \Cref{tab:param_comparison}. The Shared Parameter scheme---in which all three scales share a single $\bar{A}$ matrix---treats all scales identically, failing to adapt to their distinct modeling requirements, yielding the lowest performance. The Independent Parameters scheme achieves the highest segmentation performance, but requires fully independent parameters per scale. The Parameter Interpolation approach linearly interpolates parameters between scales; yet, linear interpolation fails to capture non-linear cross-scale relationships, resulting in limited gains. In contrast, ASD-SSM achieves performance within 0.6\% of the Independent Parameters scheme, demonstrating that dynamic content-aware parameter generation is an effective parameterization strategy.
+We further compare ASD-SSM against several common parameterization strategies, as summarized in \Cref{tab:param_comparison}. The Shared Parameter scheme---in which all three scales share a single $\bar{A}$ matrix---treats all scales identically, failing to adapt to their distinct modeling requirements, yielding the lowest performance. The Independent Parameters scheme assigns a dedicated learned $\bar{A}_s$ to each scale, capturing scale-specific characteristics but remaining input-invariant within each scale. The Parameter Interpolation approach generates $\bar{A}_s$ dynamically for the finest and coarsest scales via the parameter generator, while intermediate scales obtain their $\bar{A}_s$ through linear interpolation between $\bar{A}_1$ and $\bar{A}_S$; yet, linear interpolation fails to capture non-linear cross-scale relationships, resulting in limited gains. In contrast, ASD-SSM outperforms the Independent Parameters scheme by 1.2\%, demonstrating that dynamic content-aware parameter generation is a more effective parameterization strategy than static per-scale assignment.
 
 \begin{table}[!t]
 \centering
@@ -561,9 +561,9 @@ ASD-SSM (Ours) & 75.2 \\
 \end{tabular}
 \end{table}
 
-We systematically investigate the number of scales $S$ and window expansion configurations (\Cref{tab:scale_config}), confirming the necessity of hierarchical multi-scale modeling. Introducing a second scale yields a 1.4\% improvement over the single-scale baseline, while incorporating a third scale yields a further 1.6\%--1.9\% improvement. This suggests that a three-level hierarchy---local, intermediate, and global---provides the most comprehensive structural representation.
+We systematically investigate the number of scales $S$ and window expansion configurations (\Cref{tab:scale_config}), confirming the necessity of hierarchical multi-scale modeling. Introducing a second scale consistently improves over the single-scale baseline, with the best 2-scale result reaching 73.8\%. Incorporating a third scale yields a further improvement, with the best 3-scale configuration achieving 75.2\%. This suggests that a three-level hierarchy---local, intermediate, and global---provides comprehensive structural representation.
 
-Regarding window expansion, moderate increases in the expansion factor enhance context modeling, whereas excessively large windows tend to wash out local geometric detail. Although four- and five-scale configurations offer marginal gains, they incur substantial computational overhead with diminishing returns. Consequently, the three-scale configuration represents the optimal trade-off between performance and efficiency.
+Regarding window expansion, moderate increases in the expansion factor enhance context modeling, whereas excessively large windows tend to wash out local geometric detail. Although a four-scale configuration yields a marginal additional gain of 0.2\%, it incurs substantially longer training time with diminishing returns. Consequently, the three-scale configuration with expansion factors $(1, 2, 3)$ represents the optimal trade-off between performance and efficiency.
 
 \begin{table}[!t]
 \centering
