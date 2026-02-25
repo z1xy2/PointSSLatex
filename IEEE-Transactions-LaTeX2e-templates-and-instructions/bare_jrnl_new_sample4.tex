@@ -553,29 +553,10 @@ We further compare ASD-SSM against several common parameterization strategies, a
 \toprule
 \textbf{Parameterization Method} & \textbf{mIoU (\%)} \\
 \midrule
-Shared Parameters & 65.4 \\
+Shared Parameters & 71.9 \\
 Independent Parameters & 74.0 \\
 Parameter Interpolation & 72.1 \\
 ASD-SSM (Ours) & 75.2 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Based on these results, we further investigate the internal design of the parameter generator (\Cref{tab:param_gen}). By leveraging patch-level global features alongside scale embeddings, the generator produces patch-specific, scale-conditioned $\bar{A}_s$ values that further enhance performance.
-
-Removing global features from the generator yields a content-invariant $\bar{A}_s$ that varies only across scales—similar in spirit to allocating per-scale fixed parameters—achieving 74.6\%. Incorporating global patch features restores content-awareness, enabling $\bar{A}_s$ to adapt to the local geometric content of each patch and yielding 75.2\%. The 0.6\% gap confirms that content-aware parameter generation, rather than scale differentiation alone, is the primary driver of performance gain.
-
-\begin{table}[!t]
-\centering
-\caption{Ablation Study on the Design of the Parameter Generator.}
-\label{tab:param_gen}
-\begin{tabular}{llll}
-\toprule
-\textbf{Scheme} & \textbf{Global Features} & \textbf{Scale Embedding} & \textbf{mIoU (\%)} \\
-\midrule
-Baseline (Shared) & - & - & 73.4 \\
-Scheme 1 & \checkmark & $\times$ & 74.6 \\
-Full (Ours) & \checkmark & \checkmark & 75.2 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -592,17 +573,16 @@ Regarding window expansion, moderate increases in the expansion factor enhance c
 \toprule
 \textbf{S} & \textbf{F} & \textbf{Params} & \textbf{Train Time} & \textbf{mIoU (\%)} \\
 \midrule
-1 & (1) & 1.0$\times$ & 35h & 72.4 \\
+1 & (1) & 1.0$\times$ & 35h & 72.5 \\
 2 & (1,2) & 1.13$\times$ & 37h & 73.5 \\
 2 & (1,3) & 1.13$\times$ & 38h & 73.8 \\
-2 & (1,4) & 1.13$\times$ & 38h & 73.6 \\
-3 & (1,2,2) & 1.20$\times$ & 40h & 75.2 \\
-3 & (1,2,3) & 1.20$\times$ & 41h & 75.3 \\
-3 & (1,2,4) & 1.20$\times$ & 41h & 75.0 \\
+2 & (1,4) & 1.13$\times$ & 38h & 73.1 \\
+3 & (1,2,2) & 1.20$\times$ & 40h & 75.0 \\
+3 & (1,2,3) & 1.20$\times$ & 41h & 75.2 \\
+3 & (1,2,4) & 1.20$\times$ & 41h & 75.1 \\
 3 & (1,3,3) & 1.20$\times$ & 40h & 74.8 \\
-4 & (1,2,2,2) & 1.27$\times$ & 43h & 75.5 \\
-4 & (1,2,2,3) & 1.27$\times$ & 44h & 75.6 \\
-5 & (1,2,2,2,3) & 1.33$\times$ & 46h & 75.5 \\
+4 & (1,2,2,2) & 1.27$\times$ & 43h & 75.2 \\
+4 & (1,2,2,3) & 1.27$\times$ & 44h & 75.4 \\
 \bottomrule
 \end{tabular}
 \par\vspace{3pt}
