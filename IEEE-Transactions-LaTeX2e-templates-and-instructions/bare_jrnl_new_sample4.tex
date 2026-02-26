@@ -220,7 +220,7 @@ where $q_i := p_{\pi(i)}$ denotes the $i$-th point in the serialized order. The 
 \begin{equation}
 W_m = (q_{(m-1) \cdot 128 + 1}, q_{(m-1) \cdot 128 + 2}, \ldots, q_{m \cdot 128})
 \end{equation}
-where $m = 1, 2, \ldots, \lfloor N/128 \rfloor$ is the window index, and the window size is fixed at 128. If the last window has fewer than $128$ points, it is padded following the strategy of PTv3~\cite{ptv3}.
+where $m = 1, 2, \ldots, \lfloor N/128 \rfloor$ is the window index, and the window size is fixed at 128. A smaller window confines the neighborhood to spatially proximate points, which is essential for accurate estimation of local geometric properties such as surface normals and curvature, while 128 points provides a sufficient sample for stable PCA-based estimation with modest computational overhead. If the last window has fewer than $128$ points, it is padded following the strategy of PTv3~\cite{ptv3}.
 
 For each point $q_i$, its neighborhood $\mathcal{N}(q_i)$ consists of all other points within the same window, forming a fully connected local graph:
 \begin{equation}
