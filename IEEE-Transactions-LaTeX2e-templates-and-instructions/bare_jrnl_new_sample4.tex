@@ -218,13 +218,13 @@ Q = (p_{\pi(1)}, p_{\pi(2)}, \ldots, p_{\pi(N)})
 \end{equation}
 where $q_i := p_{\pi(i)}$ denotes the $i$-th point in the serialized order. The sequence is then partitioned into non-overlapping windows:
 \begin{equation}
-W_m = (q_{(m-1) \cdot P + 1}, q_{(m-1) \cdot P + 2}, \ldots, q_{m \cdot P})
+W_m = (q_{(m-1) \cdot 128 + 1}, q_{(m-1) \cdot 128 + 2}, \ldots, q_{m \cdot 128})
 \end{equation}
-where $m = 1, 2, \ldots, \lfloor N/P \rfloor$ is the window index and $P$ is the window size. If the last window has fewer than $P$ points, it is padded following the strategy of PTv3~\cite{ptv3}.
+where $m = 1, 2, \ldots, \lfloor N/128 \rfloor$ is the window index, and the window size is fixed at 128. If the last window has fewer than $128$ points, it is padded following the strategy of PTv3~\cite{ptv3}.
 
 For each point $q_i$, its neighborhood $\mathcal{N}(q_i)$ consists of all other points within the same window, forming a fully connected local graph:
 \begin{equation}
-\mathcal{N}(q_i) = \left\{q_j : q_j \in W_{\lceil i/P \rceil},\ j \neq i\right\}
+\mathcal{N}(q_i) = \left\{q_j : q_j \in W_{\lceil i/128 \rceil},\ j \neq i\right\}
 \end{equation}
 
 For each pair $(q_i, q_j)$ with $q_j \in \mathcal{N}(q_i)$, an 8-dimensional geometric feature vector is extracted:
