@@ -71,8 +71,7 @@ distant in the sequence. Such a loss of
 proximity is difficult to mitigate in Mamba's recurrent mechanism,
 where the contribution from distant points diminishes before reaching
 the current position, preventing effective modeling of local geometric
-features such as surface normals and curvature. This issue becomes even
-worse at object boundaries (e.g., wall-pillar junctions), where
+features such as surface normals and curvature. This issue is exacerbated at object boundaries (e.g., wall-pillar junctions), where
 spatially adjacent points may be far apart in the serialized sequence,
 making their context crucial for accurate segmentation.
 
