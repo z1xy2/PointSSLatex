@@ -170,7 +170,7 @@ spatial locations within each scale. Consequently, the model applies identical
 state transitions to all points—processing flat surfaces and sharp boundaries
 with the same transition dynamics—preventing adaptation to local geometric
 variations. Furthermore, allocating independent parameters for each scale
-incurs substantial parameter growth and memory overhead.
+incurs parameter growth and memory overhead.
 These limitations motivate the design of PointSS, which we describe in detail in the following section.
 
 
@@ -614,7 +614,7 @@ ASD-SSM (Ours) & 75.2 \\
 
 We systematically investigate the number of scales $S$ and window expansion configurations (\Cref{tab:scale_config}), confirming the necessity of hierarchical multi-scale modeling. Introducing a second scale consistently improves over the single-scale baseline, with the best 2-scale result reaching 73.8\%. Incorporating a third scale yields a further improvement, with the best 3-scale configuration achieving 75.2\%. This suggests that a three-level hierarchy---local, intermediate, and global---provides comprehensive structural representation.
 
-Regarding window size expansion, moderate increases in the expansion factor enhance context modeling, whereas excessively large windows tend to wash out local geometric detail. Although a four-scale configuration yields a marginal additional gain of 0.2\%, it incurs substantially longer training time with diminishing returns. Consequently, the three-scale configuration with expansion factors $(1, 2, 4)$ represents the optimal trade-off between performance and efficiency.
+Regarding window size expansion, moderate increases in the expansion factor enhance context modeling, whereas excessively large windows tend to wash out local geometric detail. Although a four-scale configuration yields a marginal additional gain of 0.2\%, it incurs longer training time with diminishing returns. Consequently, the three-scale configuration with expansion factors $(1, 2, 4)$ represents the optimal trade-off between performance and efficiency.
 
 \begin{table}[!t]
 \centering
@@ -642,7 +642,7 @@ Regarding window size expansion, moderate increases in the expansion factor enha
 
 \subsection{Qualitative Experiment}
 
-\cref{fig:vis} presents a comparison of segmentation results among PointSS, Point Transformer, and Point Cloud Mamba across four scenes on the S3DIS dataset. As highlighted by the circles in the figure, PointSS demonstrates clear advantages in the following three types of regions.
+\cref{fig:vis} presents a comparison of segmentation results among PointSS, Point Transformer, and Point Cloud Mamba across four scenes on the S3DIS dataset. As highlighted by the circles in the figure, PointSS demonstrates advantages in the following three types of regions.
 
 For structures with large spatial spans such as windows (upper circle in office\_10), baseline methods produce noticeably fragmented or incomplete predictions; PointSS, by contrast, yields more complete segmentation regions with higher agreement with the ground truth. This improvement is attributed to GGAM's explicit modeling of geometric relationships within windowed neighborhoods, which compensates for the context discontinuity caused by the loss of spatial proximity during serialization.
 
