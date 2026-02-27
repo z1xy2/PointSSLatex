@@ -312,7 +312,7 @@ $\mathbf{H}_{\text{final}}$ is then passed to subsequent encoders and decoders a
 \subsubsection{Overall Scheme}
 ASD-SSM addresses the limitation of input-invariant state transition parameters  by introducing a dynamic parameter generation mechanism that adapts $\bar{A}$ to the local geometric content of each patch. This scale-decoupled design enables fine scales to capture geometric details while coarse scales model semantic context, achieving effective hierarchical representations.
 
-Notation: $s \in \{1, 2, \ldots, S\}$ denotes the scale index, where $s=1$ represents the finest scale and $s=S$ the coarsest. $N$ and $C$ denote the number of points and the feature dimension, respectively.
+Notation: $s \in \{1, 2, \ldots, S\}$ denotes the scale index, where $s=1$ represents the finest scale and $s=S$ the coarsest. At scale $s$, the point cloud is divided into $M_s$ non-overlapping patches, with $m \in \{1, \ldots, M_s\}$ denoting the patch index. $N$ and $C$ denote the number of points and the feature dimension, respectively.
 
 As illustrated in \cref{fig:bss}, the pipeline comprises three stages. First, in \textbf{Window Partitioning}, the serialized sequence is uniformly partitioned into non-overlapping patches; if the last patch has fewer points than the designated patch size, it is padded following the strategy of PTv3~\cite{ptv3}. At scale $s$, the patch size is $P \times F_s$ (with $F_1 = 1$ for the finest scale); for a three-scale configuration ($S=3$), the expansion factors are $F_2=2$ and $F_3=4$. Second, following \cite{pcm}, \textbf{Order Prompting} inserts learnable prompt vectors at the beginning and end of each patch at the finest scale to inform Mamba of the sequence's arrangement rules; at coarser scales, points within each patch are randomly shuffled and no prompts are inserted. At coarse scales, the modeling objective shifts from local geometric structure to global semantic context. Retaining the serialization order at coarse scales allows the model to exploit local sequential patterns as a shortcut, causing coarse-scale features to inadvertently depend on local ordering rather than genuinely aggregating global semantic information. Shuffling removes this shortcut, forcing the model to build global representations from feature content alone. Third, \textbf{Multi-scale Feature Modeling}—the core contribution of ASD-SSM—processes each scale through a bidirectional Mamba whose state transition parameters $\bar{A}$ are dynamically adapted to the local geometric content of each patch by a scale-aware parameter generator. After feature extraction across all scales, the representations are concatenated channel-wise and projected back to $C$ dimensions via a linear layer and an MLP, yielding the final point cloud representation $\text{Points}' \in \mathbb{R}^{N \times C}$.
 
@@ -329,9 +329,9 @@ While existing SSM-based methods leverage input-variant $\bar{B}$ and $\bar{C}$ 
 
 Scale-aware Parameter Generator: ASD-SSM adaptively generates per-scale state transition parameters $\bar{A}_s$. For a given scale $s$, the point cloud features are partitioned into patches, and the parameter generation process is conducted independently for each patch, producing a patch-specific $\bar{A}_s$ conditioned on the patch's content features.
 
-Specifically, we first apply global average pooling over all points within each patch to obtain a summary of the patch features $\mathbf{f}_{\text{global}}^{(s)}$, and then project it to $\mathbb{R}^{C/4}$ via $\text{MLP}_{\text{global}}$:
+Specifically, for the $m$-th patch at scale $s$, we apply global average pooling over all points within the patch to obtain a patch summary $\mathbf{f}_{\text{global}}^{(s,m)} \in \mathbb{R}^{C}$, and then project it to $\mathbb{R}^{C/4}$ via $\text{MLP}_{\text{global}}$:
 \begin{equation}
-\tilde{\mathbf{f}}_{\text{global}}^{(s)} = \text{MLP}_{\text{global}}(\mathbf{f}_{\text{global}}^{(s)}) \in \mathbb{R}^{C/4}
+\tilde{\mathbf{f}}_{\text{global}}^{(s,m)} = \text{MLP}_{\text{global}}(\mathbf{f}_{\text{global}}^{(s,m)}) \in \mathbb{R}^{C/4}
 \end{equation}
 A trainable scale embedding $\mathbf{e}_s \in \mathbb{R}^{C/4}$ is maintained for each scale $s$ to serve as a scale identifier.
 
@@ -339,11 +339,11 @@ Scale Constraint Mechanism: To achieve differentiated state decay characteristic
 
 To directly constrain the value range of $\bar{A}_s$, the output of the parameter generator is first mapped to the interval $[0,1]$ via a sigmoid function:
 \begin{equation}
-\hat{A}_s^{\text{raw}} = \sigma(\lambda \cdot \text{MLP}([\tilde{\mathbf{f}}_{\text{global}}^{(s)} \| \mathbf{e}_s]))
+\hat{A}_{s,m}^{\text{raw}} = \sigma(\lambda \cdot \text{MLP}([\tilde{\mathbf{f}}_{\text{global}}^{(s,m)} \| \mathbf{e}_s]))
 \end{equation}
 where $\sigma(\cdot)$ is the sigmoid activation function, $\|$ denotes concatenation, and $\lambda$ is a temperature parameter (set to 0.1) that controls the sensitivity of the MLP output prior to sigmoid activation. Then, the scale constraint factor $\alpha_s$ serves as an upper bound to directly control the value range of $\bar{A}_s$:
 \begin{equation}
-\bar{A}_s = \alpha_s \cdot \hat{A}_s^{\text{raw}}
+\bar{A}_{s,m} = \alpha_s \cdot \hat{A}_{s,m}^{\text{raw}}
 \end{equation}
 
 By setting $\alpha_s$ to increase monotonically from the finest to the coarsest scale (from $\alpha_1 = 0.3$ to $\alpha_S = 0.9$), we impose an explicit constraint: the fine-scale $\bar{A}_1 \in [0, 0.3]$ enables rapid response to local variations, while the coarse-scale $\bar{A}_S \in [0, 0.9]$ maintains long-term memory to capture global context. Note that within each scale, $\bar{A}_s$ is generated independently for each patch based on its local content, rather than shared across the entire scale. For the selective parameters $\bar{B}_s$ and $\bar{C}_s$, we follow the standard selective mechanism from the Mamba paper \cite{Mamba}, dynamically generating them from the input content via linear projections.
