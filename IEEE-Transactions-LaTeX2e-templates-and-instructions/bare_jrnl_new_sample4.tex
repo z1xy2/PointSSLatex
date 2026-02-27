@@ -399,7 +399,6 @@ Sci. Rep.25 & PointGA\cite{pointga} & Transformer & 66.2 \\
 \textbf{Venue} & \textbf{Model} & \textbf{Architecture} & \textbf{OA (\%)} \\ \midrule
 NeurIPS22 & Point Transformer V2 \cite{ptv2} & Transformer & 94.2 \\
 AAAI24 & Point-FEMAE \cite{FEMAE} & Transformer & 94.5 \\
-LNCS24 & Point2Vec \cite{Point2Vec} & Transformer & 94.8 \\
 ACM MM24 & Mamba3D \cite{Mamba3D} & SSM & 94.1 \\
 NIPS24 & PointMamba \cite{PointMamba} & SSM & 93.6 \\
 TIP25 & OTMae3D \cite{OTMae3D} & Transformer & 94.5 \\
@@ -449,11 +448,11 @@ Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
 
 \end{axis}
 \end{tikzpicture}
-\caption{Inference time comparison between PTv3 and PointSS under identical FP32 precision on an NVIDIA A6000 GPU (batch size = 1). PTv3 encounters out-of-memory (OOM) errors at patch size 1024, while PointSS successfully handles this configuration.}
+\caption{Inference time vs.\ patch size for PTv3 and PointSS (FP32, batch size = 1, NVIDIA A6000 GPU).}
 \label{fig:efficiency}
 \end{figure}
 
-To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3 under identical conditions: FP32 precision, batch size 1, and a fixed input of 80,000 points on an NVIDIA A6000 GPU. Flash attention is disabled in PTv3 to ensure a fair precision-aligned comparison. As shown in \cref{fig:efficiency}, PointSS consistently reduces inference time by approximately 22--37\% across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors due to the quadratic memory cost of self-attention, while PointSS continues to operate without constraint, demonstrating that linear complexity provides meaningful scalability advantages in large-patch-size regimes.
+To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3 under identical conditions: FP32 precision, batch size 1, on an NVIDIA A6000 GPU. As shown in \cref{fig:efficiency}, PointSS consistently reduces inference time by approximately 22--37\% across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors due to the quadratic memory cost of self-attention, while PointSS continues to operate without constraint, demonstrating that linear complexity provides meaningful scalability advantages in large-patch-size regimes. Larger patch sizes allow each local region to capture richer spatial context, which is particularly beneficial for modeling large planar structures and resolving ambiguous boundaries in complex indoor scenes.
 
 \subsection{Ablation Study}
 
