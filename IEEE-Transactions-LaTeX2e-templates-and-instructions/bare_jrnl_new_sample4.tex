@@ -187,7 +187,7 @@ These limitations motivate the design of PointSS, which we describe in detail in
 
 The overall architecture of the PointSS model is illustrated in \cref{fig:architecture}. After data augmentation, the point cloud is serialized into a 1D sequence\cite{ptv3}. We then employ the Global Geometry-Aware Mechanism (GGAM) to extract explicit geometric priors from the serialized sequence. The feature learning component adopts a U-shaped encoder-decoder architecture. To ensure each patch contains an equal number of points, some points may appear in multiple patches (highlighted in orange). The learned features are subsequently fed into a prediction head to produce the final segmentation or classification results. Compared to PCM, this scheme performs serialization only once at the beginning, enabling downsampling via pooling on the serialized point cloud rather than performing re-serialization at each downsampling stage, thereby avoiding the repeated $\mathcal{O}(N\log N)$ serialization overhead.
 
-\cref{fig:coder} illustrates the encoder architecture. ASD-SSM is integrated into both the encoder and decoder for hierarchical feature learning. The decoder adopts a symmetric structure to the encoder but replaces pooling with upsampling. Through skip connections from encoder stages, the decoder integrates multi-scale features during the upsampling process.
+\cref{fig:coder} illustrates the encoder architecture. ASD-SSM is integrated into both the encoder and decoder for hierarchical feature learning. The decoder adopts a structure symmetric to that of the encoder but replaces pooling with upsampling. Through skip connections from encoder stages, the decoder integrates multi-scale features during the upsampling process.
 
 \begin{figure}[htbp]
 	\centering
@@ -224,7 +224,7 @@ To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to 
 	\label{fig:ggam}
 \end{figure}
 
-Traditional methods for computing geometric relationships (e.g., curvature and surface normals) rely on K-Nearest Neighbor (KNN) searches, which is computationally expensive for large-scale point clouds. Inspired by Point Transformer V3 \cite{ptv3}, which showed that serialization-based windowed neighborhoods can replace KNN while reducing complexity from $\mathcal{O}(N\log N)$ to $\mathcal{O}(N)$ without sacrificing performance, we adopt this construction to enable efficient geometric feature extraction.
+Traditional methods for computing geometric relationships (e.g., curvature and surface normals) rely on K-Nearest Neighbor (KNN) searches, which are computationally expensive for large-scale point clouds. Inspired by Point Transformer V3 \cite{ptv3}, which showed that serialization-based windowed neighborhoods can replace KNN while reducing complexity from $\mathcal{O}(N\log N)$ to $\mathcal{O}(N)$ without sacrificing performance, we adopt this construction to enable efficient geometric feature extraction.
 
 Given the point cloud $\{p_1, p_2, \ldots, p_N\}$, the serialization method sorts these points into a sequence according to a space-filling curve. For example, a Z-order serialization of five points might yield $Q = (p_3, p_5, p_2, p_1, p_4)$, where the index of each point in $Q$ reflects the order in which the curve visits it. In general, let $\pi$ be the permutation induced by the serialization. The serialized sequence is defined as:
 \begin{equation}
@@ -234,7 +234,7 @@ where $q_i := p_{\pi(i)}$ denotes the $i$-th point in the serialized order. The 
 \begin{equation}
 W_m = (q_{(m-1) \cdot 64 + 1}, q_{(m-1) \cdot 64 + 2}, \ldots, q_{m \cdot 64})
 \end{equation}
-where $m = 1, 2, \ldots, \lfloor N/64 \rfloor$ is the window index, and the window size is fixed at 64. A smaller window confines the neighborhood to spatially proximate points, which is essential for accurate estimation of local geometric properties such as surface normals and curvature, while 64 points provides a sufficient sample for stable PCA-based estimation with modest computational overhead. If the last window has fewer than $64$ points, it is padded following the strategy of PTv3~\cite{ptv3}.
+where $m = 1, 2, \ldots, \lfloor N/64 \rfloor$ is the window index, and the window size is fixed at 64, which provides a sufficient neighborhood for stable PCA-based estimation of local geometric properties such as surface normals and curvature. If the last window has fewer than $64$ points, it is padded following the strategy of PTv3~\cite{ptv3}.
 
 For each point $q_i$, its neighborhood $\mathcal{N}(q_i)$ consists of all other points within the same window, forming a fully connected local graph:
 \begin{equation}
@@ -257,7 +257,7 @@ Each edge feature is passed through an MLP, and for each point $q_i$, the output
 \begin{equation}
 \mathbf{H}_i = \frac{1}{|\mathcal{N}(q_i)|} \sum_{q_j \in \mathcal{N}(q_i)} \text{MLP}(\mathbf{f}_{ij})
 \end{equation}
-The resulting feature $\mathbf{H}_i \in \mathbb{R}^C$ encodes the local geometric context of $q_i$. Since Z-order serialization method favors local clustering while Hilbert serialization method better preserves spatial continuity, graph construction runs in parallel on both serializations, yielding two complementary geometric feature vectors $\mathbf{H}_z$ and $\mathbf{H}_h$ per point, which are passed to the second part of GGAM.
+The resulting feature $\mathbf{H}_i \in \mathbb{R}^C$ encodes the local geometric context of $q_i$. Since the Z-order serialization method favors local clustering while the Hilbert serialization method better preserves spatial continuity, graph construction runs in parallel on both serializations, yielding two complementary geometric feature vectors $\mathbf{H}_z$ and $\mathbf{H}_h$ per point, which are passed to the second part of GGAM.
 
 The Geometric Feature Enhancement and Fusion module processes $\mathbf{H}_z$ and $\mathbf{H}_h$ through three sequential steps: self-attention within each stream, cross-attention between streams, and adaptive gated fusion.
 
@@ -310,9 +310,9 @@ $\mathbf{H}_{\text{final}}$ is then passed to subsequent encoders and decoders a
 \subsection{Adaptive Scale-Decoupled State Space Model (ASD-SSM)}
 
 \subsubsection{Overall Scheme}
-ASD-SSM addresses the limitation of input-invariant state transition parameters  by introducing a dynamic parameter generation mechanism that adapts $\bar{A}$ to the local geometric content of each patch. This scale-decoupled design enables fine scales to capture geometric details while coarse scales model semantic context, achieving effective hierarchical representations in a parameter-efficient manner.
+ASD-SSM addresses the limitation of input-invariant state transition parameters  by introducing a dynamic parameter generation mechanism that adapts $\bar{A}$ to the local geometric content of each patch. This scale-decoupled design enables fine scales to capture geometric details while coarse scales model semantic context, achieving effective hierarchical representations.
 
-Notation: $s \in \{1, 2, \ldots, S\}$ denotes the scale index, where $s=1$ represents the finest scale (patch size $P$) and $s=S$ the coarsest (patch size $P \times F_S$). $N$ and $C$ denote the number of points and the feature dimension, respectively.
+Notation: $s \in \{1, 2, \ldots, S\}$ denotes the scale index, where $s=1$ represents the finest scale and $s=S$ the coarsest. $N$ and $C$ denote the number of points and the feature dimension, respectively.
 
 As illustrated in \cref{fig:bss}, the pipeline comprises three stages. First, in \textbf{Window Partitioning}, the serialized sequence is uniformly partitioned into non-overlapping patches; if the last patch has fewer points than the designated patch size, it is padded following the strategy of PTv3~\cite{ptv3}. At scale $s$, the patch size is $P \times F_s$ (with $F_1 = 1$ for the finest scale); for a three-scale configuration ($S=3$), the expansion factors are $F_2=2$ and $F_3=4$. Second, following \cite{pcm}, \textbf{Order Prompting} inserts learnable prompt vectors at the beginning and end of each patch at the finest scale to inform Mamba of the sequence's arrangement rules; at coarser scales, points within each patch are randomly shuffled and no prompts are inserted. At coarse scales, the modeling objective shifts from local geometric structure to global semantic context. Retaining the serialization order at coarse scales allows the model to exploit local sequential patterns as a shortcut, causing coarse-scale features to inadvertently depend on local ordering rather than genuinely aggregating global semantic information. Shuffling removes this shortcut, forcing the model to build global representations from feature content alone. Third, \textbf{Multi-scale Feature Modeling}—the core contribution of ASD-SSM—processes each scale through a bidirectional Mamba whose state transition parameters $\bar{A}$ are dynamically adapted to the local geometric content of each patch by a scale-aware parameter generator. After feature extraction across all scales, the representations are concatenated channel-wise and projected back to $C$ dimensions via a linear layer and an MLP, yielding the final point cloud representation $\text{Points}' \in \mathbb{R}^{N \times C}$.
 
@@ -341,7 +341,7 @@ To directly constrain the value range of $\bar{A}_s$, the output of the paramete
 \begin{equation}
 \hat{A}_s^{\text{raw}} = \sigma(\lambda \cdot \text{MLP}([\tilde{\mathbf{f}}_{\text{global}}^{(s)} \| \mathbf{e}_s]))
 \end{equation}
-where $\sigma(\cdot)$ is the sigmoid activation function, $\|$ denotes concatenation, and $\lambda$ is a scaling factor (set to 0.1 in experiments) that scales the MLP output before the sigmoid. Then, the scale constraint factor $\alpha_s$ serves as an upper bound to directly control the value range of $\bar{A}_s$:
+where $\sigma(\cdot)$ is the sigmoid activation function, $\|$ denotes concatenation, and $\lambda$ is a temperature parameter (set to 0.1) that controls the sensitivity of the MLP output prior to sigmoid activation. Then, the scale constraint factor $\alpha_s$ serves as an upper bound to directly control the value range of $\bar{A}_s$:
 \begin{equation}
 \bar{A}_s = \alpha_s \cdot \hat{A}_s^{\text{raw}}
 \end{equation}
