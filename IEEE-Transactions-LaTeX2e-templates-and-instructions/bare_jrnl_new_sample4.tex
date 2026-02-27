@@ -70,12 +70,15 @@ due to their linear complexity. However, serializing 3D point clouds into
 in \cref{fig:analysis}, some neighboring points can be far apart
 after serialization---points that are spatially close may become
 distant in the sequence. Such a loss of
-proximity is difficult to mitigate in Mamba's recurrent mechanism,
-where the contribution from distant points diminishes before reaching
-the current position, preventing effective modeling of local geometric
-features such as surface normals and curvature. This issue is exacerbated at object boundaries (e.g., wall-pillar junctions), where
-spatially adjacent points may be far apart in the serialized sequence,
-making their context crucial for accurate segmentation.
+proximity is difficult to mitigate in Mamba's recurrent mechanism:
+as spatially adjacent points often fall far apart after serialization,
+information between them decays before reaching each other's states,
+preventing the model from effectively capturing local geometric
+structures such as surface normals and curvature. This issue is
+particularly pronounced at object boundaries (e.g., wall-pillar
+junctions), where accurate segmentation depends critically on
+interactions between spatially proximate points that are far apart
+after serialization.
 
 
 
