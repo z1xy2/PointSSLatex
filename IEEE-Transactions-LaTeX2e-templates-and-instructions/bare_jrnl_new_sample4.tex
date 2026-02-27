@@ -374,7 +374,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mean Intersection over Union (mIoU) on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 1.8\% and the SSM-based PCM by 5.4\%. Furthermore, PointSS retains the linear time complexity of SSMs. As shown in \cref{fig:efficiency}, compared to PTv3 under identical FP32 precision, PointSS achieves approximately 25\% reduction in inference time across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors, while PointSS continues to operate normally, demonstrating the scalability advantage of linear SSM complexity over quadratic attention.
+\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mean Intersection over Union (mIoU) on Area 5, outperforming all methods in the comparison. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 1.8\% and the SSM-based PCM by 5.4\%. Furthermore, PointSS retains the linear time complexity of SSMs. As shown in \cref{fig:efficiency}, compared to PTv3 under identical FP32 precision, PointSS achieves approximately 25\% reduction in inference time across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors, while PointSS continues to operate normally, demonstrating the scalability advantage of linear SSM complexity over quadratic attention.
 
 \begin{table}[!t]
 \centering
@@ -394,13 +394,13 @@ CVPR24 & Point Transformer V3\cite{ptv3} & Transformer & 73.4 \\
 AAAI25 & PCM$^\dagger$\cite{pcm} & SSM & 69.8 \\
 Mathematics24 & PointMSGT\cite{pointmsgt} & Transformer & 68.6 \\
 Sci. Rep.25 & PointGA\cite{pointga} & Transformer & 66.2 \\
-& PointSS & SSM & \textbf{75.2} \\ \bottomrule
+Ours & PointSS & SSM & \textbf{75.2} \\ \bottomrule
 \end{tabular}
 \end{table}
 
 \subsubsection{Experiment Results on the ModelNet40 Dataset}
 
-\cref{tab:ModelNet} summarizes the classification performance on ModelNet40. PointSS achieves an Overall Accuracy (OA) of 94.6\% without pre-training, surpassing all SSM-based counterparts including Mamba3D (94.1\%) and PointMamba (93.6\%), while remaining competitive with Transformer-based methods. Note that on this near-saturated benchmark, most methods cluster within a narrow accuracy range, and marginal differences are within experimental variance.
+\cref{tab:ModelNet} summarizes the classification performance on ModelNet40. PointSS achieves an Overall Accuracy (OA) of 94.6\%, surpassing all SSM-based counterparts including Mamba3D and PointMamba, while remaining competitive with Transformer-based methods. Note that on this near-saturated benchmark, most methods cluster within a narrow accuracy range, and marginal gains of this magnitude should not be over-interpreted.
 
 \begin{table}[!t]
 \centering
@@ -416,7 +416,7 @@ NIPS24 & PointMamba \cite{PointMamba} & SSM & 93.6 \\
 TIP25 & OTMae3D \cite{OTMae3D} & Transformer & 94.5 \\
 AAAI25 & PCM \cite{pcm} & SSM & 93.4 \\
 Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
-& PointSS & SSM & \textbf{94.6} \\ \bottomrule
+Ours & PointSS & SSM & \textbf{94.6} \\ \bottomrule
 \end{tabular}
 \end{table}
 
@@ -464,7 +464,7 @@ Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
 \label{fig:efficiency}
 \end{figure}
 
-To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3 under identical conditions: FP32 precision, batch size 1, on an NVIDIA A6000 GPU. As shown in \cref{fig:efficiency}, PointSS consistently reduces inference time by approximately 22--37\% across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors due to the quadratic memory cost of self-attention, while PointSS continues to operate without constraint, demonstrating that linear complexity provides meaningful scalability advantages in large-patch-size regimes. Larger patch sizes allow each local region to capture richer spatial context, which is particularly beneficial for modeling large planar structures and resolving ambiguous boundaries in complex indoor scenes.
+To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3 under identical conditions: FP32 precision, batch size 1, on an NVIDIA A6000 GPU. As shown in \cref{fig:efficiency}, PointSS consistently reduces inference time by approximately 22--37\% across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors due to the quadratic memory cost of self-attention, while PointSS continues to operate without constraint, demonstrating that linear complexity provides meaningful scalability advantages in large-patch-size regimes.
 
 \subsection{Ablation Study}
 
