@@ -226,7 +226,7 @@ where $m = 1, 2, \ldots, \lfloor N/64 \rfloor$ is the window index, and the wind
 
 For each point $q_i$, its neighborhood $\mathcal{N}(q_i)$ consists of all other points within the same window, forming a fully connected local graph:
 \begin{equation}
-\mathcal{N}(q_i) = \left\{q_j : q_j \in W_{\lceil i/128 \rceil},\ j \neq i\right\}
+\mathcal{N}(q_i) = \left\{q_j : q_j \in W_{\lceil i/64 \rceil},\ j \neq i\right\}
 \end{equation}
 
 For each pair $(q_i, q_j)$ with $q_j \in \mathcal{N}(q_i)$, an 8-dimensional geometric feature vector is extracted:
@@ -348,7 +348,7 @@ Through these mechanisms, ASD-SSM achieves scale-decoupled state-space modeling:
 
 We conduct experiments for point cloud analysis on the indoor semantic segmentation dataset S3DIS and the 3D object classification dataset ModelNet40. All experiments were performed on an Nvidia A6000 GPU. For network training, we employed the AdamW optimizer and the OneCycleLR learning rate scheduler, with an initial maximum learning rate of $6 \times 10^{-3}$. The scheduling mechanism included a linear warm-up phase followed by a cosine annealing cycle. The model was trained for 3000 epochs with a batch size of 6, utilizing Automatic Mixed Precision (AMP) to enhance training efficiency.
 
-In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The patch size was uniformly set to 128. We employ cross-entropy as the loss function, which is widely used for classification and segmentation tasks.
+In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The patch size was uniformly set to 256. We employ cross-entropy as the loss function, which is widely used for classification and segmentation tasks.
 
 PointSS is trained from scratch without pre-training, so that performance gains can be attributed to architectural design rather than pre-training strategies.
 
