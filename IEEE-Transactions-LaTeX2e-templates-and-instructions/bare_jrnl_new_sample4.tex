@@ -668,7 +668,11 @@ These qualitative results are consistent with the trends observed in the quantit
 
 \section{Conclusion}
 
-This paper presents PointSS, a geometry-aware multi-scale framework for point cloud analysis built upon State Space Models. GGAM addresses the loss of spatial proximity caused by serialization through windowed neighborhood modeling and dual-serialization fusion, providing reliable geometric guidance throughout the network. ASD-SSM addresses the input-invariant limitation by adapting $\bar{A}$ to local geometric characteristics at each scale, enabling effective hierarchical representations. Experiments on semantic segmentation and 3D object classification benchmarks demonstrate state-of-the-art performance, with particular improvements in boundary regions and fine-grained structures, suggesting that combining explicit geometric priors with adaptive sequence modeling is a promising direction for 3D point cloud analysis.
+This paper presents PointSS, a geometry-aware multi-scale framework for point cloud analysis built upon State Space Models. GGAM and ASD-SSM address the two key limitations of existing SSM-based methods—serialization-induced spatial proximity loss and input-invariant state transition parameters—respectively. Experiments on S3DIS and ModelNet40 demonstrate state-of-the-art segmentation performance and competitive classification accuracy.
+
+Despite these contributions, PointSS has several limitations. The scale constraint factors $\alpha_s$ are manually specified as fixed hyperparameters, which may require task-specific tuning when generalizing to new datasets or point cloud distributions. In addition, the dual-serialization design in GGAM introduces additional computational overhead compared to single-stream methods. Furthermore, PointSS has only been evaluated on indoor scene segmentation and synthetic object classification benchmarks; its effectiveness on outdoor LiDAR datasets (e.g., SemanticKITTI) remains to be verified.
+
+Future work will explore automatically learning the scale constraint factors to reduce the need for manual tuning. Extending PointSS to large-scale outdoor datasets and investigating more efficient geometric feature fusion strategies are also directions we intend to pursue.
 
 \bibliographystyle{IEEEtran}
 \bibliography{../ref}
