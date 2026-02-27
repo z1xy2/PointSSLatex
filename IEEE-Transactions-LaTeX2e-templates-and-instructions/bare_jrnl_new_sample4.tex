@@ -614,7 +614,7 @@ ASD-SSM (Ours) & 75.2 \\
 
 We systematically investigate the number of scales $S$ and window expansion configurations (\Cref{tab:scale_config}), confirming the necessity of hierarchical multi-scale modeling. Introducing a second scale consistently improves over the single-scale baseline, with the best 2-scale result reaching 73.8\%. Incorporating a third scale yields a further improvement, with the best 3-scale configuration achieving 75.2\%. This suggests that a three-level hierarchy---local, intermediate, and global---provides comprehensive structural representation.
 
-Regarding window size expansion, moderate increases in the expansion factor enhance context modeling, whereas excessively large windows tend to wash out local geometric detail. Although a four-scale configuration yields a marginal additional gain of 0.2\%, it incurs substantially longer training time with diminishing returns. Consequently, the three-scale configuration with expansion factors $(1, 2, 3)$ represents the optimal trade-off between performance and efficiency.
+Regarding window size expansion, moderate increases in the expansion factor enhance context modeling, whereas excessively large windows tend to wash out local geometric detail. Although a four-scale configuration yields a marginal additional gain of 0.2\%, it incurs substantially longer training time with diminishing returns. Consequently, the three-scale configuration with expansion factors $(1, 2, 4)$ represents the optimal trade-off between performance and efficiency.
 
 \begin{table}[!t]
 \centering
@@ -629,8 +629,8 @@ Regarding window size expansion, moderate increases in the expansion factor enha
 2 & (1,3) & 40h & 73.8 \\
 2 & (1,4) & 40h & 73.1 \\
 3 & (1,2,2) & 45h & 75.0 \\
-3 & (1,2,3) & 46h & 75.2 \\
-3 & (1,2,4) & 46h & 75.1 \\
+3 & (1,2,3) & 46h & 75.0 \\
+3 & (1,2,4) & 46h & 75.2 \\
 3 & (1,3,3) & 45h & 74.8 \\
 4 & (1,2,2,2) & 53h & 75.2 \\
 4 & (1,2,2,3) & 54h & 75.4 \\
