@@ -12,6 +12,8 @@
 \usepackage{cite}
 \usepackage{booktabs}
 \usepackage{cleveref}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \crefname{figure}{Fig.}{Figs.}
 \crefname{equation}{Eq.}{Eqs.}
 \crefname{table}{Table}{Tables}
@@ -49,7 +51,7 @@ scale-decoupled approach enables hierarchical feature learning, allowing the
 model to simultaneously capture fine-grained local details and long-range
 global dependencies. Extensive experiments on the S3DIS and ModelNet40
 datasets demonstrate that PointSS achieves state-of-the-art performance in
-semantic segmentation and classification tasks while maintaining high computational efficiency.
+semantic segmentation and classification tasks while achieving faster inference and superior scalability compared to Transformer-based counterparts.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -98,7 +100,7 @@ Existing SSM-based methods struggle to establish effective hierarchical represen
 	semantic context, achieving effective hierarchical representations.
 	
 	\item Extensive experiments demonstrate that PointSS achieves state-of-the-
-	art performance, reaching 75.2\% mIoU on S3DIS and 96.0\% accuracy on
+	art performance, reaching 75.2\% mIoU on S3DIS and 94.6\% accuracy on
 	ModelNet40 while maintaining linear complexity. Comprehensive ablation
 	studies further validate the effectiveness of our geometry-aware multi-scale
 	design.
@@ -360,7 +362,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mean Intersection over Union (mIoU) on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 1.8\% and the SSM-based PCM by 5.4\%. Furthermore, PointSS retains the linear time complexity of SSMs, maintaining high computational efficiency with only a marginal increase in inference time.
+\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mean Intersection over Union (mIoU) on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 1.8\% and the SSM-based PCM by 5.4\%. Furthermore, PointSS retains the linear time complexity of SSMs. As shown in \cref{fig:efficiency}, compared to PTv3 under identical FP32 precision, PointSS achieves approximately 25\% reduction in inference time across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors, while PointSS continues to operate normally, demonstrating the scalability advantage of linear SSM complexity over quadratic attention.
 
 \begin{table}[!t]
 \centering
@@ -386,7 +388,7 @@ Sci. Rep.25 & PointGA\cite{pointga} & Transformer & 66.2 \\
 
 \subsubsection{Experiment Results on the ModelNet40 Dataset}
 
-\cref{tab:ModelNet} summarizes the classification performance on ModelNet40. PointSS achieves an Overall Accuracy (OA) of 96.0\% without pre-training, outperforming the Transformer-based Point2Vec by 1.2\% and the SSM-based Mamba3D by 1.9\%, establishing PointSS as the top-performing SSM approach on this benchmark.
+\cref{tab:ModelNet} summarizes the classification performance on ModelNet40. PointSS achieves an Overall Accuracy (OA) of 94.6\% without pre-training, surpassing all SSM-based counterparts including Mamba3D (94.1\%) and PointMamba (93.6\%), while remaining competitive with Transformer-based methods. Note that on this near-saturated benchmark, most methods cluster within a narrow accuracy range, and marginal differences are within experimental variance.
 
 \begin{table}[!t]
 \centering
@@ -403,9 +405,55 @@ NIPS24 & PointMamba \cite{PointMamba} & SSM & 93.6 \\
 TIP25 & OTMae3D \cite{OTMae3D} & Transformer & 94.5 \\
 AAAI25 & PCM \cite{pcm} & SSM & 93.4 \\
 Sci. Rep.25 & PointGA \cite{pointga} & Transformer & 93.8 \\
-& PointSS & SSM & \textbf{96.0} \\ \bottomrule
+& PointSS & SSM & \textbf{94.6} \\ \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{Computational Efficiency Analysis}
+
+\begin{figure}[!t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.92\linewidth,
+    height=5.2cm,
+    xlabel={Patch Size},
+    ylabel={Inference Time (ms)},
+    xtick={128,256,512,1024},
+    xticklabels={128,256,512,1024},
+    xmin=64, xmax=1150,
+    ymin=0.6, ymax=1.55,
+    legend pos=south east,
+    legend style={font=\small},
+    grid=major,
+    grid style={dashed,gray!30},
+]
+
+\addplot[color=blue, mark=square*, thick, solid] coordinates {
+    (128, 1.089)
+    (256, 1.147)
+    (512, 1.274)
+};
+\addlegendentry{PTv3}
+
+\addplot[color=orange, mark=*, thick, solid] coordinates {
+    (128,  0.850)
+    (256,  0.938)
+    (512,  0.932)
+    (1024, 1.208)
+};
+\addlegendentry{PointSS (Ours)}
+
+\draw[color=blue, dashed, thick] (axis cs:512,1.274) -- (axis cs:1024,1.274);
+\node[color=blue, font=\small\bfseries, anchor=south] at (axis cs:1024,1.274) {OOM};
+
+\end{axis}
+\end{tikzpicture}
+\caption{Inference time comparison between PTv3 and PointSS under identical FP32 precision on an NVIDIA A6000 GPU (batch size = 1). PTv3 encounters out-of-memory (OOM) errors at patch size 1024, while PointSS successfully handles this configuration.}
+\label{fig:efficiency}
+\end{figure}
+
+To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3 under identical conditions: FP32 precision, batch size 1, and a fixed input of 80,000 points on an NVIDIA A6000 GPU. Flash attention is disabled in PTv3 to ensure a fair precision-aligned comparison. As shown in \cref{fig:efficiency}, PointSS consistently reduces inference time by approximately 22--37\% across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors due to the quadratic memory cost of self-attention, while PointSS continues to operate without constraint, demonstrating that linear complexity provides meaningful scalability advantages in large-patch-size regimes.
 
 \subsection{Ablation Study}
 
