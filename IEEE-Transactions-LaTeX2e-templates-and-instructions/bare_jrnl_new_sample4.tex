@@ -172,13 +172,14 @@ state transitions to all points—processing flat surfaces and sharp boundaries
 with the same transition dynamics—preventing adaptation to local geometric
 variations. Furthermore, allocating independent parameters for each scale
 incurs substantial parameter growth and memory overhead.
+These limitations motivate the design of PointSS, which we describe in detail in the following section.
 
 
 \section{Method}
 
 \subsection{Framework Overview}
 
-The overall architecture of the PointSS model is illustrated in \cref{fig:architecture}. After data augmentation, the point cloud is serialized into a 1D sequence\cite{ptv3}. We then employ the Global Geometry-Aware Mechanism (GGAM) to extract explicit geometric priors from the serialized sequence. The feature learning component adopts a PointNet-based U-shaped encoder-decoder architecture. To ensure each patch contains an equal number of points, some points may appear in multiple patches (highlighted in orange). The learned features are subsequently fed into a prediction head to produce the final segmentation or classification results. Compared to PCM, this scheme performs serialization only once at the beginning, enabling  downsampling via pooling on the serialized point cloud rather than performing re-serialization at each downsampling stage. This approach significantly reduces computational complexity.
+The overall architecture of the PointSS model is illustrated in \cref{fig:architecture}. After data augmentation, the point cloud is serialized into a 1D sequence\cite{ptv3}. We then employ the Global Geometry-Aware Mechanism (GGAM) to extract explicit geometric priors from the serialized sequence. The feature learning component adopts a U-shaped encoder-decoder architecture. To ensure each patch contains an equal number of points, some points may appear in multiple patches (highlighted in orange). The learned features are subsequently fed into a prediction head to produce the final segmentation or classification results. Compared to PCM, this scheme performs serialization only once at the beginning, enabling  downsampling via pooling on the serialized point cloud rather than performing re-serialization at each downsampling stage. This approach significantly reduces computational complexity.
 
 \cref{fig:coder} illustrates the encoder architecture. ASD-SSM is integrated into both the encoder and decoder for hierarchical feature learning. The decoder adopts a symmetric structure to the encoder but replaces pooling with upsampling. Through skip connections from encoder stages, the decoder integrates multi-scale features during the upsampling process.
 
@@ -297,7 +298,7 @@ Since the two streams are constructed over different serialization-induced windo
 \mathbf{H}_{\text{final}} = \mathbf{H}_{\text{fused}} \odot \gamma
 \end{equation}
 
-$\mathbf{H}_{\text{final}}$ is then passed to subsequent network as the geometry-aware point representation.
+$\mathbf{H}_{\text{final}}$ is then passed to subsequent encoders and decoders as the geometry-aware point representation.
 
 
 \subsection{Adaptive Scale-Decoupled State Space Model (ASD-SSM)}
