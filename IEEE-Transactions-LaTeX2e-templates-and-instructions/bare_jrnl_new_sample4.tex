@@ -61,7 +61,7 @@ Geometry-Aware Feature Learning, Multi-Scale Representation, Point Cloud Seriali
 \end{IEEEkeywords}
 
 \section{Introduction}
-\IEEEPARstart{P}{oint} clouds are fundamental for 3D perception but pose a challenge to feature extraction due to their sparsity and unstructured nature. Pioneering works such as PointNet and PointNet++ \cite{pointnet,PointNet++} established efficient point-wise processing paradigms. Despite efficiency, their limited ability to capture local structures often leads to sub-optimal prediction accuracy. To address this limitation, Transformers \cite{pt,ptv2,ptv3} subsequently improved semantic representation via self-attention; however, their quadratic complexity $\mathcal{O}(N^2)$ creates scalability bottlenecks.
+\IEEEPARstart{P}{oint} clouds serve as a primary representation for 3D scene understanding but present challenges for feature extraction owing to their sparse and unstructured nature. Pioneering works such as PointNet and PointNet++ \cite{pointnet,PointNet++} established efficient point-wise processing paradigms. Despite their efficiency, their limited ability to capture local structures often leads to sub-optimal prediction accuracy. To address this limitation, Transformers \cite{pt,ptv2,ptv3} subsequently improved semantic representation via self-attention; however, their quadratic complexity $\mathcal{O}(N^2)$ creates scalability bottlenecks.
 
   Recently, State Space Models (SSMs) \cite{ssm,Mamba}, exemplified by
 PointMamba \cite{PointMamba} and PCM \cite{pcm}, have gained attention
@@ -85,7 +85,9 @@ making their context crucial for accurate segmentation.
 	\caption{Visualization of the loss of spatial proximity after serialization. Left: Point sequence after serialization. Right: Segmentation prediction results.}
 	\label{fig:analysis}
 \end{figure}
-Existing SSM-based methods struggle to establish effective hierarchical representations. Specifically, single-scale models (e.g., PointMamba ) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context. Conversely, hierarchical approaches (e.g., PCM ) allocate separate parameters for each downsampled scale. However, their state transition parameters remain input-invariant across spatial locations. This means the network applies the exact same feature aggregation rules across an entire scale, failing to adapt to varying local geometric characteristics—for instance, processing flat surfaces and sharp boundaries identically. Furthermore, allocating independent parameters for every scale introduces parameter growth and memory overhead. Consequently, the lack of dynamic, geometry-aware parameterization fundamentally limits the capacity of existing SSMs to accurately model complex 3D scenes.
+Existing SSM-based methods struggle to establish effective hierarchical representations. Single-scale models (e.g., PointMamba) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context.
+
+Hierarchical approaches (e.g., PCM) allocate separate parameters for each downsampled scale. However, their state transition parameters remain input-invariant across spatial locations. This means the network applies identical feature aggregation rules across an entire scale, failing to adapt to varying local geometric characteristics---for instance, processing flat surfaces and sharp boundaries with the same transition dynamics. Furthermore, allocating independent parameters for every scale introduces parameter growth and memory overhead. Consequently, the lack of dynamic, geometry-aware parameterization limits the capacity of existing SSMs to accurately model complex 3D scenes.
 
 
 To address these limitations, we propose PointSS, a geometry-aware
@@ -105,11 +107,11 @@ analysis. The main contributions of this work are as follows:
 	enables fine scales to capture geometric details while coarse scales model
 	semantic context, achieving effective hierarchical representations.
 	
-	\item Extensive experiments demonstrate that PointSS achieves state-of-the-
-	art performance, reaching 75.2\% mIoU on S3DIS and 94.6\% accuracy on
-	ModelNet40 while maintaining linear complexity. Comprehensive ablation
-	studies further validate the effectiveness of our geometry-aware multi-scale
-	design.
+	\item Extensive experiments demonstrate that PointSS achieves state-of-the-art
+	semantic segmentation on S3DIS (75.2\% mIoU) and outperforms all SSM-based
+	counterparts on ModelNet40 (94.6\% OA), while maintaining linear complexity.
+	Comprehensive ablation studies further validate the effectiveness of our
+	geometry-aware multi-scale design.
 \end{enumerate}
 Code will be released at https://github.com/z1xy2/PointSS-public.git
 
