@@ -38,7 +38,7 @@
 \maketitle
 
 \begin{abstract}
-  Recently, State Space Models (SSMs) have exhibited strong global modeling
+  Recently, State Space Models (SSMs) have demonstrated strong global modeling
 capabilities and linear computational complexity for point cloud analysis.
 However, they often suffer from the loss of spatial proximity and insufficient
 hierarchical feature representations due to serializing 3D point clouds into
@@ -47,11 +47,13 @@ geometry-aware multi-scale state space framework. PointSS explicitly injects
 geometric priors to alleviate the loss of spatial proximity. Leveraging these
 geometric priors, we design an Adaptive Scale-Decoupled State Space Model
 (ASD-SSM) featuring a dynamic parameter generation mechanism. This
-scale-decoupled approach enables hierarchical feature learning, allowing the
-model to simultaneously capture fine-grained local details and long-range
-global dependencies. Extensive experiments on the S3DIS and ModelNet40
-datasets demonstrate that PointSS achieves state-of-the-art performance in
-semantic segmentation and classification tasks while achieving faster inference and superior scalability compared to Transformer-based counterparts.
+scale-decoupled approach enables hierarchical feature learning, with fine scales
+capturing local geometric details and coarse scales modeling global semantic
+context. Extensive experiments demonstrate that PointSS achieves state-of-the-art
+semantic segmentation performance on S3DIS and competitive classification
+accuracy on ModelNet40, outperforming all SSM-based counterparts. Compared to Transformer-based counterparts, PointSS
+achieves faster inference and remains operational at large patch sizes where
+attention-based methods encounter memory limitations.
 \end{abstract}
 
 \begin{IEEEkeywords}
