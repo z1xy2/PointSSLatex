@@ -87,6 +87,11 @@ making their context crucial for accurate segmentation.
 Existing SSM-based methods struggle to establish effective hierarchical representations. Specifically, single-scale models (e.g., PointMamba ) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context. Conversely, hierarchical approaches (e.g., PCM ) allocate separate parameters for each downsampled scale. However, their state transition parameters remain input-invariant across spatial locations. This means the network applies the exact same feature aggregation rules across an entire scale, failing to adapt to varying local geometric characteristics—for instance, processing flat surfaces and sharp boundaries identically. Furthermore, allocating independent parameters for every scale introduces prohibitive parameter growth and  memory overhead. Consequently, the lack of dynamic, geometry-aware parameterization fundamentally limits the capacity of existing SSMs to accurately model complex 3D scenes.
 
 
+To address these limitations, we propose PointSS, a geometry-aware
+multi-scale state space framework that explicitly injects geometric
+priors and employs adaptive scale-decoupled parameterization for point cloud
+analysis. The main contributions of this work are as follows:
+
   \begin{enumerate}
 	\item We propose a Global Geometry-Aware Mechanism (GGAM) that injects
 	explicit geometric priors through windowed neighborhoods and dual-
