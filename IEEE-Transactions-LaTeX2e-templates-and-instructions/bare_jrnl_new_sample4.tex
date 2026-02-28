@@ -51,8 +51,8 @@ scale-decoupled approach enables hierarchical feature learning, with fine scales
 capturing local geometric details and coarse scales modeling global semantic
 context. Extensive experiments demonstrate that PointSS achieves state-of-the-art
 semantic segmentation performance on S3DIS and competitive classification
-accuracy on ModelNet40, outperforming all SSM-based counterparts. Compared to Transformer-based counterparts, PointSS
-achieves faster inference and remains operational at large patch sizes where
+accuracy on ModelNet40, outperforming all SSM-based counterparts. Compared to Point Transformer V3, PointSS
+achieves 22--37\% faster inference and remains operational at large patch sizes where
 attention-based methods encounter memory limitations.
 \end{abstract}
 
@@ -550,7 +550,7 @@ Category-wise analysis (\Cref{tab:ggam_category}) further confirms that categori
 \end{table*}
 
 We further ablate the components of GGAM (\Cref{tab:ggam_components}) to verify their individual contributions.
-Introducing dual-serialization alone yields limited improvement or even slight fluctuation, as different serialization methods may introduce biases without an effective fusion strategy. Adding cross-sequence attention further yields a marked improvement, demonstrating that cross-sequence interaction plays a role in aligning complementary geometric information across different serialization patterns. Incorporating the gated fusion mechanism further refines the fused representation by adaptively balancing contributions from the two serialization branches. Adding the geometric consistency gate yields a further gain, as it derives a scalar gate from both streams to modulate the fused output, mitigating cross-stream inconsistencies.
+Introducing dual-serialization alone leads to a slight performance drop, as different serialization methods introduce complementary but potentially conflicting neighborhood biases without an effective fusion strategy to reconcile them. Adding cross-sequence attention further yields a marked improvement, demonstrating that cross-sequence interaction plays a role in aligning complementary geometric information across different serialization patterns. Incorporating the gated fusion mechanism further refines the fused representation by adaptively balancing contributions from the two serialization branches. Adding the geometric consistency gate yields a further gain, as it derives a scalar gate from both streams to modulate the fused output, mitigating cross-stream inconsistencies.
 
 The full combination demonstrates that these components function as a coherent whole to mitigate serialization-induced spatial proximity loss.
 
