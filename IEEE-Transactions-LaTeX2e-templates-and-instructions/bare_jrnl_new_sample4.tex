@@ -78,7 +78,7 @@ after serialization.
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\linewidth]{../picture/analysis.JPG}
+	\includegraphics[width=\linewidth]{picture/analysis.JPG}
 	\caption{Visualization of the loss of spatial proximity after serialization. Left: Point sequence after serialization. Right: Segmentation prediction results.}
 	\label{fig:analysis}
 \end{figure}
@@ -181,7 +181,7 @@ The overall architecture of the PointSS model is illustrated in \cref{fig:archit
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\linewidth]{../picture/architecture.jpg}
+	\includegraphics[width=\linewidth]{picture/architecture.jpg}
 	\caption{The overview of the proposed PointSS. The encoder and decoder employ a patch-based strategy for point cloud upsampling and down-sampling. The notation (number of points, feature dimension) in Feature Learning indicates the tensor shape at each stage.}
 	\label{fig:architecture}
 \end{figure}
@@ -189,7 +189,7 @@ The overall architecture of the PointSS model is illustrated in \cref{fig:archit
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\linewidth]{../picture/coder.JPG}
+	\includegraphics[width=\linewidth]{picture/coder.JPG}
 	\caption{Detailed structure of the encoder module.}
 	\label{fig:coder}
 \end{figure}
@@ -209,7 +209,7 @@ To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to 
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\linewidth]{../picture/ggam.jpg}
+	\includegraphics[width=\linewidth]{picture/ggam.jpg}
 	\caption{Architecture of the Global Geometry-Aware Mechanism (GGAM).}
 	\label{fig:ggam}
 \end{figure}
@@ -308,7 +308,7 @@ As illustrated in \cref{fig:bss}, the pipeline comprises three stages. First, in
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\linewidth]{../picture/BSS.JPG}
+	\includegraphics[width=\linewidth]{picture/BSS.JPG}
 	\caption{Detailed pipeline of the Adaptive Scale-Decoupled State Space Model (ASD-SSM).}
 	\label{fig:bss}
 \end{figure}
@@ -651,7 +651,7 @@ These qualitative results are consistent with the trends observed in the quantit
 
 \begin{figure*}[!t]
 	\centering
-	\includegraphics[width=\textwidth]{../picture/visualize.JPG}
+	\includegraphics[width=\textwidth]{picture/visualize.JPG}
 	\caption{Qualitative comparison of semantic segmentation results on four representative indoor scenes (Area 5 of S3DIS).}
 	\label{fig:vis}
 \end{figure*}
@@ -665,6 +665,6 @@ Despite these contributions, PointSS has several limitations. The scale constrai
 Future work will explore automatically learning the scale constraint factors to reduce the need for manual tuning. Extending PointSS to large-scale outdoor datasets and investigating more efficient geometric feature fusion strategies are also directions we intend to pursue.
 
 \bibliographystyle{IEEEtran}
-\bibliography{../ref}
+\bibliography{ref}
 
 \end{document}
