@@ -107,11 +107,11 @@
 
 针对上述问题，本文提出PointSS，一种基于几何感知的多尺度状态空间点云分析方法。为缓解序列化引发的空间邻域丢失问题，本文提出全局几何感知机制（GGAM）。GGAM通过窗口化邻域高效提取相对位置、法向量和曲率等几何先验，并结合双序列化并行建模与跨序列注意力机制，将几何信息显式注入到Mamba的状态传递过程中。
 
-为解决状态转移参数输入无关的问题，本文设计了自适应尺度解耦状态空间模型（ASD-SSM）。ASD-SSM通过动态参数生成机制，依据各尺度的局部几何内容自适应生成状态转移参数，并利用尺度约束因子引导细尺度关注局部几何细节、粗尺度建模全局语义依赖，从而构建层次化的特征表示。
+为解决现有SSM在多尺度点云特征提取中层次化建模能力不足的问题，本文设计了自适应尺度解耦状态空间模型（ASD-SSM）。其根本原因在于传统SSM的状态转移参数与输入无关，无法针对不同尺度的几何内容自适应调整。ASD-SSM通过动态参数生成机制，依据各尺度的局部几何内容自适应生成状态转移参数，并利用尺度约束因子引导细尺度关注局部几何细节、粗尺度建模全局语义依赖，从而构建层次化的特征表示。
 
 在空域建模的基础上，本文进一步提出基于Chebyshev多项式近似的频谱状态空间模型（Chebyshev Spectral SSM），从频域视角与前述空域方法形成互补。该方法利用Chebyshev多项式对图拉普拉斯算子进行高效频谱分解，将点云特征分离为多个频段，并为每个频段配备独立的Mamba模块进行差异化建模，通过可学习的权重自适应融合多频段特征，使模型能够同时感知平滑的全局结构与剧烈变化的局部细节。
 
-在S3DIS室内语义分割基准上，PointSS在不依赖预训练的条件下达到75.2\% mIoU，超越当前最优SSM方法PCM 5.4\%；在ModelNet40三维分类基准上达到94.6\%整体精度，超越所有SSM类对比方法。消融实验进一步验证了各模块设计的有效性。
+在S3DIS室内语义分割基准上，PointSS在不依赖预训练的条件下达到75.9\% mIoU，超越当前最优SSM方法PCM 5.4\%；在ModelNet40三维分类基准上达到94.6\%整体精度，超越所有SSM类对比方法。消融实验进一步验证了各模块设计的有效性。
 
 \vspace{1em}
 \noindent\textbf{关键词：}点云分析；状态空间模型；几何感知；多尺度特征学习；频谱图信号处理
@@ -120,15 +120,15 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-Point clouds serve as a primary representation for 3D scene understanding but present inherent challenges due to their sparse and unstructured nature. State Space Models (SSMs) have demonstrated promising global modeling capabilities and linear computational complexity for point cloud analysis. However, serializing 3D point clouds into 1D sequences inevitably disrupts spatial proximity—spatially adjacent points often become distant in the sequence, weakening the model's ability to capture local geometric structures. Moreover, the state transition parameters in existing SSM-based methods remain input-invariant, preventing adaptation to the distinct modeling requirements at different scales.
+Point clouds serve as a primary representation for 3D scene understanding but present inherent challenges due to their sparse and unstructured nature. State Space Models (SSMs) have demonstrated promising global modeling capabilities and linear computational complexity for point cloud analysis. However, serializing 3D point clouds into 1D sequences inevitably disrupts spatial proximity—spatially adjacent points often become distant in the sequence, weakening the model's ability to capture local geometric structures. Moreover, the state transition parameters in existing SSM-based methods remain input-invariant, preventing adaptation to the distinct modeling requirements at different scales, thereby limiting the construction of hierarchical feature representations.
 
 To address these limitations, this paper proposes PointSS, a geometry-aware multi-scale state space framework for point cloud analysis. To mitigate serialization-induced spatial proximity loss, we propose a Global Geometry-Aware Mechanism (GGAM). GGAM efficiently extracts geometric priors—including relative positions, surface normals, and curvatures—via windowed neighborhoods, and explicitly injects them into Mamba's state propagation through dual-serialization parallel modeling and cross-sequence attention.
 
-To overcome input-invariant state transition parameters, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM). Through a dynamic parameter generation mechanism, ASD-SSM adapts state transition parameters to the local geometric content of each patch at each scale. Scale constraint factors guide fine scales toward capturing local geometric details while coarse scales model long-range semantic context, enabling effective hierarchical feature representations.
+To address the insufficient hierarchical modeling capability of existing SSMs in multi-scale point cloud feature extraction, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM). The root cause lies in the input-invariant nature of state transition parameters in conventional SSMs, which prevents adaptive adjustment to the geometric content at different scales. Through a dynamic parameter generation mechanism, ASD-SSM adapts state transition parameters to the local geometric content of each scale. Scale constraint factors guide fine scales toward capturing local geometric details while coarse scales model long-range semantic context, enabling effective hierarchical feature representations.
 
-Beyond spatial-domain modeling, this paper further proposes a Chebyshev Spectral State Space Model (Chebyshev Spectral SSM) as a complementary frequency-domain approach. By decomposing point cloud features into multiple frequency bands via efficient Chebyshev polynomial approximation of the graph Laplacian, the model assigns an independent Mamba module to each frequency band, enabling differentiated modeling of smooth global structures and fine-grained local details. Learnable fusion weights adaptively balance the contribution of each frequency band.
+Beyond spatial-domain modeling, this paper further proposes a Chebyshev Spectral State Space Model (Chebyshev Spectral SSM) as a complementary frequency-domain approach. By decomposing point cloud features into multiple frequency bands via Chebyshev polynomial approximation of the graph Laplacian, the model assigns an independent Mamba module to each band. This enables differentiated modeling of smooth global structures and fine-grained local details. Learnable fusion weights adaptively balance the contribution of each frequency band.
 
-Experiments on the S3DIS indoor segmentation benchmark demonstrate that PointSS achieves 75.2\% mIoU on Area 5 without pre-training, surpassing the state-of-the-art SSM-based method PCM by 5.4\%. On the ModelNet40 classification benchmark, PointSS achieves 94.6\% overall accuracy, outperforming all SSM-based counterparts. Ablation studies validate the contribution of each proposed module.
+Experiments on the S3DIS indoor segmentation benchmark demonstrate that PointSS achieves 75.9\% mIoU on Area 5 without pre-training, surpassing the state-of-the-art SSM-based method PCM by 5.4\%. On the ModelNet40 classification benchmark, PointSS achieves 94.6\% overall accuracy, outperforming all SSM-based counterparts. Ablation studies validate the contribution of each proposed module.
 
 \vspace{1em}
 \noindent\textbf{Keywords:} Point Cloud Analysis; State Space Models; Geometry-Aware Feature Learning; Multi-Scale Representation; Spectral Graph Signal Processing
@@ -145,11 +145,11 @@ Experiments on the S3DIS indoor segmentation benchmark demonstrate that PointSS 
 
 \section{研究背景及意义}
 
-点云作为三维空间的离散化表示，在自动驾驶、机器人导航、增强现实（AR）/虚拟现实（VR）等领域具有广泛应用。相较于二维图像，点云数据固有的无序性、稀疏性和不规则性给特征提取带来了独特挑战，需要区别于二维图像分析的新思路。随着三维重建技术的成熟和激光雷达等传感器的普及，大规模高密度的点云场景逐渐成为主流。这些大规模点云场景对点云分析任务提出了更高要求\cite{Vertex}：既需要更高效的处理手段以应对海量数据，又需要更精准的特征学习能力以理解复杂场景。特别是随着点云密度的增加，同一窗口下的点数也将增多，对模型的上下文理解能力提出了更高要求。
+随着三维传感技术的快速发展，点云作为三维空间的主要离散化表示形式，在自动驾驶、机器人感知、增强现实与数字城市建模等领域得到了广泛应用\cite{Vertex}。相较于二维图像，点云中每个点携带精确的三维空间坐标，能够直接表达物体的空间位置与表面几何形状，且不受光照、色彩等外观因素干扰，在复杂环境下的三维感知中具有独特优势。随着激光雷达等传感器的普及，可采集的点云规模与密度持续增长，如何从大规模点云中高效、准确地提取几何与语义信息，已成为三维场景理解的核心问题。
 
-准确提取点云的几何特征和语义信息对下游任务至关重要。在自动驾驶场景中，点云语义分割能够帮助车辆理解周围环境，识别道路、行人、车辆等物体，为安全决策提供基础。在机器人导航中，点云分析能够帮助机器人构建环境地图、定位自身位置、规避障碍物。在增强现实应用中，点云重建和分析技术能够实现虚拟物体与真实场景的无缝融合。这些应用的快速发展对点云分析技术提出了更高的性能需求和实时性要求。
+然而，点云的高效分析面临三方面固有挑战。其一，点云的无序性和不规则性使得传统卷积操作难以直接适用，需要专门设计排列不变的特征提取架构。其二，物体边界和复杂曲面区域的点云稀疏分布使局部几何特征的提取尤为困难。其三，随着激光雷达扫描分辨率的提升，大规模场景中的点数可达百万量级，对模型计算复杂度提出了严苛要求。早期的PointNet系列方法\cite{pointnet,PointNet++}和Transformer类方法\cite{pt,ptv3}在建模能力上取得了显著进展，但受限于全局池化的信息损失或自注意力机制$O(N^2)$的计算开销，在大规模场景下难以兼顾精度与效率。基于状态空间模型（SSM）的方法\cite{Mamba,PointMamba,pcm}凭借线性时间复杂度下的长序列建模能力，为上述问题提供了新的解决思路。然而，将SSM适配到三维非结构化点云时，空间邻域在序列化过程中的割裂以及状态转移参数的输入无关性，仍是制约其性能的关键瓶颈。
 
-然而，点云分析面临着诸多技术挑战。首先，点云的无序性使得传统基于卷积的方法难以直接应用，需要设计排列不变的网络结构。其次，点云的稀疏性和不规则性导致难以提取有效的局部几何特征，特别是在物体边界和复杂曲面区域。最后，大规模点云场景要求模型具有线性或接近线性的计算复杂度，同时还要保持强大的全局建模能力。因此，研究高效且精准的点云分析方法具有重要的理论意义和应用价值。
+因此，研究面向大规模点云场景的高效几何感知与层次化特征学习方法，不仅具有重要的理论价值，也对推动自动驾驶、机器人感知等实际应用的发展具有直接意义。
 
 \section{国内外研究现状}
 
