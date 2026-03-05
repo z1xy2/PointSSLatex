@@ -424,12 +424,12 @@ T_k(x) &= 2xT_{k-1}(x) - T_{k-2}(x), \quad k \geq 2
 \end{aligned}
 \end{equation}
 
-将该递推应用于拉普拉斯算子，可得：
+将该递推应用于拉普拉斯算子作用在信号$x$上，可得：
 \begin{equation}
 \begin{aligned}
-T_0(\tilde{L}) &= I \\
-T_1(\tilde{L}) &= \tilde{L} = \frac{2L}{\lambda_{max}} - I \\
-T_k(\tilde{L}) &= 2\tilde{L}T_{k-1}(\tilde{L}) - T_{k-2}(\tilde{L})
+T_0(\tilde{L})x &= x \\
+T_1(\tilde{L})x &= \tilde{L}x = \left(\frac{2L}{\lambda_{max}} - I\right)x \\
+T_k(\tilde{L})x &= 2\tilde{L}T_{k-1}(\tilde{L})x - T_{k-2}(\tilde{L})x
 \end{aligned}
 \end{equation}
 其中$\tilde{L} = 2L/\lambda_{max} - I$为归一化拉普拉斯。
