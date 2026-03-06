@@ -375,7 +375,7 @@ L = U\Lambda U^T
 \begin{equation}
 \hat{x} = U^T x
 \end{equation}
-其中$\hat{x}_i = \langle x, u_i \rangle$表示信号在第$i$个频率上的分量。低频分量（$\lambda_i \approx 0$）捕获全局平滑结构（如点云中的平坦墙面、地板等连续区域），高频分量（$\lambda_i$较大）捕获局部细节和边缘（如物体边界、角点等几何突变）。
+其中$\hat{x}_i = \langle x, u_i \rangle$表示信号在第$i$个频率上的分量。
 
 \textbf{频谱滤波}：图卷积可以表示为频域中的滤波操作\cite{defferrard2016convolutional}：
 \begin{equation}
@@ -419,12 +419,7 @@ y = g_\theta(L)x \approx \sum_{k=0}^{K-1} \theta_k T_k(\tilde{L})x
 
 关键优势在于，$T_k(\tilde{L})x$可通过递推计算，每步仅需$O(|\mathcal{E}|)$次稀疏矩阵-向量乘法（利用$L$的稀疏性），总复杂度为$O(K|\mathcal{E}|)$。对于$k$-近邻图，$|\mathcal{E}| = O(kN)$，故总复杂度为$O(KkN) = O(KN)$（$k$为常数）。这比直接特征分解的$O(N^3)$快数个数量级。
 
-\textbf{多尺度解释}：不同阶的Chebyshev多项式$T_k(\tilde{L})$作用于图信号时，对应不同跳数的邻域聚合，与谱域中的频率成分存在隐式关联。具体而言：
-\begin{itemize}
-\item $T_0(\tilde{L})x = x$：保留原始信号（0跳，自身特征）
-\item $T_1(\tilde{L})x = \tilde{L}x$：聚合1跳邻域的加权差异信息
-\item $T_k(\tilde{L})x$：$k$跳邻域聚合，感受野随$k$递增
-\end{itemize}
+\textbf{多尺度解释}：不同阶的Chebyshev多项式$T_k(\tilde{L})$作用于图信号时，对应不同跳数的邻域聚合，与谱域中的频率成分存在隐式关联。具体而言，$T_0(\tilde{L})x = x$保留原始信号，即0跳的自身特征；$T_1(\tilde{L})x = \tilde{L}x$聚合1跳邻域的加权差异信息；更高阶的$T_k(\tilde{L})x$则对应$k$跳邻域聚合，感受野随$k$递增。
 
 需要指出的是，$T_k(\tilde{L})$并非严格的带通滤波器，但低阶多项式更侧重于捕获平滑变化，高阶多项式能够表达更快速的空间变化\cite{defferrard2016convolutional}。通过选择合适的$K$（通常2-5），可以近似覆盖图信号的主要空间尺度。这一理论为本文多尺度图状态空间模型的设计奠定了基础。
 
