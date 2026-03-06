@@ -109,12 +109,12 @@
 
 为解决现有SSM在多尺度点云特征提取中层次化建模能力不足的问题，本文设计了自适应尺度解耦状态空间模型（ASD-SSM）。其根本原因在于传统SSM的状态转移参数与输入无关，无法针对不同尺度的几何内容自适应调整。ASD-SSM通过动态参数生成机制，依据各尺度的局部几何内容自适应生成状态转移参数，并利用尺度约束因子引导细尺度关注局部几何细节、粗尺度建模全局语义依赖，从而构建层次化的特征表示。
 
-在空域建模的基础上，本文进一步提出基于Chebyshev多项式近似的频谱状态空间模型（Chebyshev Spectral SSM），从频域视角与前述空域方法形成互补。该方法利用Chebyshev多项式对图拉普拉斯算子进行高效频谱分解，将点云特征分离为多个频段，并为每个频段配备独立的Mamba模块进行差异化建模，通过可学习的权重自适应融合多频段特征，使模型能够同时感知平滑的全局结构与剧烈变化的局部细节。
+在空域建模的基础上，本文进一步提出基于Chebyshev多项式近似的多尺度图状态空间模型（Chebyshev多尺度SSM），从图多项式的视角与前述空域方法形成互补。该方法利用Chebyshev多项式对图拉普拉斯算子进行递推展开，将点云特征隐式地分解为多个空间尺度的分量，并为每个分量配备独立的Mamba模块进行差异化序列建模，通过可学习的权重自适应融合多尺度特征，使模型能够同时捕获局部细粒度结构与大范围上下文信息。
 
 在S3DIS室内语义分割基准上，PointSS在不依赖预训练的条件下达到75.9\% mIoU，超越当前最优SSM方法PCM 5.4\%；在ModelNet40三维分类基准上达到94.6\%整体精度，超越所有SSM类对比方法。消融实验进一步验证了各模块设计的有效性。
 
 \vspace{1em}
-\noindent\textbf{关键词：}点云分析；状态空间模型；几何感知；多尺度特征学习；频谱图信号处理
+\noindent\textbf{关键词：}点云分析；状态空间模型；几何感知；多尺度特征学习；图多项式多尺度建模
 
 % ==================== 英文摘要 ====================
 \chapter*{Abstract}
@@ -126,12 +126,12 @@ To address these limitations, this paper proposes PointSS, a geometry-aware mult
 
 To address the insufficient hierarchical modeling capability of existing SSMs in multi-scale point cloud feature extraction, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM). The root cause lies in the input-invariant nature of state transition parameters in conventional SSMs, which prevents adaptive adjustment to the geometric content at different scales. Through a dynamic parameter generation mechanism, ASD-SSM adapts state transition parameters to the local geometric content of each scale. Scale constraint factors guide fine scales toward capturing local geometric details while coarse scales model long-range semantic context, enabling effective hierarchical feature representations.
 
-Beyond spatial-domain modeling, this paper further proposes a Chebyshev Spectral State Space Model (Chebyshev Spectral SSM) as a complementary frequency-domain approach. By decomposing point cloud features into multiple frequency bands via Chebyshev polynomial approximation of the graph Laplacian, the model assigns an independent Mamba module to each band. This enables differentiated modeling of smooth global structures and fine-grained local details. Learnable fusion weights adaptively balance the contribution of each frequency band.
+Beyond spatial-domain modeling, this paper further proposes a Chebyshev Multi-Scale Graph State Space Model (Chebyshev Multi-Scale Graph SSM) that complements the aforementioned spatial-domain methods from a graph polynomial perspective. By recursively expanding the graph Laplacian via Chebyshev polynomials, point cloud features are implicitly decomposed into multiple spatial-scale components, each processed by an independent Mamba module for scale-specific sequence modeling. Learnable fusion weights adaptively balance the contributions across scales, enabling the model to simultaneously capture fine-grained local structures and broad contextual information.
 
 Experiments on the S3DIS indoor segmentation benchmark demonstrate that PointSS achieves 75.9\% mIoU on Area 5 without pre-training, surpassing the state-of-the-art SSM-based method PCM by 5.4\%. On the ModelNet40 classification benchmark, PointSS achieves 94.6\% overall accuracy, outperforming all SSM-based counterparts. Ablation studies validate the contribution of each proposed module.
 
 \vspace{1em}
-\noindent\textbf{Keywords:} Point Cloud Analysis; State Space Models; Geometry-Aware Feature Learning; Multi-Scale Representation; Spectral Graph Signal Processing
+\noindent\textbf{Keywords:} Point Cloud Analysis; State Space Models; Geometry-Aware Feature Learning; Multi-Scale Representation; Graph Polynomial Multi-Scale Modeling
 
 % ==================== 目录 ====================
 \tableofcontents
@@ -193,7 +193,7 @@ Transformer通过自注意力机制为点云分析引入了全局建模能力，
 	\label{fig:analysis}
 \end{figure}
 
-多尺度建模能力不足的问题源于两方面。其一，现有SSM方法的状态转移参数与输入无关：PointMamba采用非层次化的平坦结构，在单一特征粒度下处理所有点，缺乏层次化表达；PCM虽然引入了层次化下采样，但每个尺度内的状态转移参数对所有空间位置保持不变，无论是平坦表面还是尖锐边界，模型均施加相同的状态转移动态，无法自适应于不同局部几何变化，限制了多尺度特征表达能力。其二，上述空域方法的感受野相对固定，难以在同一模块中同时建模不同空间尺度的几何信息。点云特征本身兼具局部细粒度结构（如曲面细节、边缘走向）与大范围上下文结构（如物体整体形态、区域语义）两类信息，二者的建模需求本质上不同，单一感受野的空域方法难以在同一模块内同时兼顾两者的有效表达。
+多尺度建模能力不足的问题源于两方面。其一，现有SSM方法的状态转移参数与输入无关：PointMamba采用非层次化的平坦结构，在单一特征粒度下处理所有点，缺乏层次化表达；PCM虽然引入了层次化下采样，但每个尺度内的状态转移参数对所有空间位置保持不变，无论是平坦表面还是尖锐边界，模型均施加相同的状态转移动态，无法自适应于不同局部几何变化，限制了多尺度特征表达能力。其二，上述空域方法的感受野相对固定，难以在同一模块中同时建模不同空间尺度的几何信息。点云特征本身兼具局部细粒度结构（如曲面细节、边缘走向）与大范围上下文结构（如物体整体形态、区域语义）两类信息，二者的建模需求本质上不同，尽管可以通过改变窗口大小实现多尺度序列建模，但不同尺度的特征在进入序列模型前已被混合，各尺度无法获得独立的非线性建模能力。如何在保持线性复杂度的前提下，将不同空间尺度的特征显式分离并针对各尺度采用差异化建模策略，仍是一个有待解决的问题。
 
 \section{主要工作内容}
 
@@ -441,15 +441,14 @@ y = g_\theta(L)x \approx \sum_{k=0}^{K-1} \theta_k T_k(\tilde{L})x
 
 关键优势在于，$T_k(\tilde{L})x$可通过递推计算，每步仅需$O(|\mathcal{E}|)$次稀疏矩阵-向量乘法（利用$L$的稀疏性），总复杂度为$O(K|\mathcal{E}|)$。对于$k$-近邻图，$|\mathcal{E}| = O(kN)$，故总复杂度为$O(KkN) = O(KN)$（$k$为常数）。这比直接特征分解的$O(N^3)$快数个数量级。
 
-\textbf{频率解释}：第$k$阶Chebyshev多项式$T_k(\tilde{L})$对应第$k$个频段的滤波器。具体而言：
+\textbf{多尺度解释}：不同阶的Chebyshev多项式$T_k(\tilde{L})$作用于图信号时，对应不同跳数的邻域聚合，与谱域中的频率成分存在隐式关联。具体而言：
 \begin{itemize}
-\item $T_0(\tilde{L})x = x$：直流分量（DC），保留原始信号
-\item $T_1(\tilde{L})x = \tilde{L}x$：一阶频率，捕获局部一阶变化
-\item $T_2(\tilde{L})x$：二阶频率，捕获更高阶的几何变化
-\item $T_k(\tilde{L})x$：$k$阶频率，频率随$k$递增
+\item $T_0(\tilde{L})x = x$：保留原始信号（0跳，自身特征）
+\item $T_1(\tilde{L})x = \tilde{L}x$：聚合1跳邻域的加权差异信息
+\item $T_k(\tilde{L})x$：$k$跳邻域聚合，感受野随$k$递增
 \end{itemize}
 
-通过选择合适的$K$（通常2-5），可以用少量频段近似完整的频谱。这一理论为频谱状态空间模型的设计奠定了基础。
+需要指出的是，$T_k(\tilde{L})$并非严格的带通滤波器，但低阶多项式更侧重于捕获平滑变化，高阶多项式能够表达更快速的空间变化\cite{defferrard2016convolutional}。通过选择合适的$K$（通常2-5），可以近似覆盖图信号的主要空间尺度。这一理论为本文多尺度图状态空间模型的设计奠定了基础。
 
 \section{其他相关技术}
 
@@ -471,7 +470,7 @@ y = g_\theta(L)x \approx \sum_{k=0}^{K-1} \theta_k T_k(\tilde{L})x
 
 \section{本章小结}
 
-本章系统介绍了本文研究所涉及的相关理论和技术。首先介绍了点云数据的基本特性，包括无序性、稀疏性和局部结构重要性。然后概述了深度学习在点云处理中的应用，包括PointNet、PointNet++、DGCNN等经典方法。接着详细讨论了Transformer模型的自注意力机制及其在点云分析中的应用。随后深入介绍了状态空间模型的数学基础和Mamba架构的选择性机制，阐明了其线性复杂度的优势和硬件感知优化。点云序列化技术的讨论揭示了现有方法在空间邻近性保持方面的局限性，这正是本文提出全局几何感知机制的重要动机。此外，本章还系统介绍了图信号处理与频谱分析的理论基础，包括图拉普拉斯算子、频谱分解、图傅里叶变换等核心概念，以及Chebyshev多项式近似方法，为后续频谱状态空间模型的设计提供了理论支撑。最后介绍了注意力机制变体、位置编码、归一化技术、激活函数等相关技术。
+本章系统介绍了本文研究所涉及的相关理论和技术。首先介绍了点云数据的基本特性，包括无序性、稀疏性和局部结构重要性。然后概述了深度学习在点云处理中的应用，包括PointNet、PointNet++、DGCNN等经典方法。接着详细讨论了Transformer模型的自注意力机制及其在点云分析中的应用。随后深入介绍了状态空间模型的数学基础和Mamba架构的选择性机制，阐明了其线性复杂度的优势和硬件感知优化。点云序列化技术的讨论揭示了现有方法在空间邻近性保持方面的局限性，这正是本文提出全局几何感知机制的重要动机。此外，本章还系统介绍了图信号处理与频谱分析的理论基础，包括图拉普拉斯算子、频谱分解、图傅里叶变换等核心概念，以及Chebyshev多项式近似方法，为后续多尺度图状态空间模型的设计提供了理论支撑。最后介绍了注意力机制变体、位置编码、归一化技术、激活函数等相关技术。
 
 这些理论和技术为后续章节中PointSS方法的设计提供了坚实基础。第三章将详细介绍全局几何感知机制（GGAM），展示如何通过显式几何先验补偿序列化过程中的信息损失。
 
