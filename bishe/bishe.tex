@@ -447,77 +447,102 @@ y = g_\theta(L)x \approx \sum_{k=0}^{K-1} \theta_k T_k(\tilde{L})x
 
 
 \chapter{基于全局几何感知的点云特征增强}
-针对前文所述的基于Mamba的点云分析方法中存在的几何学习困难问题，核心在于Mamba的状态空间模型机制与点云几何特性之间的矛盾。Mamba通过以下离散化状态空间方程进行序列建模：
+基于Mamba的点云分析方法面临局部几何结构建模困难的问题，根本原因在于序列化状态传递机制与无序三维结构之间的冲突。Mamba通过以下离散化状态空间方程进行序列建模：
 \begin{equation}
-	\begin{aligned}
-		x_{k} &= \overline{A}x_{k-1} + \overline{B}u_{k} \\
-		y_{k} &= \overline{C}x_{k} + \overline{D}u_{k}
-	\end{aligned}
+	x_k = \bar{A}x_{k-1} + \bar{B}u_k, \quad y_k = \bar{C}x_k + \bar{D}u_k
 \end{equation}
-其中$k$表示点云序列化后的位置索引，$x_k$为第$k$个位置的状态向量，$u_k$为输入向量，$y_k$为输出向量，$\overline{A}$、$\overline{B}$、$\overline{C}$、$\overline{D}$为系统矩阵。在点云序列化处理过程中，几何相邻的点由于序列化规则被分离成割裂点，导致状态向量$x_k$在线性传递过程中难以建立割裂点之间的关联，使得模型难以隐式学习到完整的几何结构特征，特别是依赖空间邻域定义的法向量和曲率等关键几何信息。
+其中$k$表示序列化后的位置索引，$x_k$为第$k$个位置的状态向量，$u_k$为输入特征向量，$y_k$为输出特征向量，$\bar{A}$、$\bar{B}$、$\bar{C}$、$\bar{D}$分别为状态转移矩阵、输入投影矩阵、输出投影矩阵和跳跃连接矩阵。
 
-因此，我们设计了全局几何感知机制（GGAM），通过显式提取点云几何先验并建立全局关联，为后续的编码器和解码器提供丰富的几何信息，从而补偿Mamba的几何学习困难。GGAM整体设计如\cref{fig:ggam}所示。其主要包括点云图构建与几何特征提取、几何特征增强和融合两部分。后续将围绕方法设计和相关消融实验进行介绍。
+在该递归机制中，每个状态$x_k$依赖于前一状态$x_{k-1}$和当前输入$u_k$，从而建立序列依赖关系。如第一章所述，序列化不可避免地破坏了空间邻近性——空间上相邻的点在序列中往往相距较远。这种邻近性的丧失使得递归状态更新无法有效聚合空间邻居的信息，限制了模型捕获局部几何结构（如法向量和曲率）的能力。
+
+针对上述问题，我们提出了全局几何感知机制（Global Geometry-Aware Mechanism, GGAM），通过显式注入几何先验来补偿序列化造成的几何信息丢失。如\cref{fig:ggam}所示，GGAM由两部分组成：（1）图构建与几何特征提取；（2）几何特征增强与融合。第一部分从序列化的点序列中构建图结构并提取每个点的几何特征向量。为捕获互补的空间结构信息，该过程在Z-order和Hilbert两种序列化流上并行执行，产生两组独立的几何特征。第二部分通过交叉注意力机制和自适应门控策略对双流特征进行增强与融合。后续将围绕方法设计和相关消融实验进行介绍。
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{ggam.jpg}
-	\caption{GGAM的结构}
+	\caption{全局几何感知机制（GGAM）的整体结构}
 	\label{fig:ggam}
 \end{figure}
 
 \section{方法设计}
-\textbf{点云图构建与几何特征提取}：传统的点云图构建与几何关系计算（如曲率、法向量）方法通常依赖$K$近邻（KNN）搜索来进行构建。然而，KNN搜索的计算复杂度较高，特别是在处理大规模点云数据时。如第二章所述，基于序列化的邻域构建方法可以将复杂度从$O(N\log N)$降至$O(N)$。本章采用\textbf{窗口划分策略}，通过窗口内密集连接来提取丰富的几何特征。
+\textbf{图构建与几何特征提取。}传统的几何关系计算方法（如曲率、法向量）依赖$K$近邻（KNN）搜索来构建邻域。然而，KNN搜索的计算复杂度较高，难以适应大规模点云场景。受Point Transformer V3\cite{ptv3}的启发——该工作表明基于序列化的窗口邻域可以替代KNN，在不损失性能的前提下将复杂度从$\mathcal{O}(N\log N)$降至$\mathcal{O}(N)$——我们采用该策略来实现高效的几何特征提取。
 
-给定点云$\{p_1, p_2, \ldots, p_N\}$及其序列化后的点序列$Q$即$\{q_1, q_2, \ldots, q_N\}$，我们将其划分为不重叠的窗口：
+给定点云$\{p_1, p_2, \ldots, p_N\}$，序列化方法按照空间填充曲线对其进行排序，得到序列$Q = (q_1, q_2, \ldots, q_N)$，其中$q_i$表示排序后第$i$个位置上的点。随后将$Q$划分为不重叠的窗口：
 \begin{equation}
-	W_m = \{q_{(m-1) \cdot P + 1}, q_{(m-1) \cdot P + 2}, \ldots, q_{m \cdot P}\}
+	W_m = (q_{(m-1) \cdot 64 + 1}, q_{(m-1) \cdot 64 + 2}, \ldots, q_{m \cdot 64})
 \end{equation}
-其中$m = 1, 2, \ldots, \lfloor N/P \rfloor$是窗口索引，$P$是窗口大小（Patch Size）。在划分过程中可能会出现最后一个窗口的点云数量不到$P$的情况，此时我们使用窗口填充策略，将倒数第二个窗口的点云填充到最后一个窗口。详细做法见后文Window Partitioning部分。
+其中$m = 1, 2, \ldots, \lfloor N/64 \rfloor$为窗口索引，窗口大小固定为64，该尺度能为基于PCA的法向量和曲率估计提供充足的邻域。若最后一个窗口不足64个点，则按照PTv3\cite{ptv3}的策略进行填充。
 
-对于任意点$p_i$，设其在序列化后的位置为$pos(i)$，则该点的邻域定义为其所属窗口：
+对于每个点$q_i$，其邻域$\mathcal{N}(q_i)$由同一窗口内的所有其他点组成，构成全连接的局部图：
 \begin{equation}
-	\mathcal{N}_P(p_i) = W_{\lfloor \frac{pos(i)-1}{P} \rfloor + 1}
+	\mathcal{N}(q_i) = \left\{q_j : q_j \in W_{\lceil i/64 \rceil},\ j \neq i\right\}
 \end{equation}
-基于窗口化邻域，我们构建点云的边连接关系。对于每个窗口$W_m$内的点，建立全连接：
+
+对于每对点$(q_i, q_j)$（$q_j \in \mathcal{N}(q_i)$），提取8维几何特征向量：
 \begin{equation}
-	\mathcal{E}_m = \{(q_i, q_j) : q_i, q_j \in W_m, i \neq j\}
+	\mathbf{f}_{ij} = [\Delta q_{ij},\ \mathbf{n}_i \cdot \mathbf{n}_j,\ \cos\theta_i,\ \cos\theta_j,\ \kappa_i,\ \kappa_j] \in \mathbb{R}^8
 \end{equation}
-这种窗口内全连接的设计能够充分捕获局部几何关系，为后续的曲率和法向量计算提供丰富的邻域信息。
-
-在构建的窗口化邻域基础上，我们为每条边$(q_i, q_j)$提取8维特征向量，以充分描述点对之间的几何关系,构建点云图。在图结构中，节点表示每个点，边代表两个点所构成的几何关系。点云图的边的构建性质决定了点云图对提取几何信息具有优势。边特征向量$\mathbf{f}_{ij}$由以下几个部分组成：
-
+其中$\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$为相对位置向量；$\mathbf{n}_i, \mathbf{n}_j \in \mathbb{R}^3$为$q_i$和$q_j$处的法向量，通过对窗口内点的三维坐标进行PCA估计得到。$\mathbf{n}_i \cdot \mathbf{n}_j \in \mathbb{R}$为法向量的点积，用于度量两端点之间的法向一致性——在光滑表面上趋近于1，在几何边界处急剧下降。$\cos\theta_i$和$\cos\theta_j$分别为相对位置向量$\Delta q_{ij}$与法向量$\mathbf{n}_i$和$\mathbf{n}_j$之间夹角的余弦值：
 \begin{equation}
-	\mathbf{f}_{ij} = [\Delta\mathbf{p}_{ij}, \alpha_{ij},  \boldsymbol{\kappa}] \in \mathbb{R}^8
+	\cos\theta_i = \frac{\mathbf{n}_i \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}, \quad \cos\theta_j = \frac{\mathbf{n}_j \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}
 \end{equation}
-其中$\Delta\mathbf{p}_{ij} = \mathbf{p}_j - \mathbf{p}_i$是相对坐标向量(3维)，$\alpha_{ij}$是方向关系特征(3维)，由窗口内平均法向量与归一化相对位置向量的差值计算得到，用于表征边方向相对于局部表面法向的偏离程度，$\boldsymbol{\kappa}$是两种曲率(2维)：表面变化率和高斯曲率。
-再经过多层感知机之后我们通过累加所有邻边特征，再除以邻边数量的方式，实现了将边特征到点特征的均值聚合。对于点$p_i$,有聚合后的点特征$\mathbf{H}$。
+$\cos\theta_i$度量边方向$\Delta q_{ij}$偏离$q_i$处切平面的程度：在光滑区域接近零，在几何边缘处显著增大，$\cos\theta_j$在$q_j$处类似定义。$\kappa_i, \kappa_j \in \mathbb{R}$为两端点处的表面曲率。
 
+上述基于法向量的特征分量——$\mathbf{n}_i \cdot \mathbf{n}_j$、$\cos\theta_i$、$\cos\theta_j$、$\kappa_i$和$\kappa_j$——均为旋转不变的几何量\cite{clusterNet, riconv}：对点云施加全局旋转不会改变这些数值。相比之下，原始法向量会随点云旋转而变化，不具备这种不变性。旋转不变性有助于增强模型对旋转变化的鲁棒性\cite{clusterNet, riconv}。
 
-\textbf{几何特征增强与融合：}几何特征增强与融合模块包含基于双空间编码的交叉注意力机制，自适应门控融合，几何一致性约束三部分。
+每条边特征经过多层感知机（MLP）处理后，对每个点$q_i$通过其邻域$\mathcal{N}(q_i)$上的均值池化进行聚合：
+\begin{equation}
+	\mathbf{H}_i = \frac{1}{|\mathcal{N}(q_i)|} \sum_{q_j \in \mathcal{N}(q_i)} \text{MLP}(\mathbf{f}_{ij})
+\end{equation}
+所得特征$\mathbf{H}_i \in \mathbb{R}^C$编码了$q_i$的局部几何上下文信息。由于Z-order序列化偏向于局部聚集性，而Hilbert序列化更好地保持空间连续性，图构建在两种序列化上并行执行，为每个点生成两组互补的几何特征向量$\mathbf{H}_z$和$\mathbf{H}_h$，并传递给GGAM的第二部分。
 
-\textbf{基于双空间编码的交叉注意力机制}：
-由于我们使用经z-order编码和Hilbert编码的序列化点云并行计算上述过程，因此每个点会分别得到特征$\mathbf{H}_{z}$以及$\mathbf{H}_{h}$。这两种编码方式产生了不同的空间邻域关系和节点排列顺序。Z-order编码由于其递归二进制分割特性，在局部尺度下具有很好的空间聚集性，能够有效检测几何边界和局部变化。Hilbert曲线具有更好的空间连续性保持特性，在序列化过程中能更好地维持几何结构的整体连贯性。参照\cite{attention}我们在每种编码序列内部生成$Q$,$K$,$V$进行自注意力计算，让节点能够关注到其在该编码下的邻域节点特征，Z-order编码序列和Hilbert编码分别生成结果$A_z$和$A_h$。然后在两种编码序列之间建立交叉注意力机制,分别生成${A}'_z$，${A}'_h$，使得同一个点的特征在两种不同空间排序下的表示能够相互增强。最终通过特征融合得到更加丰富和鲁棒的节点表示，具体融合方式见\cref{fig:ggam}。融合后得到双序列化增强后的特征 $\mathbf{H}''_z$ 和 $\mathbf{H}''_h$ 。
+\textbf{几何特征增强与融合。}几何特征增强与融合模块对$\mathbf{H}_z$和$\mathbf{H}_h$依次进行三个步骤的处理：流内自注意力、跨流交叉注意力和自适应门控融合。
 
+首先在每个流内部施加自注意力，其中$\text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{Softmax}(\mathbf{Q}\mathbf{K}^\top / \sqrt{d})\mathbf{V}$：
+\begin{equation}
+	\begin{aligned}
+		\mathbf{A}_z = \text{Attention}(\mathbf{H}_z, \mathbf{H}_z, \mathbf{H}_z), \\
+		\mathbf{A}_h = \text{Attention}(\mathbf{H}_h, \mathbf{H}_h, \mathbf{H}_h)
+	\end{aligned}
+\end{equation}
+并通过残差连接得到：
+\begin{equation}
+	\mathbf{H}'_z = \mathbf{H}_z + \mathbf{A}_z, \quad \mathbf{H}'_h = \mathbf{H}_h + \mathbf{A}_h
+\end{equation}
+然后施加交叉注意力，每个流保留自身的查询向量，而键和值则来自另一个流：
+\begin{equation}
+	\begin{aligned}
+		\mathbf{A}'_z = \text{Attention}(\mathbf{H}'_z, \mathbf{H}'_h, \mathbf{H}'_h), \\
+		\mathbf{A}'_h = \text{Attention}(\mathbf{H}'_h, \mathbf{H}'_z, \mathbf{H}'_z)
+	\end{aligned}
+\end{equation}
+通过残差连接得到增强后的特征：
+\begin{equation}
+	\mathbf{H}''_z = \mathbf{H}'_z + \mathbf{A}'_z, \quad \mathbf{H}''_h = \mathbf{H}'_h + \mathbf{A}'_h
+\end{equation}
 
-\textbf{自适应门控融合：}在得到增强特征后，我们设计了最后的融合步骤。为了更智能地融合两种特征，我们设计了一个自适应门控单元。它接收拼接后的特征，并为每个特征流（Z-order和Hilbert）生成一个权重：
+为自适应地融合两组增强特征，自适应门控单元为每个流生成一个标量权重：
 \begin{equation}
 	[\alpha_z, \alpha_h] = \text{Softmax}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
 	\label{eq:adaptive_gate}
 \end{equation}
-其中$\|$为拼接操作。最终的融合特征 $\mathbf{H}_{fused}$ 通过加权求和得到：
+其中$\|$为拼接操作。融合特征通过加权求和得到：
 \begin{equation}
-	\mathbf{H}_{fused} = \alpha_z \odot \mathbf{H}''_z + \alpha_h \odot \mathbf{H}''_h
+	\mathbf{H}_{\text{fused}} = \alpha_z \mathbf{H}''_z + \alpha_h \mathbf{H}''_h
 	\label{eq:gated_fusion}
 \end{equation}
-其中 $\odot$ 表示逐元素相乘。
+其中$\alpha_z, \alpha_h \in \mathbb{R}$为标量权重且满足$\alpha_z + \alpha_h = 1$，在所有通道上统一广播。
 
-
-\textbf{几何一致性约束：}由于本方法计算的曲率与法向量以邻域为粒度，结果相比较于逐点计算不够精确。在引入双分支学习后，为了确保融合后的特征仍然符合物理世界的几何规律，我们引入了一个几何一致性模块。该模块学习一个一致性因子 $\boldsymbol{\gamma} \in [0, 1]$，并作用于融合特征上：
-\begin{gather}
-	\boldsymbol{\gamma} = \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h])) \label{eq:consistency_factor} \\
-	\mathbf{H}_{final} = \mathbf{H}_{fused} \odot \boldsymbol{\gamma} \label{eq:final_feature}
-\end{gather}
-其中 $\odot$ 表示逐元素相乘。这个约束可以看作是一个软性的过滤器，抑制了在融合过程中可能产生的几何上不合理的特征组合。最终，$\mathbf{H}_{final}$ 作为GGAM模块的输出，包含了几何感知特征。
+由于两个流建立在不同序列化产生的窗口划分之上，其融合表示可能包含跨流不一致性。为缓解该问题，几何一致性约束模块从两个流中推导出一个可学习的标量门控$\gamma \in [0, 1]$，用于自适应地调制融合表示：
+\begin{equation}
+	\gamma = \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
+	\label{eq:consistency_factor}
+\end{equation}
+\begin{equation}
+	\mathbf{H}_{\text{final}} = \mathbf{H}_{\text{fused}} \odot \gamma
+	\label{eq:final_feature}
+\end{equation}
+$\mathbf{H}_{\text{final}}$作为GGAM模块的输出，传递给后续的编码器和解码器，提供几何感知的点云表示。
 
 \section{实验设置与分析}
 通过系统性的消融实验，验证全局几何感知机制GGAM在缓解点云序列化所引入的几何学习困难问题上的有效性。实验均在S3DIS数据集上开展，重点分析序列化导致的近邻割裂现象、GGAM对不同几何复杂度类别的补偿能力，以及GGAM内部各组成模块的协同作用机制。
