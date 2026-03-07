@@ -79,7 +79,7 @@ Y^{(\ell)} = \text{Mamba}_\ell(X^{(\ell)}_{seq})
 
 定义可学习的融合权重$\boldsymbol{\beta} = [\beta_0, \beta_1, \ldots, \beta_{K-1}] \in \mathbb{R}^K$，初始化为均匀权重$\beta_\ell = 1/K$。融合特征计算为：
 \begin{equation}
-Y_{multi} = \sum_{\ell=0}^{K-1} \alpha_\ell Y^{(\ell)}, \quad \alpha_\ell = \frac{\exp(\beta_\ell)}{\sum_{j=0}^{K-1}\exp(\beta_j)}
+Y_{multi} = \sum_{\ell=0}^{K-1} \alpha_\ell Y^{(\ell)}, \quad \alpha_\ell = \frac{\exp(\beta_\ell)}{\sum_{r=0}^{K-1}\exp(\beta_r)}
 \end{equation}
 其中$\alpha_\ell$为归一化后的权重（通过softmax保证$\sum_\ell \alpha_\ell = 1$）。这种软加权融合允许梯度反传到所有分量，避免了硬选择的不可微问题。
 
