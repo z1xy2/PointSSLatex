@@ -61,11 +61,11 @@ T_\ell(\tilde{L})X &= 2\tilde{L}T_{\ell-1}(\tilde{L})X - T_{\ell-2}(\tilde{L})X,
 
 传统方法使用单一Mamba处理所有尺度的混合特征，难以同时适应小感受野分量的局部特性和大感受野分量的全局特性。本文通过为每个尺度分量配备独立的Mamba，使模型能够学习特定尺度的最优建模策略，从而更有效地捕获不同空间尺度的几何特征。
 
-对于第$\ell$个分量的特征$X^{(\ell)} = T_\ell(\tilde{L})X \in \mathbb{R}^{N \times C}$，我们使用Point Transformer V3的序列化顺序（已预先计算）将其重排为序列：
+对于第$\ell$个分量的特征$X^{(\ell)} = T_\ell(\tilde{L})X \in \mathbb{R}^{N \times C}$，直接沿用前文所述的序列化顺序$\pi$，按该顺序送入对应的Mamba模块进行序列建模：
 \begin{equation}
-X^{(\ell)}_{seq} = X^{(\ell)}[\pi], \quad \pi = \text{serialized\_order}
+X^{(\ell)}_{seq} = X^{(\ell)}[\pi]
 \end{equation}
-其中$\pi$为序列化索引（如Hilbert曲线或Z-order曲线的排序）。注意，所有分量使用\textbf{相同的序列化顺序}$\pi$，这保证了分量间的空间对应关系。
+其中$\pi$为Point Transformer V3已预先计算的序列化索引（Hilbert曲线或Z-order曲线排序）。所有分量使用\textbf{相同的序列化顺序}$\pi$，保证了分量间的空间对应关系。
 
 第$\ell$个分量的Mamba模块定义为：
 \begin{equation}
