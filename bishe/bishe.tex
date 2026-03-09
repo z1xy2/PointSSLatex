@@ -801,9 +801,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 \section{定量实验}
 
 \subsubsection{Experiment results on the S3DIS dataset}
-\cref{tab:s3dis}汇总了在S3DIS数据集上的室内点云语义分割性能对比结果。在未使用任何预训练策略的条件下，本文提出的PointSS在Area 5测试设置下取得了75.9\%的mIoU，显著优于现有主流方法。其中，相较于当前性能最优的Transformer架构方法Point Transformer V3，PointSS提升了2.7个百分点；相较于代表性的基于状态空间模型的方法PCM，提升幅度达到6.1个百分点。
-
-上述性能提升主要得益于本文在几何建模、多尺度特征建模与频谱域建模三个方面的架构创新。一是全局几何感知机制（GGAM）通过窗口化邻域引入显式几何先验，并结合双序列化特征融合与全局交叉注意力，有效缓解了点云序列化过程中空间邻近点被割裂所导致的几何信息丢失问题。该机制使模型在特征更新时能够综合更多完整的空间邻域信息，尤其在墙面与柱体交界等几何变化剧烈的区域，以及曲面过渡与细长结构等复杂场景中，显著提升了分割边界的连续性与语义一致性。二是自适应尺度解耦状态空间模型（ASD-SSM）通过尺度感知参数生成器，为不同尺度的特征提取过程动态生成定制化的状态空间参数，使模型能够在粗尺度上保持较长的状态记忆以建模全局语义，在细尺度上快速响应局部几何变化。这种多尺度、参数解耦的设计有效克服了现有SSM方法中共享参数导致的单一粒度特征建模限制，使模型能够同时兼顾局部细节与全局上下文信息。三是基于Chebyshev多项式近似的多尺度图状态空间模型（Chebyshev多尺度SSM）通过图拉普拉斯的多项式展开隐式地提取不同空间尺度的谱特征，并为每阶分量配备独立Mamba模块实现尺度特定的序列建模，从频谱域补偿了空域方法在拓扑信息建模上的不足，与GGAM和ASD-SSM形成正交互补。
+\cref{tab:s3dis}汇总了S3DIS数据集上的语义分割性能对比。在不使用预训练的条件下，PointSS在Area 5上达到75.9\%的mIoU，优于所有对比方法。具体而言，相比当前最优的Point Transformer V3提升了2.7个百分点，相比基于SSM的PCM提升了6.1个百分点。此外，PointSS保持了SSM的线性时间复杂度。如\cref{tab:efficiency}所示，在相同FP32精度下，PointSS在Patch Size从128到512的范围内推理时间相比PTv3降低约25\%。当Patch Size增至1024时，PTv3因显存溢出无法运行，而PointSS仍可正常工作，体现了线性SSM复杂度相比二次方注意力的可扩展性优势。
 
 \begin{table}[htbp!]
 	\caption{在S3DIS上的分割性能对比}
@@ -832,9 +830,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 
 \subsubsection{Experiment results on the ModelNet40 dataset}
 
-\cref{tab:ModelNet}汇总了在ModelNet40数据集上的点云分类性能对比结果。可以看出，本文提出的PointSS在该数据集上取得了96.0\%的整体准确率（OA），在未使用预训练模型的前提下，优于现有主流方法。其中，相较于当前性能最优的Transformer方法Point2Vec，PointSS提升了1.2个百分点；相较于代表性的状态空间模型方法Mamba3D，提升幅度达到1.9个百分点，在同类方法中取得了最优性能。
-
-与基于掩码自监督学习的分类方法相比，PointSS在无需复杂预训练策略的情况下，依然实现了更高的分类准确率。这一结果表明，相比依赖大规模预训练来增强全局表征能力，针对点云数据结构特性进行显式建模，同样能够有效提升模型对整体形状语义的理解能力。PointSS通过多尺度层次化建模，在保留局部几何细节的同时，逐步聚合形成稳定的全局语义表示，从而在分类任务中展现出更强的判别能力。
+\cref{tab:ModelNet}汇总了ModelNet40数据集上的分类性能对比。PointSS达到94.6\%的整体准确率（OA），超越了所有基于SSM的对比方法（包括Mamba3D和PointMamba），同时与基于Transformer的方法保持竞争力。值得注意的是，在该接近饱和的基准上，大多数方法的准确率集中在较窄的范围内，此量级的边际增益不应被过度解读。
 
 \begin{table}[htbp!]
 	\centering
@@ -851,7 +847,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 		TIP25     & OTMae3D\cite{OTMae3D}    & Transformer & 94.5          \\
 		AAAI25    & PCM\cite{pcm}     & SSM         & 93.4         \\
 		Sci. Rep.25 & PointGA\cite{pointga}           & Transformer & 93.8         \\
-		& PointSS               &SSM             & 96.0          \\ \bottomrule
+		& \textbf{PointSS}               &\textbf{SSM}             & \textbf{94.6}          \\ \bottomrule
 	\end{tabular}
 \end{table}
 
@@ -937,7 +933,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 
 在频谱域建模方面，Chebyshev多尺度SSM利用Chebyshev多项式对图拉普拉斯的递推展开，以$O(KN)$的线性复杂度将点云特征分解为$K$个不同感受野的分量，并为每个分量配备独立Mamba模块进行尺度特定的序列建模。该方法从频谱域补偿了空域方法在拓扑信息建模上的不足，与GGAM和ASD-SSM形成正交互补。实验表明，Chebyshev多尺度SSM与空域方法结合后，完整系统性能从75.2\%提升至75.9\%，总体相比基线提升5.6个百分点。
 
-在标准基准测试中，PointSS在S3DIS数据集上达到75.9\% mIoU，以6.1\%的显著优势超过了当前效果最好的SSM模型PCM（69.8\%），并超过Transformer方法PTv3 2.7个百分点。在ModelNet40分类任务上，PointSS达到96.0\%的准确率，超过最好的SSM方法Mamba3D 1.9个百分点，超过最好的Transformer方法Point2Vec 1.2个百分点。计算效率分析表明，PointSS在保持线性时间复杂度的同时，推理速度相比PTv3提升22\%--37\%，并在大Patch Size场景下展现出更好的可扩展性。定性实验和可视化分析验证了PointSS在复杂边界、大感受野物体和细粒度分割等场景的优势。
+在标准基准测试中，PointSS在S3DIS数据集上达到75.9\% mIoU，以6.1\%的显著优势超过了当前效果最好的SSM模型PCM（69.8\%），并超过Transformer方法PTv3 2.7个百分点。在ModelNet40分类任务上，PointSS达到94.6\%的整体准确率，超过所有SSM类对比方法，同时与Transformer方法保持竞争力。计算效率分析表明，PointSS在保持线性时间复杂度的同时，推理速度相比PTv3提升22\%--37\%，并在大Patch Size场景下展现出更好的可扩展性。定性实验和可视化分析验证了PointSS在复杂边界、大感受野物体和细粒度分割等场景的优势。
 
 本文的研究成果为点云分析领域提供了新的解决思路：通过显式几何先验注入补偿序列化模型的几何学习不足，通过自适应参数生成实现参数高效的多尺度特征学习，通过图多项式近似在频谱域恢复序列化丢失的拓扑信息。未来工作可进一步探索自适应序列化策略、多模态信息融合以及面向大规模场景的轻量化设计，以应对更复杂的实际应用需求。
 %% The Appendices part is started with the command \appendix;
