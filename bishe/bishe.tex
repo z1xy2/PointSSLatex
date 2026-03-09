@@ -128,7 +128,7 @@ To address these issues, this paper proposes PointSS, a geometry-aware multi-sca
 
 To address the input-invariant state transition parameters in conventional SSMs that cannot adapt to multi-scale modeling requirements, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM). Through a dynamic parameter generation mechanism, ASD-SSM adaptively generates state transition parameters based on the local geometric content at each scale, and employs scale constraint factors to guide fine scales toward capturing local geometric details while coarse scales model global semantic dependencies, thereby constructing hierarchical feature representations.
 
-Building upon spatial-domain modeling, this paper further proposes a Chebyshev polynomial approximation-based Multi-Scale Graph State Space Model (Chebyshev Multi-Scale SSM) that complements the aforementioned spatial-domain methods from a graph polynomial perspective. By recursively expanding the graph Laplacian via Chebyshev polynomials, point cloud features are implicitly decomposed into multiple spatial-scale components, each equipped with an independent Mamba module for differentiated sequence modeling. Learnable fusion weights adaptively balance the contributions across scales, enabling the model to simultaneously capture fine-grained local structures and broad contextual information.
+Building upon spatial-domain modeling, this paper further proposes a Chebyshev polynomial approximation-based Multi-Scale Graph State Space Model (Chebyshev Multi-Scale SSM). This module complements the aforementioned spatial-domain methods from a graph polynomial perspective. By recursively expanding the graph Laplacian via Chebyshev polynomials, point cloud features are implicitly decomposed into multiple spatial-scale components, each equipped with an independent Mamba module for differentiated sequence modeling. Learnable fusion weights adaptively balance the contributions across scales, enabling the model to simultaneously capture fine-grained local structures and broad contextual information.
 
 On the S3DIS indoor semantic segmentation benchmark, PointSS achieves 75.9\% mIoU without pre-training, surpassing the state-of-the-art SSM-based method PCM by 6.1\%. On the ModelNet40 3D classification benchmark, PointSS achieves 94.6\% overall accuracy, outperforming all SSM-based counterparts. Ablation studies further validate the effectiveness of each proposed module.
 
@@ -149,7 +149,7 @@ On the S3DIS indoor semantic segmentation benchmark, PointSS achieves 75.9\% mIo
 
 随着三维传感技术的快速发展，点云作为三维空间的主要离散化表示形式，在自动驾驶、机器人感知、增强现实与数字城市建模等领域得到了广泛应用\cite{Vertex}。相较于二维图像，点云中每个点携带精确的三维空间坐标，能够直接表达物体的空间位置与表面几何形状，且不受光照、色彩等外观因素干扰，在复杂环境下的三维感知中具有独特优势。随着激光雷达等传感器的普及，可采集的点云规模与密度持续增长，如何从大规模点云中高效、准确地提取几何与语义信息，已成为三维场景理解的核心问题。
 
-然而，点云的高效分析面临三方面固有挑战。其一，点云的无序性和不规则性使得传统卷积操作难以直接适用，需要专门设计排列不变的特征提取架构。其二，物体边界和复杂曲面区域的点云稀疏分布使局部几何特征的提取尤为困难。其三，随着激光雷达扫描分辨率的提升，大规模场景中的点数可达百万量级，对模型计算复杂度提出了严苛要求。早期的PointNet系列方法\cite{pointnet,PointNet++}和Transformer类方法\cite{pt,ptv3}在建模能力上取得了显著进展，但受限于全局池化的信息损失或自注意力机制$O(N^2)$的计算开销，在大规模场景下难以兼顾精度与效率。基于状态空间模型（SSM）的方法\cite{Mamba,PointMamba,pcm}凭借线性时间复杂度下的长序列建模能力，为上述问题提供了新的解决思路。然而，将SSM适配到三维非结构化点云时，点云序列化破坏空间近邻关系导致的几何信息丢失，以及多尺度层次化建模能力不足，仍是制约其性能的关键瓶颈。
+然而，点云的高效分析面临三方面固有挑战。其一，点云的无序性和不规则性使得传统卷积操作难以直接适用，需要专门设计排列不变的特征提取架构。其二，点云在物体边界和复杂曲面区域分布稀疏，使得局部几何特征的提取尤为困难。其三，随着激光雷达扫描分辨率的提升，大规模场景中的点数可达百万量级，对模型计算复杂度提出了严苛要求。早期的PointNet系列方法\cite{pointnet,PointNet++}和Transformer类方法\cite{pt,ptv3}在建模能力上取得了显著进展，但受限于全局池化导致的信息损失和自注意力机制$O(N^2)$的计算开销，在大规模场景下难以兼顾精度与效率。基于状态空间模型（SSM）的方法\cite{Mamba,PointMamba,pcm}凭借线性时间复杂度下的长序列建模能力，为上述问题提供了新的解决思路。然而，将SSM适配到三维点云时，序列化不可避免地破坏点云的空间近邻关系，造成几何信息丢失；同时，现有方法在多尺度层次化建模方面能力不足，这些问题仍是制约其性能的关键瓶颈。
 
 因此，研究面向大规模点云场景的高效几何感知与层次化特征学习方法，不仅具有重要的理论价值，也对推动自动驾驶、机器人感知等实际应用的发展具有直接意义。
 
@@ -158,11 +158,11 @@ On the S3DIS indoor semantic segmentation benchmark, PointSS achieves 75.9\% mIo
 近年来，点云分析领域从基于几何先验的传统方法演进至深度学习驱动的端到端模型。本节从深度学习点云语义分析、几何特征增强、多尺度特征表达以及基于图多项式的分析方法四个维度梳理相关工作。
 
 \subsection{基于深度学习的点云语义分析}
-PointNet~\cite{pointnet}开创性地通过对称函数（最大池化）处理点云无序性问题，成为点云深度学习的基础框架，但其全局池化策略在局部几何细节建模方面存在明显不足。为克服这一局限，PointNet++~\cite{PointNet++}引入分层采样策略，通过集合抽象层递进式地实现多尺度特征学习，显著增强了对局部结构的感知能力。后续工作进一步增强了局部特征建模能力：DGCNN~\cite{DGCNN}通过在特征空间中动态构建k近邻图结构，将每轮卷积的局部感受野自适应地调整为语义近邻而非几何近邻；此外亦有方法通过核点算子、残差MLP架构、位置自适应卷积核或曲线行走等策略进一步挖掘局部几何信息，从不同角度丰富了卷积式点云分析的设计空间。然而，这些方法的感受野受限于邻域半径，难以有效捕获点云中的长程依赖关系，这在大场景语义分割中表现得尤为明显。
+PointNet~\cite{pointnet}开创性地通过对称函数（最大池化）处理点云无序性问题，成为点云深度学习的基础框架，但其全局池化策略在局部几何细节建模方面存在明显不足。为克服这一局限，PointNet++~\cite{PointNet++}引入分层采样策略，通过抽象层递进式地实现多尺度特征学习，显著增强了对局部结构的感知能力。后续工作进一步增强了局部特征建模能力：DGCNN~\cite{DGCNN}通过在特征空间中动态构建k近邻图结构，将每轮卷积的局部感受野自适应地调整为语义近邻而非几何近邻；此外亦有方法通过核点算子、残差MLP架构、位置自适应卷积核等策略进一步挖掘局部几何信息，从不同角度拓展了卷积式点云分析的设计空间。然而，这些方法的感受野受限于邻域半径，难以有效捕获点云中的长程依赖关系，这在大场景语义分割中表现得尤为明显。
 
-Transformer通过自注意力机制为点云分析引入了全局建模能力，突破了局部感受野的限制。Point Transformer~\cite{pt}设计了向量注意力机制，将相对位置信息融入注意力计算，实现几何感知的特征聚合，在室内场景分割基准上取得了显著提升；PTv3~\cite{ptv3}进一步采用简化的序列化策略，通过串行块结构取代传统窗口注意力，并配合大规模预训练充分挖掘模型表示能力，成为点云Transformer的重要里程碑。尽管Transformer具有强大的全局建模能力，其$O(N^2)$的计算复杂度在大规模点云处理中成为显著瓶颈，迫使模型依赖粗粒度表示或滑动窗口策略，难以在保持计算效率的同时兼顾精细局部几何细节。
+Transformer通过自注意力机制为点云分析引入了全局建模能力，突破了局部感受野的限制。Point Transformer~\cite{pt}设计了向量注意力机制，将相对位置信息融入注意力计算，实现几何感知的特征聚合，在室内场景分割基准上取得了显著提升；PTv3~\cite{ptv3}进一步采用简化的序列化策略，通过串行块结构取代传统窗口注意力，并配合大规模预训练充分挖掘模型表示能力。尽管Transformer具有强大的全局建模能力，其$O(N^2)$的计算复杂度在大规模点云处理中成为显著瓶颈，迫使模型依赖粗粒度表示或滑动窗口策略，难以在保持计算效率的同时兼顾精细局部几何细节。
 
-状态空间模型（SSM）~\cite{Mamba}以线性复杂度提供了有竞争力的替代方案。PointMamba~\cite{PointMamba}首次将Mamba架构引入点云分析，通过空间填充曲线将三维点云序列化为一维序列以实现全局建模；PCM~\cite{pcm}引入层次化下采样以捕获多尺度特征。然而，将三维非结构化数据适配到一维序列处理框架时面临两个关键挑战：其一，序列化破坏了空间邻近点之间的邻域关系，导致局部几何结构的空间邻近性丢失；其二，统一的序列化策略难以同时捕获细粒度局部特征与长程上下文依赖，限制了多尺度表达能力。
+状态空间模型（SSM）~\cite{Mamba}以线性复杂度提供了有竞争力的替代方案。PointMamba~\cite{PointMamba}首次将Mamba架构引入点云分析，通过空间填充曲线将三维点云序列化为一维序列以实现全局建模；PCM~\cite{pcm}引入层次化下采样以捕获多尺度特征。然而，将三维点云转换为一维点云序列时面临两个关键挑战：其一，序列化破坏了空间邻近点之间的邻域关系，导致局部几何结构的空间邻近性丢失；其二，统一的序列化策略难以同时捕获细粒度局部特征与长程上下文依赖，限制了多尺度表达能力。
 
 \subsection{基于几何特征增强的点云分析方法}
 显式建模曲面法向量、曲率等几何属性对准确理解三维结构至关重要。早期方法主要依赖原始三维坐标，但随着研究深入，越来越多工作开始引入更丰富的几何先验知识。PointGA~\cite{pointga}通过三角函数位置编码将原始三维坐标扩展为高维几何特征，并设计了位置差分自注意力机制以线性复杂度实现几何感知的特征表达。PointMSGT~\cite{pointmsgt}提出多尺度几何特征提取框架，其几何特征提取模块通过每个点的两个近邻重构三角形结构，利用三角形质心、法向量和平面常数提取精细的局部几何关系，多尺度注意力模块则通过自适应聚合不同尺度的特征增强对复杂场景的理解能力。Geo-CNN~\cite{geo-cnn}设计了几何卷积操作，将边特征提取过程分解到三个正交基上，并根据边向量与基之间的角度聚合特征，从而在特征提取层次中保持欧几里得空间的几何结构。
