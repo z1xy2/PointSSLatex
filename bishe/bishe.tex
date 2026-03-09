@@ -315,7 +315,7 @@ y_t &= Ch_t
 \end{aligned}
 \end{equation}
 
-其中$\Delta$是步长参数，$\Delta A$表示步长与状态矩阵的乘积，$\bar{A} = \exp(\Delta A)$，$\bar{B} = (\Delta A)^{-1}(\exp(\Delta A) - I) \cdot \Delta B$。
+其中$\Delta$是步长参数，$\Delta A$和$\Delta B$分别表示步长与状态矩阵、输入矩阵的乘积，$\bar{A} = \exp(\Delta A)$，$\bar{B} = (\Delta A)^{-1}(\exp(\Delta A) - I) \cdot \Delta B$。
 
 传统的SSM（如S4\cite{gu2022efficiently}）通常假设系统参数是时间不变的（Linear Time Invariance, LTI），即矩阵$A$、$B$、$C$在整个序列中保持不变。这种设计虽然能够通过卷积定理实现高效的并行计算，但限制了模型根据输入内容动态调整的能力。
 
