@@ -13,6 +13,8 @@
 \usepackage{subfigure}
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{comment}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \usepackage{geometry}
 \usepackage{hyperref}
 \usepackage{cleveref}
@@ -798,7 +800,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 \section{定量实验}
 
 \subsubsection{Experiment results on the S3DIS dataset}
-\cref{tab:s3dis}汇总了S3DIS数据集上的语义分割性能对比。在不使用预训练的条件下，PointSS在Area 5上达到75.9\%的mIoU，优于所有对比方法。具体而言，相比当前最优的Point Transformer V3提升了2.7个百分点，相比基于SSM的PCM提升了6.1个百分点。此外，PointSS保持了SSM的线性时间复杂度。如\cref{tab:efficiency}所示，在相同FP32精度下，PointSS在Patch Size从128到512的范围内推理时间相比PTv3降低约25\%。当Patch Size增至1024时，PTv3因显存溢出无法运行，而PointSS仍可正常工作，体现了线性SSM复杂度相比二次方注意力的可扩展性优势。
+\cref{tab:s3dis}汇总了S3DIS数据集上的语义分割性能对比。在不使用预训练的条件下，PointSS在Area 5上达到75.9\%的mIoU，优于所有对比方法。具体而言，相比当前最优的Point Transformer V3提升了2.7个百分点，相比基于SSM的PCM提升了6.1个百分点。此外，PointSS保持了SSM的线性时间复杂度。如\cref{fig:efficiency}所示，在相同FP32精度下，PointSS在Patch Size从128到512的范围内推理时间相比PTv3降低约25\%。当Patch Size增至1024时，PTv3因显存溢出无法运行，而PointSS仍可正常工作，体现了线性SSM复杂度相比二次方注意力的可扩展性优势。
 
 \begin{table}[htbp!]
 	\caption{在S3DIS上的分割性能对比}
@@ -883,21 +885,49 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 
 \section{计算效率分析}
 
-为验证状态空间模型线性复杂度的计算优势，我们在相同条件下（FP32精度、batch size为1、NVIDIA A6000 GPU）比较了PointSS与Point Transformer V3的推理时间，结果如\cref{tab:efficiency}所示。
+为验证状态空间模型线性复杂度的计算优势，我们在相同条件下（FP32精度、batch size为1、NVIDIA A6000 GPU）比较了PointSS与Point Transformer V3的推理时间，结果如\cref{fig:efficiency}所示。
 
-\begin{table}[htbp!]
+\begin{figure}[htbp!]
 	\centering
-	\caption{不同Patch Size下的推理时间对比（ms）}
-	\label{tab:efficiency}
-	\begin{tabular}{@{}lllll@{}}
-		\toprule
-		\textbf{模型} & \textbf{128} & \textbf{256} & \textbf{512} & \textbf{1024} \\
-		\midrule
-		Point Transformer V3 & 1.089 & 1.147 & 1.274 & OOM \\
-		\textbf{PointSS} & \textbf{0.850} & \textbf{0.938} & \textbf{0.932} & \textbf{1.208} \\
-		\bottomrule
-	\end{tabular}
-\end{table}
+	\begin{tikzpicture}
+	\begin{axis}[
+		width=0.85\linewidth,
+		height=6cm,
+		xlabel={Patch Size},
+		ylabel={推理时间 (ms)},
+		xtick={128,256,512,1024},
+		xticklabels={128,256,512,1024},
+		xmin=64, xmax=1150,
+		ymin=0.6, ymax=1.55,
+		legend pos=south east,
+		legend style={font=\small},
+		grid=major,
+		grid style={dashed,gray!30},
+	]
+
+	\addplot[color=blue, mark=square*, thick, solid] coordinates {
+		(128, 1.089)
+		(256, 1.147)
+		(512, 1.274)
+	};
+	\addlegendentry{PTv3}
+
+	\addplot[color=orange, mark=*, thick, solid] coordinates {
+		(128,  0.850)
+		(256,  0.938)
+		(512,  0.932)
+		(1024, 1.208)
+	};
+	\addlegendentry{PointSS (Ours)}
+
+	\draw[color=blue, dashed, thick] (axis cs:512,1.274) -- (axis cs:1024,1.274);
+	\node[color=blue, font=\small\bfseries, anchor=south] at (axis cs:1024,1.274) {OOM};
+
+	\end{axis}
+	\end{tikzpicture}
+	\caption{PTv3与PointSS在不同Patch Size下的推理时间对比（FP32精度、batch size为1、NVIDIA A6000 GPU）}
+	\label{fig:efficiency}
+\end{figure}
 
 在Patch Size从128到512的范围内，PointSS的推理时间相比PTv3降低约22\%--37\%。当Patch Size增至1024时，PTv3因自注意力机制的二次方内存开销导致显存溢出（OOM），而PointSS仍可正常运行，体现了线性复杂度在大规模点云处理中的可扩展性优势。
 
