@@ -105,7 +105,7 @@
 \chapter*{摘\quad 要}
 \addcontentsline{toc}{chapter}{摘要}
 
-随着三维传感技术的快速发展，点云数据在自动驾驶、机器人感知与数字城市等领域得到广泛应用。近年来，状态空间模型（State Space Model，SSM）凭借线性复杂度下的长序列建模能力，被引入点云分析任务并取得一定进展。然而，点云在序列化处理过程中不可避免地引入空间邻域与序列顺序的不一致，导致相邻点在序列中被分离，削弱了模型对局部几何结构的感知能力。此外，现有SSM方法的状态转移参数与输入无关，无法根据不同尺度的建模需求自适应调整，限制了层次化特征表示的构建。
+随着三维传感技术的快速发展，点云数据在自动驾驶、机器人感知与数字城市等领域得到广泛应用。近年来，状态空间模型（State Space Model，SSM）凭借线性复杂度下的长序列建模能力，被引入点云分析任务并取得一定进展。然而，点云在序列化处理过程中不可避免地破坏了点云在空间上的相邻性，导致在三维空间上相邻点在序列中被分离，削弱了模型对局部几何结构的感知能力。此外，现有SSM方法的状态转移参数与输入无关，无法根据不同尺度的建模需求自适应调整，限制了层次化特征表示的构建。
 
 针对上述问题，本文提出PointSS，一种基于几何感知的多尺度状态空间点云分析方法。为缓解序列化引发的空间邻域丢失问题，本文提出全局几何感知机制（GGAM）。GGAM通过窗口化邻域高效提取相对位置、法向量和曲率等几何先验，并结合双序列化并行建模与跨序列注意力机制，将几何信息显式注入到Mamba的状态传递过程中。
 
@@ -122,9 +122,9 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-With the rapid development of 3D sensing technology, point cloud data has been widely applied in autonomous driving, robot perception, and digital city modeling. Recently, State Space Models (SSMs), with their long-sequence modeling capability at linear complexity, have been introduced to point cloud analysis and achieved promising results. However, serializing 3D point clouds into 1D sequences inevitably disrupts spatial proximity—spatially adjacent points become separated in the sequence, weakening the model's ability to capture local geometric structures. Moreover, the state transition parameters in existing SSM-based methods remain input-invariant, preventing adaptive adjustment to the modeling requirements at different scales and limiting the construction of hierarchical feature representations.
+With the rapid development of 3D sensing technology, point cloud data has been widely applied in autonomous driving, robot perception, and digital city modeling. Recently, State Space Models (SSMs), with their long-sequence modeling capability at linear complexity, have been introduced to point cloud analysis and achieved promising results. However, serializing 3D point clouds into 1D sequences inevitably disrupts the spatial adjacency of point clouds—points that are adjacent in 3D space become separated in the sequence, weakening the model's ability to capture local geometric structures. Moreover, the state transition parameters in existing SSM-based methods remain input-invariant, preventing adaptive adjustment to the modeling requirements at different scales and limiting the construction of hierarchical feature representations.
 
-To address these issues, this paper proposes PointSS, a geometry-aware multi-scale state space method for point cloud analysis. To mitigate the loss of spatial proximity caused by serialization, we propose a Global Geometry-Aware Mechanism (GGAM). GGAM efficiently extracts geometric priors—including relative positions, surface normals, and curvatures—via windowed neighborhoods, and explicitly injects them into Mamba's state propagation through dual-serialization parallel modeling and cross-sequence attention.
+To address these issues, this paper proposes PointSS, a geometry-aware multi-scale state space method for point cloud analysis. To mitigate the loss of spatial proximity caused by serialization, we propose a Global Geometry-Aware Mechanism (GGAM). GGAM efficiently extracts geometric priors—including relative positions, surface normals, and curvatures—via windowed neighborhoods. Combined with dual-serialization parallel modeling and cross-sequence attention, these geometric priors are explicitly injected into Mamba's state propagation.
 
 To address the input-invariant state transition parameters in conventional SSMs that cannot adapt to multi-scale modeling requirements, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM). Through a dynamic parameter generation mechanism, ASD-SSM adaptively generates state transition parameters based on the local geometric content at each scale, and employs scale constraint factors to guide fine scales toward capturing local geometric details while coarse scales model global semantic dependencies, thereby constructing hierarchical feature representations.
 
