@@ -108,7 +108,7 @@ X' &= X + \hat{X}
 
 \section{消融实验}
 
-通过系统消融实验，分析Chebyshev多尺度SSM中关键设计选择对模型性能的影响，重点考察多项式阶数、Mamba独立性、融合策略以及图构建方法等因素。所有实验均在S3DIS数据集上进行。
+通过系统消融实验，分析Chebyshev多尺度SSM中关键设计选择对模型性能的影响，重点考察多项式阶数、Mamba独立性以及与空域方法的互补性等因素。所有实验均在S3DIS数据集上进行。除"与空域方法的互补性"实验外，其余消融实验均在仅启用Chebyshev多尺度SSM、不加载GGAM和ASD-SSM的条件下进行，以隔离各设计选择的独立影响。
 
 \subsection{Chebyshev多项式阶数}
 
@@ -154,31 +154,35 @@ Chebyshev多项式阶数$K$决定了多尺度分解的精细度。表\ref{tab:ch
 
 实验显示，所有分量共享单一Mamba时性能受限，虽然参数量最少但难以同时适应小感受野分量的局部特性和大感受野分量的全局特性。将低阶分量（$\ell=0,1$）和高阶分量（$\ell=2$）分为两组，各组内共享Mamba，性能有所提升，验证了分组建模的价值。每个分量使用独立Mamba时达到最优性能，相比分组方案进一步改善。虽然参数量增加15\%，但增益显著，证明尺度特定建模的必要性。
 
-\subsection{多尺度融合策略}
+此外，我们对比了不同的多尺度融合方式，包括均匀加权（74.6\%）、线性层投影（74.9\%）、注意力机制（75.1\%）和Softmax加权（75.2\%）。结果表明Softmax加权融合已足够有效，更复杂的注意力机制反而因过度参数化略有下降。
 
-表\ref{tab:fusion_strategy}对比了不同多尺度融合方法的性能。
+\subsection{与空域方法的互补性}
+
+表\ref{tab:comparison_spatial}对比了Chebyshev多尺度SSM与空域方法的性能，验证两类方法的互补关系。
 
 \begin{table}[htbp!]
 \centering
-\caption{多尺度融合策略对比}
-\label{tab:fusion_strategy}
-\begin{tabular}{@{}lc@{}}
+\caption{Chebyshev多尺度SSM与空域方法对比}
+\label{tab:comparison_spatial}
+\begin{tabular}{@{}lcc@{}}
 \toprule
-融合策略 & mIoU (\%) \\
+方法 & 建模策略 & mIoU (\%) \\
 \midrule
-均匀加权（固定权重$1/K$） & 74.6 \\
-线性层融合（可学习投影） & 74.9 \\
-\textbf{Softmax加权（可学习权重）} & \textbf{75.2} \\
-注意力机制融合 & 75.1 \\
+Baseline (PTv3) & 空域 & 71.9 \\
++ GGAM & 空域 & 73.2 \\
++ ASD-SSM & 空域 & 73.5 \\
++ Chebyshev多尺度SSM & 图多项式 & 75.2 \\
+\midrule
+\textbf{+ GGAM + ASD-SSM + Chebyshev多尺度SSM} & \textbf{空域+图多项式} & \textbf{75.9} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-均匀加权作为最简单的基线，说明即使不学习权重，多尺度融合也能带来增益。使用线性层对拼接的多尺度特征进行投影，性能进一步改善。本文采用的Softmax加权融合达到最优性能，表明不同空间尺度分量的重要性确实存在差异，可学习权重能够自适应地调整各分量的贡献。我们还尝试了更复杂的注意力机制融合（用查询-键-值attention聚合各尺度特征），但性能反而略有下降。这可能是因为过度参数化导致过拟合，简单的Softmax加权已足够有效。
+实验表明，单独使用Chebyshev多尺度SSM相比Baseline提升明显，验证了基于图多项式的多尺度建模的有效性。更重要的是，将Chebyshev多尺度SSM与空域方法（GGAM + ASD-SSM）结合后，性能达到75.9\%，展现出两类方法的互补性：空域方法擅长捕获局部几何细节和序列化邻域结构，Chebyshev多尺度SSM通过图拉普拉斯递推聚合不同跳数的邻域信息，两者结合能够更全面地刻画点云的多尺度几何特征。
 
 
 \section{本章小结}
 
 本章针对现有空域方法感受野相对固定、难以在同一模块中同时建模不同空间尺度几何信息的局限，提出了基于Chebyshev多项式近似的多尺度图状态空间模型（Chebyshev多尺度SSM）。该方法利用Chebyshev多项式递推计算实现$O(KN)$复杂度的多尺度分解，将点云特征展开为$K$个不同感受野的分量，通过为每个分量配备独立Mamba模块实现尺度特定的序列建模，并通过可学习权重自适应融合多尺度特征。
 
-实验结果表明，Chebyshev多尺度SSM在S3DIS数据集上达到75.2\% mIoU（相比Baseline提升3.3\%），消融实验验证了分量独立建模的必要性。与空域方法（GGAM + ASD-SSM）结合后，完整的PointSS系统在S3DIS上达到76.8\% mIoU，验证了图多项式建模与空域建模的互补性。
+实验结果表明，Chebyshev多尺度SSM在S3DIS数据集上达到75.2\% mIoU（相比Baseline提升3.3\%），消融实验验证了分量独立建模的必要性。与空域方法（GGAM + ASD-SSM）结合后，完整的PointSS系统在S3DIS上达到75.9\% mIoU，验证了图多项式建模与空域建模的互补性。
