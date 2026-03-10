@@ -800,7 +800,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 \section{定量实验}
 
 \subsubsection{Experiment results on the S3DIS dataset}
-\cref{tab:s3dis}汇总了S3DIS数据集上的语义分割性能对比。在不使用预训练的条件下，PointSS在Area 5上达到75.9\%的mIoU，优于所有对比方法。具体而言，相比当前最优的Point Transformer V3提升了2.7个百分点，相比基于SSM的PCM提升了6.1个百分点。此外，PointSS保持了SSM的线性时间复杂度。如\cref{fig:efficiency}所示，在相同FP32精度下，PointSS在Patch Size从128到512的范围内推理时间相比PTv3降低约25\%。当Patch Size增至1024时，PTv3因显存溢出无法运行，而PointSS仍可正常工作，体现了线性SSM复杂度相比二次方注意力的可扩展性优势。
+\cref{tab:s3dis}汇总了S3DIS数据集上的语义分割性能对比。在不使用预训练的条件下，PointSS在Area 5上达到75.9\%的mIoU，优于所有对比方法。具体而言，相比当前最优的Point Transformer V3提升了2.7个百分点，相比基于SSM的PCM提升了6.1个百分点。
 
 \begin{table}[htbp!]
 	\caption{在S3DIS上的分割性能对比}
@@ -926,7 +926,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 	\label{fig:efficiency}
 \end{figure}
 
-在Patch Size从128到512的范围内，PointSS的推理时间相比PTv3降低约22\%--37\%。当Patch Size增至1024时，PTv3因自注意力机制的二次方内存开销导致显存溢出（OOM），而PointSS仍可正常运行，体现了线性复杂度在大规模点云处理中的可扩展性优势。
+在Patch Size从128到512的范围内，PointSS的推理时间相比PTv3降低约9\%--19\%。当Patch Size增至1024时，PTv3因自注意力机制的二次方内存开销导致显存溢出（OOM），而PointSS仍可正常运行，体现了线性复杂度在大规模点云处理中的可扩展性优势。
 
 
 \section{定性实验}
@@ -955,7 +955,7 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 
 在多尺度特征学习方面，ASD-SSM通过尺度感知参数生成器为不同尺度动态生成定制化的状态转移参数，使细尺度快速响应局部几何细节变化，粗尺度保持长程记忆以捕获全局语义上下文，实现了层次化的多尺度特征学习。实验表明，相比共享参数或完全独立参数的方案，ASD-SSM在保持参数高效的前提下取得了更优的性能。
 
-在图多项式建模方面，Chebyshev多尺度SSM利用Chebyshev多项式对图拉普拉斯算子的递推展开，以线性复杂度将点云特征分解为多个不同感受野的分量，并为每个分量配备独立的Mamba模块进行差异化序列建模。该方法从图多项式的视角补偿了空域方法在拓扑信息建模上的不足，与GGAM和ASD-SSM形成正交互补。实验表明，Chebyshev多尺度SSM与空域方法结合后产生了协同增益，验证了两类方法的互补性。
+在图多项式建模方面，Chebyshev多尺度SSM利用Chebyshev多项式对图拉普拉斯算子的递推展开，以线性复杂度将点云特征分解为多个不同感受野的分量，并为每个分量配备独立的Mamba模块进行差异化序列建模。该方法从图多项式的视角补偿了空域方法在拓扑信息建模上的不足，与GGAM和ASD-SSM形成互补。实验表明，Chebyshev多尺度SSM与空域方法结合后产生了协同增益，验证了两类方法的互补性。
 
 在S3DIS和ModelNet40标准基准上的实验表明，PointSS在不依赖预训练的条件下，在语义分割任务上超越了现有的SSM方法和Transformer方法，在分类任务上超越所有SSM类对比方法并与Transformer方法保持竞争力。计算效率分析表明，PointSS在保持线性时间复杂度的同时具有推理速度优势，并在大Patch Size场景下展现出更好的可扩展性。定性实验进一步验证了PointSS在大空间跨度结构、细粒度物体和类别边界等场景中的有效性。
 
