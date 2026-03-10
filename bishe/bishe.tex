@@ -433,7 +433,7 @@ y = g_\theta(L)x \approx \sum_{k=0}^{K-1} \theta_k T_k(\tilde{L})x
 
 \subsection{位置编码}
 
-由于Transformer和Mamba本身不包含位置信息，需要通过位置编码注入序列的顺序信息。绝对位置编码（如正弦位置编码\cite{vaswani2017attention}）为每个位置生成固定的编码向量。相对位置编码（如旋转位置编码RoPE\cite{su2024roformer}）则编码位置之间的相对关系，通常具有更好的泛化能力。在点云处理中，位置编码需要结合三维空间坐标的特性进行设计。
+由于Transformer本身不包含位置信息，需要通过位置编码注入序列的顺序信息。绝对位置编码（如正弦位置编码\cite{vaswani2017attention}）为每个位置生成固定的编码向量。相对位置编码（如旋转位置编码RoPE\cite{su2024roformer}）则编码位置之间的相对关系，通常具有更好的泛化能力。在点云处理中，位置编码需要结合三维空间坐标的特性进行设计。
 
 \subsection{归一化技术}
 
