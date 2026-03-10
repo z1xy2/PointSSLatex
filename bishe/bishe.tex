@@ -363,7 +363,7 @@ Hilbert曲线具有良好的空间局部性保持特性\cite{lawder2000using}：
 
 \subsection{图信号处理基础}
 
-点云可以自然地建模为图结构$\mathcal{G} = (\mathcal{V}, \mathcal{E})$，其中节点$\mathcal{V}$表示点，边$\mathcal{E}$表示点间的邻接关系（通常通过$k$-近邻或半径邻域定义）。每个点的特征$x_i \in \mathbb{R}^D$可视为图上的信号。图信号处理理论\cite{shuman2013emerging}将经典信号处理的概念推广到图域，其中图拉普拉斯算子扮演了傅里叶变换基的角色。
+点云可以自然地建模为图结构$\mathcal{G} = (\mathcal{V}, \mathcal{E})$，其中节点$\mathcal{V}$表示点，边$\mathcal{E}$表示点间的邻接关系（通常通过$k$-近邻或半径邻域定义）。每个点的特征$x_i$可视为图上的信号。图信号处理理论\cite{shuman2013emerging}将经典信号处理的概念推广到图域，其中图拉普拉斯算子扮演了傅里叶变换基的角色。
 
 \textbf{图拉普拉斯算子}：定义为$L = D - W$，其中$D$为度矩阵（对角元素$D_{ii} = \sum_j W_{ij}$），$W$为邻接矩阵（$W_{ij}$表示点$i$和$j$之间的边权重）。归一化拉普拉斯定义为$L_{norm} = I - D^{-1/2}WD^{-1/2}$。
 
@@ -389,11 +389,11 @@ y = g_\theta(L)x = Ug_\theta(\Lambda)U^Tx
 
 \subsection{Chebyshev多项式近似}
 
-Chebyshev多项式近似\cite{hammond2011wavelets,defferrard2016convolutional}通过用低阶多项式逼近频域滤波器，避免显式计算特征分解。其理论基础是：任意平滑函数$g_\theta(\lambda)$可以在$[-1,1]$区间内用Chebyshev多项式展开：
+Chebyshev多项式近似\cite{defferrard2016convolutional,hammond2011wavelets}通过用低阶多项式逼近频域滤波器，避免显式计算特征分解。其理论基础是：任意平滑函数$g_\theta(\lambda)$可以在$[-1,1]$区间内用Chebyshev多项式展开：
 \begin{equation}
 g_\theta(\lambda) \approx \sum_{k=0}^{K-1} \theta_k T_k(\tilde{\lambda})
 \end{equation}
-其中$T_k$为$k$阶Chebyshev多项式，$\tilde{\lambda} = 2\lambda/\lambda_{max} - 1$为归一化的特征值（将$[0, \lambda_{max}]$映射到$[-1,1]$）。
+其中$\theta_k$为第$k$阶的Chebyshev展开系数（在图神经网络中为可学习参数），$T_k$为$k$阶Chebyshev多项式，$\tilde{\lambda} = 2\lambda/\lambda_{max} - 1$为归一化的特征值（将$[0, \lambda_{max}]$映射到$[-1,1]$）。
 
 Chebyshev多项式具有以下递推性质：
 \begin{equation}
