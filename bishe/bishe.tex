@@ -331,7 +331,7 @@ C_t &= \text{Linear}_C(x_t) \\
 \end{aligned}
 \end{equation}
 
-其中$\text{Linear}_B$和$\text{Linear}_C$分别为将输入投影到$N$维的线性层，$\text{Linear}_1$将输入投影到1维标量，$\text{Broadcast}_D$将该标量广播到$D$维（$D$为模型通道数），$\text{Parameter}$为可学习的偏置参数，$\text{softplus}$激活函数确保步长$\Delta_t$为正值。这种选择性机制使得模型能够根据输入内容选择性地更新隐状态，增强了对重要信息的记忆能力和对不相关信息的过滤能力。
+其中$\text{Linear}_B$和$\text{Linear}_C$分别为将输入投影到$N$维的线性层，$\text{Linear}_1$将输入投影到1维标量，$\text{Broadcast}_D$将该标量广播到$D$维（$D$为模型通道数），$\text{Parameter}$为可学习的偏置参数，$\text{softplus}$激活函数确保步长$\Delta_t$为正值。步长$\Delta_t$控制离散化的时间步幅，通过$\bar{A} = \exp(\Delta_t A)$直接影响状态衰减速率：较大的$\Delta_t$加速状态衰减，使模型更关注当前输入；较小的$\Delta_t$减缓衰减，使模型保留更多历史信息。这种选择性机制使得模型能够根据输入内容选择性地更新隐状态，增强了对重要信息的记忆能力和对不相关信息的过滤能力。
 
 Mamba的计算过程可以概括为：首先将输入$x$通过线性层映射到高维空间，并分为两路进行门控；随后通过选择性SSM根据输入动态计算$B_t$、$C_t$、$\Delta_t$并更新隐状态$h_t$；之后使用SiLU激活函数对两路特征进行门控融合；最后通过线性层映射回原始维度。
 
