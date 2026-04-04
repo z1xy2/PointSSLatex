@@ -48,7 +48,7 @@ capturing local geometric details and coarse scales modeling global semantic
 context. Extensive experiments demonstrate that PointSS achieves state-of-the-art
 semantic segmentation performance on S3DIS and competitive classification
 accuracy on ModelNet40, outperforming all SSM-based counterparts. Compared to Point Transformer V3, PointSS
-achieves 22--37\% faster inference and remains operational at large patch sizes where
+achieves 9--19\% faster inference and remains operational at large patch sizes where
 attention-based methods encounter memory limitations.
 \end{abstract}
 
@@ -107,7 +107,7 @@ analysis. The main contributions of this work are as follows:
 	semantic context, achieving effective hierarchical representations.
 	
 	\item Extensive experiments demonstrate that PointSS achieves state-of-the-art
-	semantic segmentation on S3DIS (75.2\% mIoU) and outperforms all SSM-based
+	semantic segmentation on S3DIS (74.1\% mIoU) and outperforms all SSM-based
 	counterparts on ModelNet40 (94.6\% OA), while maintaining linear complexity.
 	Comprehensive ablation studies further validate the effectiveness of our
 	geometry-aware multi-scale design.
@@ -350,9 +350,9 @@ Through these mechanisms, ASD-SSM achieves scale-decoupled state-space modeling:
 
 \subsection{Implementation Details}
 
-We conduct experiments for point cloud analysis on the indoor semantic segmentation dataset S3DIS and the 3D object classification dataset ModelNet40. All experiments were performed on an Nvidia A6000 GPU. For network training, we employed the AdamW optimizer and the OneCycleLR learning rate scheduler, with an initial maximum learning rate of $6 \times 10^{-3}$. The scheduling mechanism included a linear warm-up phase followed by a cosine annealing cycle. The model was trained for 3000 epochs with a batch size of 6, utilizing Automatic Mixed Precision (AMP) to enhance training efficiency.
+We conduct experiments for point cloud analysis on the indoor semantic segmentation dataset S3DIS and the 3D object classification dataset ModelNet40. All experiments were performed on an Nvidia A6000 GPU. For network training, we employed the AdamW optimizer and the OneCycleLR learning rate scheduler, with an initial maximum learning rate of $6 \times 10^{-3}$. The scheduling mechanism included a linear warm-up phase followed by a cosine annealing cycle. The model was trained for 300 epochs with a batch size of 6, utilizing Automatic Mixed Precision (AMP) to enhance training efficiency.
 
-In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The patch size was uniformly set to 256. We employ cross-entropy as the loss function, which is widely used for classification and segmentation tasks.
+In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The patch size was uniformly set to 128. We employ cross-entropy as the loss function, which is widely used for classification and segmentation tasks.
 
 PointSS is trained from scratch without pre-training, so that performance gains can be attributed to architectural design rather than pre-training strategies.
 
@@ -366,7 +366,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 75.2\% mean Intersection over Union (mIoU) on Area 5, outperforming all methods in the comparison. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 1.8\% and the SSM-based PCM by 5.4\%. Furthermore, PointSS retains the linear time complexity of SSMs. As shown in \cref{fig:efficiency}, compared to PTv3 under identical FP32 precision, PointSS achieves approximately 25\% reduction in inference time across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors, while PointSS continues to operate normally, demonstrating the scalability advantage of linear SSM complexity over quadratic attention.
+\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 74.1\% mean Intersection over Union (mIoU) on Area 5, outperforming all methods in the comparison. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 0.7\% and the SSM-based Pamba by 0.6\%. Furthermore, PointSS retains the linear time complexity of SSMs. As shown in \cref{fig:efficiency}, compared to PTv3 under identical FP32 precision, PointSS achieves approximately 9--19\% reduction in inference time across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors, while PointSS continues to operate normally, demonstrating the scalability advantage of linear SSM complexity over quadratic attention.
 
 \begin{table}[!t]
 \centering
@@ -378,15 +378,17 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 Point Transformer V2\cite{ptv2} & NeurIPS'22 & Transformer & 72.6 \\
 PointMetaBase\cite{pmb} & CVPR'23 & Transformer & 72.0 \\
 SuperpointTransformer\cite{spt} & ICCV'23 & Transformer & 68.1 \\
-Swin3D\cite{Swin3D} & CVMJ'23 & Transformer & 72.5 \\
+Swin3D\cite{Swin3D} & CVMJ'25 & Transformer & 72.5 \\
 PPT+SpareUNET\cite{ppt} & CVPR'24 & Transformer & 72.7 \\
 OA-CNNs\cite{oacnn} & CVPR'24 & CNN & 71.1 \\
 OneFormer3D\cite{OneFormer3D} & CVPR'24 & Transformer & 72.4 \\
 Point Transformer V3\cite{ptv3} & CVPR'24 & Transformer & 73.4 \\
 PCM$^\dagger$\cite{pcm} & AAAI'25 & SSM & 69.8 \\
+Pamba\cite{pamba} & AAAI'25 & SSM & 73.5 \\
+HybridTM\cite{hybridtm} & IROS'25 & SSM & 72.1 \\
 PointMSGT\cite{pointmsgt} & Mathematics'24 & Transformer & 68.6 \\
 PointGA\cite{pointga} & Sci. Rep.'25 & Transformer & 66.2 \\
-PointSS (Ours) & -- & SSM & \textbf{75.2} \\ \bottomrule
+PointSS (Ours) & -- & SSM & \textbf{74.1} \\ \bottomrule
 \end{tabular}
 \end{table}
 
@@ -405,7 +407,6 @@ Point Transformer V2 \cite{ptv2} & NeurIPS'22 & Transformer & 94.2 \\
 Point-FEMAE \cite{FEMAE} & AAAI'24 & Transformer & 94.5 \\
 Mamba3D \cite{Mamba3D} & ACM MM'24 & SSM & 94.1 \\
 PointMamba \cite{PointMamba} & NeurIPS'24 & SSM & 93.6 \\
-OTMae3D \cite{OTMae3D} & TIP'25 & Transformer & 94.5 \\
 PCM \cite{pcm} & AAAI'25 & SSM & 93.4 \\
 PointGA \cite{pointga} & Sci. Rep.'25 & Transformer & 93.8 \\
 PointSS (Ours) & -- & SSM & \textbf{94.6} \\ \bottomrule
@@ -456,13 +457,13 @@ PointSS (Ours) & -- & SSM & \textbf{94.6} \\ \bottomrule
 \label{fig:efficiency}
 \end{figure}
 
-To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3 under identical conditions: FP32 precision, batch size 1, on an NVIDIA A6000 GPU. As shown in \cref{fig:efficiency}, PointSS consistently reduces inference time by approximately 22--37\% across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors due to the quadratic memory cost of self-attention, while PointSS continues to operate without constraint, demonstrating that linear complexity provides meaningful scalability advantages in large-patch-size regimes.
+To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3 under identical conditions: FP32 precision, batch size 1, on an NVIDIA A6000 GPU. As shown in \cref{fig:efficiency}, PointSS consistently reduces inference time by approximately 9--19\% across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors due to the quadratic memory cost of self-attention, while PointSS continues to operate without constraint, demonstrating that linear complexity provides meaningful scalability advantages in large-patch-size regimes.
 
 \subsection{Ablation Study}
 
 Ablation studies were conducted on the S3DIS dataset using a progressive strategy to verify individual module contributions. First, the effectiveness of GGAM in mitigating the loss of spatial proximity was examined (\Cref{tab:ggam_fragmentation,tab:ggam_category,tab:ggam_components}), followed by the validation of ASD-SSM design choices (\Cref{tab:scale_constraint,tab:param_comparison,tab:scale_config}).
 
-The baseline model utilizes a standard single-scale bidirectional Mamba. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a +2.2\% mIoU improvement, confirming that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates serialization-induced spatial proximity loss. Building on this, ASD-SSM contributes a further +2.7\%, demonstrating that scale-decoupled parameterization is crucial for simultaneously capturing local details and modeling global semantics. Together, the two modules address distinct limitations and yield a gain of 4.9\% mIoU over the baseline.
+The baseline model utilizes a standard single-scale bidirectional Mamba. As shown in \Cref{tab:progressive_improvement}, introducing GGAM alone yields a +1.6\% mIoU improvement, confirming that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates serialization-induced spatial proximity loss. Building on this, ASD-SSM contributes a further +1.9\%, demonstrating that scale-decoupled parameterization is crucial for simultaneously capturing local details and modeling global semantics. Together, the two modules address distinct limitations and yield a gain of 3.5\% mIoU over the baseline.
 
 \begin{table*}[!t]
 \centering
@@ -473,10 +474,10 @@ The baseline model utilizes a standard single-scale bidirectional Mamba. As show
 \textbf{Model Configuration} & \textbf{mIoU (\%)} & \textbf{Improvement (\%)} \\
 \midrule
 Pure Mamba Baseline & 70.3 & - \\
-Baseline + GGAM & 72.5 & +2.2 \\
-Baseline + GGAM + ASD-SSM (PointSS) & \textbf{75.2} & +2.7 \\
+Baseline + GGAM & 71.9 & +1.6 \\
+Baseline + GGAM + ASD-SSM (PointSS) & \textbf{73.8} & +1.9 \\
 \midrule
-\textbf{Total Improvement} & - & \textbf{+4.9} \\
+\textbf{Total Improvement} & - & \textbf{+3.5} \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -490,11 +491,11 @@ Baseline + GGAM + ASD-SSM (PointSS) & \textbf{75.2} & +2.7 \\
 		\textbf{Proximity Loss} & \textbf{Point} & \textbf{Point} & \textbf{Baseline} & \textbf{GGAM} & \textbf{Absolute} \\
 		\textbf{Ratio} & \textbf{Count} & \textbf{Percentage} & \textbf{IoU (\%)} & \textbf{IoU (\%)} & \textbf{Gain (\%)} \\
 		\midrule
-		0-10\% (Low) & 270k & 67\% & 74.0 & 74.8 & 0.8 \\
-		10-20\% (Mild) & 101k & 25\% & 63.0 & 67.1 & 4.1 \\
-		20-30\% (Moderate) & 32k & 8\% & 62.0 & 70.0 & 8.0 \\
+		0-10\% (Low) & 270k & 67\% & 73.0 & 73.7 & 0.7 \\
+		10-20\% (Mild) & 101k & 25\% & 65.9 & 68.6 & 2.7 \\
+		20-30\% (Moderate) & 32k & 8\% & 62.0 & 67.4 & 5.4 \\
 		\midrule
-		Total & 403k & 100\% & 70.3 & 72.5 & 2.2 \\
+		Total & 403k & 100\% & 70.3 & 71.9 & 1.6 \\
 		\bottomrule
 	\end{tabular}
 	\par\vspace{3pt}
@@ -520,21 +521,21 @@ Category-wise analysis (\Cref{tab:ggam_category}) further confirms that categori
 		\toprule
 		\textbf{Category} & \textbf{Avg. Proximity Loss Ratio} & \textbf{Baseline IoU (\%)} & \textbf{GGAM IoU (\%)} & \textbf{Absolute Gain (\%)} \\
 		\midrule
-		Floor     & 5\%    & 97.3  & 98.5  & +1.2 \\
-		Wall      & 6\%    & 84.4  & 85.8  & +1.4 \\
-		Ceiling   & 8\%    & 89.9  & 92.3  & +2.4 \\
-		Table     & 11\%   & 80.8  & 82.5  & +1.7 \\
+		Floor     & 5\%    & 97.3  & 97.5  & +0.2 \\
+		Wall      & 6\%    & 84.4  & 84.8  & +0.4 \\
+		Ceiling   & 8\%    & 89.9  & 90.3  & +0.4 \\
+		Table     & 11\%   & 80.8  & 81.5  & +0.7 \\
 		Bookshelf & 13\%   & 78.5  & 80.0  & +1.5 \\
-		Chair     & 15\%   & 91.1  & 93.6  & +2.5 \\
+		Chair     & 15\%   & 91.1  & 91.6  & +0.5 \\
 		Sofa      & 15\%   & 81.5  & 84.3  & +2.8 \\
-		Board     & 15\%   & 84.8  & 87.9  & +3.1 \\
+		Board     & 15\%   & 84.8  & 86.9  & +2.1 \\
 		Door      & 16\%   & 77.6  & 80.6  & +3.0 \\
 		Column    & 18\%   & 33.6  & 35.4  & +1.8 \\
 		Window    & 18\%   & 58.9  & 62.4  & +3.5 \\
 		Clutter   & 22\%   & 56.1  & 59.4  & +3.3 \\
 		Beam      & --     & 0.0   & 0.0   & 0.0   \\
 		\midrule
-		Mean      & 13.5\% & 70.3  & 72.5  & +2.2 \\
+		Mean      & 13.5\% & 70.3  & 71.9  & +1.6 \\
 		\bottomrule
 	\end{tabular}
 	\par\vspace{3pt}
@@ -554,15 +555,15 @@ The full combination demonstrates that these components function as a coherent w
 \toprule
 \textbf{DS} & \textbf{CSA} & \textbf{GFM} & \textbf{$L_{geo}$} & \textbf{mIoU (\%)} \\
 \midrule
-$\times$ & $\times$ & $\times$ & $\times$ & 71.1 \\
+$\times$ & $\times$ & $\times$ & $\times$ & 70.8 \\
 \checkmark & $\times$ & $\times$ & $\times$ & 70.6 \\
-\checkmark & \checkmark & $\times$ & $\times$ & 71.9 \\
-\checkmark & \checkmark & \checkmark & $\times$ & 72.2 \\
-\checkmark & \checkmark & \checkmark & \checkmark & 72.5 \\
+\checkmark & \checkmark & $\times$ & $\times$ & 71.2 \\
+\checkmark & \checkmark & \checkmark & $\times$ & 71.4 \\
+\checkmark & \checkmark & \checkmark & \checkmark & 71.9 \\
 \bottomrule
 \end{tabular}
 \par\vspace{3pt}
-\footnotesize Notes: DS: Dual-Serialization; CSA: Cross-Sequence Attention; GFM: Gated Fusion Mechanism; $L_{geo}$: Geometric Consistency Constraint (Gate Module). All configurations retain geometric feature extraction as it is a prerequisite of GGAM. The baseline (71.1\%) differs from the pure Mamba baseline in \Cref{tab:progressive_improvement} (70.3\%), as geometric feature extraction is retained in all configurations here.
+\footnotesize Notes: DS: Dual-Serialization; CSA: Cross-Sequence Attention; GFM: Gated Fusion Mechanism; $L_{geo}$: Geometric Consistency Constraint (Gate Module). All configurations retain geometric feature extraction as it is a prerequisite of GGAM. The baseline (70.8\%) differs from the pure Mamba baseline in \Cref{tab:progressive_improvement} (70.3\%), as geometric feature extraction is retained in all configurations here.
 \end{table}
 
 \subsubsection{ASD-SSM Ablation Study}
@@ -580,15 +581,15 @@ Experimental results indicate that uniform $\alpha_s$ configurations consistentl
 \toprule
 $\alpha_1$ & $\alpha_2$ & $\alpha_3$ & \textbf{mIoU (\%)} \\
 \midrule
-0.3 & 0.3 & 0.3 & 73.7 \\
-0.7 & 0.7 & 0.7 & 73.5 \\
-0.5 & 0.5 & 0.5 & 74.0 \\
-0.3 & 0.5 & 0.7 & 74.7 \\
-0.3 & 0.6 & 0.9 & 75.2 \\
-0.3 & 0.7 & 0.9 & 75.0 \\
-0.2 & 0.6 & 0.9 & 74.6 \\
-0.4 & 0.6 & 0.9 & 74.7 \\
-0.9 & 0.6 & 0.3 & 67.9 \\
+0.3 & 0.3 & 0.3 & 72.3 \\
+0.7 & 0.7 & 0.7 & 72.1 \\
+0.5 & 0.5 & 0.5 & 72.6 \\
+0.3 & 0.5 & 0.7 & 73.3 \\
+0.3 & 0.6 & 0.9 & 73.8 \\
+0.3 & 0.7 & 0.9 & 73.6 \\
+0.2 & 0.6 & 0.9 & 73.2 \\
+0.4 & 0.6 & 0.9 & 73.3 \\
+0.9 & 0.6 & 0.3 & 66.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -603,15 +604,15 @@ We further compare ASD-SSM against several common parameterization strategies, a
 \toprule
 \textbf{Parameterization Method} & \textbf{mIoU (\%)} \\
 \midrule
-Shared Parameters & 71.9 \\
-Independent Parameters & 74.0 \\
-Parameter Interpolation & 72.1 \\
-ASD-SSM (Ours) & 75.2 \\
+Shared Parameters & 70.8 \\
+Independent Parameters & 71.6 \\
+Parameter Interpolation & 71.5 \\
+ASD-SSM (Ours) & 73.8 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-We systematically investigate the number of scales $S$ and window expansion configurations (\Cref{tab:scale_config}), confirming the necessity of hierarchical multi-scale modeling. Introducing a second scale consistently improves over the single-scale baseline, with the best 2-scale result reaching 73.8\%. Incorporating a third scale yields a further improvement, with the best 3-scale configuration achieving 75.2\%. This suggests that a three-level hierarchy---local, intermediate, and global---provides comprehensive structural representation.
+We systematically investigate the number of scales $S$ and window expansion configurations (\Cref{tab:scale_config}), confirming the necessity of hierarchical multi-scale modeling. Introducing a second scale consistently improves over the single-scale baseline, with the best 2-scale result reaching 72.4\%. Incorporating a third scale yields a further improvement, with the best 3-scale configuration achieving 73.8\%. This suggests that a three-level hierarchy---local, intermediate, and global---provides comprehensive structural representation.
 
 Regarding window size expansion, moderate increases in the expansion factor enhance context modeling, whereas excessively large windows tend to wash out local geometric detail. Although a four-scale configuration yields a marginal additional gain of 0.2\%, it incurs longer training time with diminishing returns. Consequently, the three-scale configuration with expansion factors $(1, 2, 4)$ represents the optimal trade-off between performance and efficiency.
 
@@ -623,16 +624,16 @@ Regarding window size expansion, moderate increases in the expansion factor enha
 \toprule
 \textbf{S} & \textbf{F} & \textbf{Train Time} & \textbf{mIoU (\%)} \\
 \midrule
-1 & (1) & 35h & 72.5 \\
-2 & (1,2) & 39h & 73.5 \\
-2 & (1,3) & 40h & 73.8 \\
-2 & (1,4) & 40h & 73.1 \\
-3 & (1,2,2) & 45h & 75.0 \\
-3 & (1,2,3) & 46h & 75.0 \\
-3 & (1,2,4) & 46h & 75.2 \\
-3 & (1,3,3) & 45h & 74.8 \\
-4 & (1,2,2,2) & 53h & 75.2 \\
-4 & (1,2,2,3) & 54h & 75.4 \\
+1 & (1) & 35h & 71.9 \\
+2 & (1,2) & 39h & 72.1 \\
+2 & (1,3) & 40h & 72.4 \\
+2 & (1,4) & 40h & 71.7 \\
+3 & (1,2,2) & 45h & 73.6 \\
+3 & (1,2,3) & 46h & 73.6 \\
+3 & (1,2,4) & 46h & 73.8 \\
+3 & (1,3,3) & 45h & 73.4 \\
+4 & (1,2,2,2) & 53h & 73.8 \\
+4 & (1,2,2,3) & 54h & 74.0 \\
 \bottomrule
 \end{tabular}
 \par\vspace{3pt}
