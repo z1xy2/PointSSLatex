@@ -366,7 +366,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 74.1\% mean Intersection over Union (mIoU) on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 0.7\% and the SSM-based Pamba by 0.6\%. Furthermore, PointSS retains the linear time complexity of SSMs. As shown in \cref{fig:efficiency}, compared to PTv3 under identical FP32 precision, PointSS achieves approximately 9--19\% reduction in inference time across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors, while PointSS continues to operate normally, demonstrating the scalability advantage of linear SSM complexity over quadratic attention.
+\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 74.1\% mean Intersection over Union (mIoU) on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 0.7\% and the SSM-based Pamba by 0.6\%. Furthermore, PointSS retains the linear time complexity of SSMs.
 
 \begin{table}[!t]
 \centering
@@ -453,7 +453,7 @@ PointSS (Ours) & -- & SSM & \textbf{94.6} \\ \bottomrule
 
 \end{axis}
 \end{tikzpicture}
-\caption{Inference time vs.\ patch size for PTv3 and PointSS (FP32, batch size = 1, NVIDIA A6000 GPU).}
+\caption{Inference time vs.\ patch size for PTv3 and PointSS.}
 \label{fig:efficiency}
 \end{figure}
 
