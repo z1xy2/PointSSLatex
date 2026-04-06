@@ -106,7 +106,7 @@ analysis. The main contributions of this work are as follows:
 	enables fine scales to capture geometric details while coarse scales model
 	semantic context, achieving effective hierarchical representations.
 	
-	\item Extensive experiments demonstrate that PointSS achieves 74.1\% mIoU
+	\item Extensive experiments demonstrate that PointSS achieves 73.8\% mIoU
 	on S3DIS semantic segmentation and 94.6\% OA on ModelNet40 classification,
 	consistently outperforming major SSM-based counterparts while maintaining linear complexity.
 	Comprehensive ablation studies further validate the effectiveness of our
@@ -366,29 +366,31 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 74.1\% mean Intersection over Union (mIoU) on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 0.7\% and the SSM-based Pamba by 0.6\%. Furthermore, PointSS retains the linear time complexity of SSMs.
+\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 73.8\% mean Intersection over Union (mIoU) on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 0.4\% and the SSM-based Pamba by 0.3\%. Furthermore, PointSS retains the linear time complexity of SSMs.
 
 \begin{table}[!t]
 \centering
 \caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Result reproduced using the official implementation; the median of three independent runs is reported.}
 \label{tab:s3dis}
-\begin{tabular}{@{}llll@{}}
+\begin{tabular}{@{}lll@{}}
 \toprule
-\textbf{Method} & \textbf{Venue} & \textbf{Architecture} & \textbf{mIoU (\%)} \\ \midrule
-Point Transformer V2\cite{ptv2} & NeurIPS'22 & Transformer & 72.6 \\
-PointMetaBase\cite{pmb} & CVPR'23 & Transformer & 72.0 \\
-SuperpointTransformer\cite{spt} & ICCV'23 & Transformer & 68.1 \\
-Swin3D\cite{Swin3D} & CVMJ'25 & Transformer & 72.5 \\
-PPT+SpareUNET\cite{ppt} & CVPR'24 & Transformer & 72.7 \\
-OA-CNNs\cite{oacnn} & CVPR'24 & CNN & 71.1 \\
-OneFormer3D\cite{OneFormer3D} & CVPR'24 & Transformer & 72.4 \\
-Point Transformer V3\cite{ptv3} & CVPR'24 & Transformer & 73.4 \\
-PCM$^\dagger$\cite{pcm} & AAAI'25 & SSM & 69.8 \\
-Pamba\cite{pamba} & AAAI'25 & SSM & 73.5 \\
-HybridTM\cite{hybridtm} & IROS'25 & SSM & 72.1 \\
-PointMSGT\cite{pointmsgt} & Mathematics'24 & Transformer & 68.6 \\
-PointGA\cite{pointga} & Sci. Rep.'25 & Transformer & 66.2 \\
-PointSS (Ours) & -- & SSM & \textbf{74.1} \\ \bottomrule
+\textbf{Method} & \textbf{Venue} & \textbf{mIoU (\%)} \\ \midrule
+\multicolumn{3}{l}{\textit{w/o Mamba}} \\
+Point Transformer V2\cite{ptv2} & NeurIPS'22 & 72.6 \\
+PointMetaBase\cite{pmb} & CVPR'23 & 72.0 \\
+SuperpointTransformer\cite{spt} & ICCV'23 & 68.1 \\
+Swin3D\cite{Swin3D} & CVMJ'25 & 72.5 \\
+PPT+SpareUNET\cite{ppt} & CVPR'24 & 72.7 \\
+OA-CNNs\cite{oacnn} & CVPR'24 & 71.1 \\
+OneFormer3D\cite{OneFormer3D} & CVPR'24 & 72.4 \\
+Point Transformer V3\cite{ptv3} & CVPR'24 & 73.4 \\
+PointMSGT\cite{pointmsgt} & Mathematics'24 & 68.6 \\
+PointGA\cite{pointga} & Sci. Rep.'25 & 66.2 \\ \midrule
+\multicolumn{3}{l}{\textit{w/ Mamba}} \\
+PCM$^\dagger$\cite{pcm} & AAAI'25 & 69.8 \\
+Pamba\cite{pamba} & AAAI'25 & 73.5 \\
+HybridTM\cite{hybridtm} & IROS'25 & 72.1 \\
+PointSS (Ours) & -- & \textbf{73.8} \\ \bottomrule
 \end{tabular}
 \end{table}
 
@@ -400,16 +402,18 @@ PointSS (Ours) & -- & SSM & \textbf{74.1} \\ \bottomrule
 \centering
 \caption{Classification Performance Comparison on ModelNet40}
 \label{tab:ModelNet}
-\begin{tabular}{@{}llll@{}}
+\begin{tabular}{@{}lll@{}}
 \toprule
-\textbf{Method} & \textbf{Venue} & \textbf{Architecture} & \textbf{OA (\%)} \\ \midrule
-Point Transformer V2 \cite{ptv2} & NeurIPS'22 & Transformer & 94.2 \\
-Point-FEMAE \cite{FEMAE} & AAAI'24 & Transformer & 94.5 \\
-Mamba3D \cite{Mamba3D} & ACM MM'24 & SSM & 94.1 \\
-PointMamba \cite{PointMamba} & NeurIPS'24 & SSM & 93.6 \\
-PCM \cite{pcm} & AAAI'25 & SSM & 93.4 \\
-PointGA \cite{pointga} & Sci. Rep.'25 & Transformer & 93.8 \\
-PointSS (Ours) & -- & SSM & \textbf{94.6} \\ \bottomrule
+\textbf{Method} & \textbf{Venue} & \textbf{OA (\%)} \\ \midrule
+\multicolumn{3}{l}{\textit{w/o Mamba}} \\
+Point Transformer V2 \cite{ptv2} & NeurIPS'22 & 94.2 \\
+Point-FEMAE \cite{FEMAE} & AAAI'24 & 94.5 \\
+PointGA \cite{pointga} & Sci. Rep.'25 & 93.8 \\ \midrule
+\multicolumn{3}{l}{\textit{w/ Mamba}} \\
+Mamba3D \cite{Mamba3D} & ACM MM'24 & 94.1 \\
+PointMamba \cite{PointMamba} & NeurIPS'24 & 93.6 \\
+PCM \cite{pcm} & AAAI'25 & 93.4 \\
+PointSS (Ours) & -- & \textbf{94.6} \\ \bottomrule
 \end{tabular}
 \end{table}
 
