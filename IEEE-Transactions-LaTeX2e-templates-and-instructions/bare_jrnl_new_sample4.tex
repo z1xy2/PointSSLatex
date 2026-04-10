@@ -78,18 +78,12 @@ after serialization.
 
 
 
-\begin{figure*}[htbp]
+\begin{figure}[htbp]
 	\centering
-	\subfloat[]{\includegraphics[width=0.48\linewidth]{picture/panel_a.png}}
-	\hfill
-	\subfloat[]{\includegraphics[width=0.165\linewidth]{picture/panel_b.png}}
-	\hfill
-	\subfloat[]{\includegraphics[width=0.165\linewidth]{picture/panel_c.png}}
-	\hfill
-	\subfloat[]{\includegraphics[width=0.165\linewidth]{picture/panel_d.png}}
-	\caption{Motivation and segmentation comparison on an indoor scene from S3DIS. \textbf{(a)} Left: RGB point cloud. Right: points colored by their 1D Hilbert serialization rank (blue $\to$ red = sequence start $\to$ end), revealing that spatially adjacent points at geometric boundaries can be separated by a large rank gap in the 1D sequence. \textbf{(b)} Ground truth semantic labels. \textbf{(c)} Prediction of the baseline without GGAM (w/o GGAM), with a zoom-in (red box) highlighting boundary confusion caused by serialization-induced proximity loss. \textbf{(d)} Prediction of our PointSS, with the same region (green box) showing sharp, accurate boundaries enabled by explicit geometric prior injection via GGAM.}
+	\includegraphics[width=\linewidth]{picture/analysis.JPG}
+	\caption{Visualization of the loss of spatial proximity after serialization. Left: Point sequence after serialization. Right: Segmentation prediction results.}
 	\label{fig:analysis}
-\end{figure*}
+\end{figure}
 Existing SSM-based methods struggle to establish effective hierarchical representations. Single-scale models (e.g., PointMamba) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context.
 
 Hierarchical approaches (e.g., PCM) allocate separate parameters for each downsampled scale. However, their state transition parameters remain input-invariant across spatial locations. This means the network applies identical feature aggregation rules across an entire scale, failing to adapt to varying local geometric characteristics---for instance, processing flat surfaces and sharp boundaries with the same transition dynamics. Furthermore, allocating independent parameters for every scale introduces parameter growth and memory overhead. Consequently, the lack of dynamic, geometry-aware parameterization limits the capacity of existing SSMs to accurately model complex 3D scenes.
