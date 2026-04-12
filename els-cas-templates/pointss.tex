@@ -177,9 +177,9 @@ junctions), where accurate segmentation depends critically on
 interactions between spatially proximate points that are far apart
 after serialization.
 
-\begin{figure}[htbp]
+\begin{figure}
 	\centering
-	\includegraphics[width=\linewidth]{picture/analysis.JPG}
+	\includegraphics[width=.9\columnwidth]{picture/analysis.JPG}
 	\caption{Visualization of the loss of spatial proximity after serialization. Left: Point sequence after serialization. Right: Segmentation prediction results.}
 	\label{fig:analysis}
 \end{figure}
@@ -280,17 +280,17 @@ The overall architecture of the PointSS model is illustrated in \cref{fig:archit
 
 \cref{fig:coder} illustrates the encoder architecture. ASD-SSM is integrated into both the encoder and decoder for hierarchical feature learning. The decoder adopts a structure symmetric to that of the encoder but replaces pooling with upsampling. Through skip connections from encoder stages, the decoder integrates multi-scale features during the upsampling process.
 
-\begin{figure}[htbp]
+\begin{figure}
 	\centering
-	\includegraphics[width=\linewidth]{picture/architecture.jpg}
+	\includegraphics[width=.9\columnwidth]{picture/architecture.jpg}
 	\caption{The overview of the proposed PointSS. The encoder and decoder employ a patch-based strategy for point cloud upsampling and down-sampling. The notation (number of points, feature dimension) in Feature Learning indicates the tensor shape at each stage.}
 	\label{fig:architecture}
 \end{figure}
 
 
-\begin{figure}[htbp]
+\begin{figure}
 	\centering
-	\includegraphics[width=\linewidth]{picture/coder.JPG}
+	\includegraphics[width=.9\columnwidth]{picture/coder.JPG}
 	\caption{Detailed structure of the encoder module.}
 	\label{fig:coder}
 \end{figure}
@@ -308,9 +308,9 @@ In this recurrent mechanism, each state $x_k$ depends on the previous state $x_{
 
 To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to explicitly inject geometric priors into the model. As illustrated in \cref{fig:ggam}, GGAM consists of two parts: (1) Graph Construction and Geometric Feature Extraction, and (2) Geometric Feature Enhancement and Fusion. The first part constructs a graph from the serialized point sequence and extracts a geometric feature vector for each point. To capture complementary spatial structure, this process runs in parallel on two serialization streams—Z-order and Hilbert—yielding two independent sets of geometric features. The second part enhances and fuses these dual-stream features through a cross-attention mechanism and an adaptive gating strategy.
 
-\begin{figure}[htbp]
+\begin{figure}
 	\centering
-	\includegraphics[width=\linewidth]{picture/ggam.jpg}
+	\includegraphics[width=.9\columnwidth]{picture/ggam.jpg}
 	\caption{Architecture of the Global Geometry-Aware Mechanism (GGAM).}
 	\label{fig:ggam}
 \end{figure}
@@ -407,9 +407,9 @@ Notation: $s \in \{1, 2, \ldots, S\}$ denotes the scale index, where $s=1$ repre
 
 As illustrated in \cref{fig:bss}, the pipeline comprises three stages. First, in \textbf{Window Partitioning}, the serialized sequence is uniformly partitioned into non-overlapping patches; if the last patch has fewer points than the designated patch size, it is padded following the strategy of PTv3~\cite{ptv3}. At scale $s$, the patch size is $P \times F_s$ (with $F_1 = 1$ for the finest scale); for a three-scale configuration ($S=3$), the expansion factors are $F_2=2$ and $F_3=4$. Second, following \cite{pcm}, \textbf{Order Prompting} inserts learnable prompt vectors at the beginning and end of each patch at the finest scale to inform Mamba of the sequence's arrangement rules; at coarser scales, points within each patch are randomly shuffled and no prompts are inserted. At coarse scales, the modeling objective shifts from local geometric structure to global semantic context. Retaining the serialization order at coarse scales allows the model to exploit local sequential patterns as a shortcut, causing coarse-scale features to inadvertently depend on local ordering rather than genuinely aggregating global semantic information. Shuffling removes this shortcut, forcing the model to build global representations from feature content alone. Third, \textbf{Multi-scale Feature Modeling}—the core contribution of ASD-SSM—processes each scale through a bidirectional Mamba whose state transition parameters $\bar{A}$ are dynamically adapted to the local geometric content of each patch by a scale-aware parameter generator. After feature extraction across all scales, the representations are concatenated channel-wise and projected back to $C$ dimensions via a linear layer and an MLP, yielding the final point cloud representation $\text{Points}' \in \mathbb{R}^{N \times C}$.
 
-\begin{figure}[htbp]
+\begin{figure}
 	\centering
-	\includegraphics[width=\linewidth]{picture/BSS.JPG}
+	\includegraphics[width=.9\columnwidth]{picture/BSS.JPG}
 	\caption{Detailed pipeline of the Adaptive Scale-Decoupled State Space Model (ASD-SSM).}
 	\label{fig:bss}
 \end{figure}
@@ -518,7 +518,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \subsection{Computational Efficiency Analysis}
 
-\begin{figure}[!t]
+\begin{figure}
 	\centering
 	\begin{tikzpicture}
 		\begin{axis}[
