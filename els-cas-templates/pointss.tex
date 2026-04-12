@@ -83,7 +83,7 @@
 	context. Experiments demonstrate that PointSS achieves strong
 	semantic segmentation performance on S3DIS and competitive classification
 	accuracy on ModelNet40, outperforming major SSM-based counterparts. Compared to Point Transformer V3, PointSS
-	achieves 9--19\% faster inference and remains operational at large patch sizes where
+	achieves 18--27\% faster inference and remains operational at large patch sizes where
 	attention-based methods encounter memory limitations.
 \end{abstract}
 
@@ -102,8 +102,7 @@ Point clouds serve as a primary representation for 3D scene understanding but pr
 Recently, State Space Models (SSMs) \cite{ssm,Mamba,VisionMamba}, exemplified by
 PointMamba \cite{PointMamba} and PCM \cite{pcm}, have gained attention
 due to their linear complexity. However, serializing 3D point clouds into
-1D sequences will inevitably sacrifice spatial proximity. As illustrated
-in \cref{fig:analysis}, some neighboring points can be far apart
+1D sequences will inevitably sacrifice spatial proximity. As illustrated on the left side of \cref{fig:analysis}, some neighboring points can be far apart
 after serialization---points that are spatially close may become
 distant in the sequence. Such a loss of
 proximity is difficult to mitigate in Mamba's recurrent mechanism:
@@ -119,18 +118,17 @@ after serialization.
 \begin{figure*}
 	\centering
 	\includegraphics[width=.9\textwidth]{picture/analysis.JPG}
-	\caption{Visualization of the loss of spatial proximity after serialization. Left: Point sequence after serialization. Right: Segmentation prediction results.}
+	\caption{Identification of the spatial proximity loss problem in existing SSMs (e.g., PCM) and our proposed PointSS solution.}
 	\label{fig:analysis}
 \end{figure*}
-Existing SSM-based methods struggle to establish effective hierarchical representations. Single-scale models (e.g., PointMamba) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context.
+Existing SSM-based methods struggle to establish effective hierarchical represetations. Single-scale models (e.g., PointMamba) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context.
 
 Hierarchical approaches (e.g., PCM) allocate separate parameters for each downsampled scale. However, their state transition parameters remain input-invariant across spatial locations. This means the network applies identical feature aggregation rules across an entire scale, failing to adapt to varying local geometric characteristics---for instance, processing flat surfaces and sharp boundaries with the same transition dynamics. Furthermore, allocating independent parameters for every scale introduces parameter growth and memory overhead. Consequently, the lack of dynamic, geometry-aware parameterization limits the capacity of existing SSMs to accurately model complex 3D scenes.
 
 
-To address these limitations, we propose PointSS, a geometry-aware
-multi-scale state space framework that explicitly injects geometric
-priors and employs adaptive scale-decoupled parameterization for point cloud
-analysis. The main contributions of this work are as follows:
+To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework. As depicted in the middle of \cref{fig:analysis}, PointSS explicitly injects geometric priors to alleviate the loss of spatial proximity. Leveraging these geometric priors, we introduce an adaptive multi-scale learning mechanism with scale-decoupled parameterization. Fine scales maintain small state transition parameters for rapid state decay to capture local geometric detail, while coarse scales maintain large values for slow decay to model long-range global context. As shown on the right side of \cref{fig:analysis}, this design enables PointSS to respond more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
+
+The main contributions of this work are as follows:
 
 \begin{enumerate}
 	\item We propose a Global Geometry-Aware Mechanism (GGAM) that injects
@@ -499,7 +497,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 	\label{fig:efficiency}
 \end{figure}
 
-To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3 under identical conditions: FP32 precision, batch size 1, on an NVIDIA A6000 GPU. As shown in \cref{fig:efficiency}, PointSS consistently reduces inference time by approximately 9--19\% across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors due to the quadratic memory cost of self-attention, while PointSS continues to operate without constraint, demonstrating that linear complexity provides meaningful scalability advantages in large-patch-size regimes.
+To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3 under identical conditions: FP32 precision, batch size 1, on an NVIDIA A6000 GPU. As shown in \cref{fig:efficiency}, PointSS consistently reduces inference time by approximately 18--27\% across patch sizes from 128 to 512. At patch size 1024, PTv3 encounters out-of-memory errors due to the quadratic memory cost of self-attention, while PointSS continues to operate without constraint, demonstrating that linear complexity provides meaningful scalability advantages in large-patch-size regimes.
 
 \subsection{Ablation Study}
 
