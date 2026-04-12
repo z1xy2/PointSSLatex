@@ -26,6 +26,8 @@
 %\usepackage[authoryear]{natbib}
 \usepackage[numbers]{natbib}
 \usepackage{cleveref}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 
 \crefname{figure}{Fig.}{Figs.}
 \crefname{equation}{Eq.}{Eqs.}
@@ -147,6 +149,11 @@
 \end{abstract}
 
 
+\begin{keywords}
+	Geometry-Aware Feature Learning, Multi-Scale Representation, Point Cloud Serialization,  Point Cloud Analysis, State Space Models
+\end{keywords}
+
+\maketitle
 
 
 
@@ -169,10 +176,6 @@ particularly pronounced at object boundaries (e.g., wall-pillar
 junctions), where accurate segmentation depends critically on
 interactions between spatially proximate points that are far apart
 after serialization.
-
-\begin{keywords}
-		Geometry-Aware Feature Learning, Multi-Scale Representation, Point Cloud Serialization,  Point Cloud Analysis, State Space Models
-\end{keywords}
 
 \begin{figure}[htbp]
 	\centering
@@ -767,7 +770,8 @@ Despite these contributions, PointSS has several limitations. The scale constrai
 
 Future work will explore automatically learning the scale constraint factors to reduce the need for manual tuning. Extending PointSS to large-scale outdoor datasets and investigating more efficient geometric feature fusion strategies are also directions we intend to pursue.
 
-
+\bibliographystyle{cas-model2-names}
+\bibliography{../IEEE-Transactions-LaTeX2e-templates-and-instructions/ref}
 
 \end{document}
 
