@@ -116,12 +116,12 @@ junctions), where accurate segmentation depends critically on
 interactions between spatially proximate points that are far apart
 after serialization.
 
-\begin{figure}
+\begin{figure*}
 	\centering
-	\includegraphics[width=.9\columnwidth]{picture/analysis.JPG}
+	\includegraphics[width=.9\textwidth]{picture/analysis.JPG}
 	\caption{Visualization of the loss of spatial proximity after serialization. Left: Point sequence after serialization. Right: Segmentation prediction results.}
 	\label{fig:analysis}
-\end{figure}
+\end{figure*}
 Existing SSM-based methods struggle to establish effective hierarchical representations. Single-scale models (e.g., PointMamba) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context.
 
 Hierarchical approaches (e.g., PCM) allocate separate parameters for each downsampled scale. However, their state transition parameters remain input-invariant across spatial locations. This means the network applies identical feature aggregation rules across an entire scale, failing to adapt to varying local geometric characteristics---for instance, processing flat surfaces and sharp boundaries with the same transition dynamics. Furthermore, allocating independent parameters for every scale introduces parameter growth and memory overhead. Consequently, the lack of dynamic, geometry-aware parameterization limits the capacity of existing SSMs to accurately model complex 3D scenes.
@@ -247,12 +247,12 @@ In this recurrent mechanism, each state $x_k$ depends on the previous state $x_{
 
 To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to explicitly inject geometric priors into the model. As illustrated in \cref{fig:ggam}, GGAM consists of two parts: (1) Graph Construction and Geometric Feature Extraction, and (2) Geometric Feature Enhancement and Fusion. The first part constructs a graph from the serialized point sequence and extracts a geometric feature vector for each point. To capture complementary spatial structure, this process runs in parallel on two serialization streams—Z-order and Hilbert—yielding two independent sets of geometric features. The second part enhances and fuses these dual-stream features through a cross-attention mechanism and an adaptive gating strategy.
 
-\begin{figure}
+\begin{figure*}
 	\centering
-	\includegraphics[width=.9\columnwidth]{picture/ggam.jpg}
+	\includegraphics[width=.9\textwidth]{picture/ggam.jpg}
 	\caption{Architecture of the Global Geometry-Aware Mechanism (GGAM).}
 	\label{fig:ggam}
-\end{figure}
+\end{figure*}
 
 Traditional methods for computing geometric relationships (e.g., curvature and surface normals) rely on K-Nearest Neighbor (KNN) searches, which are computationally expensive for large-scale point clouds. Inspired by Point Transformer V3 \cite{ptv3}, which showed that serialization-based windowed neighborhoods can replace KNN while reducing complexity from $\mathcal{O}(N\log N)$ to $\mathcal{O}(N)$ without sacrificing performance, we adopt this construction to enable efficient geometric feature extraction.
 
@@ -406,7 +406,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 73.8\% mean Intersection over Union (mIoU) on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 0.4\% and the SSM-based Pamba by 0.3\%. Furthermore, PointSS retains the linear time complexity of SSMs.
 
-\begin{table}[!t]
+\begin{table*}
 	\centering
 	\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Result reproduced using the official implementation; the median of three independent runs is reported.}
 	\label{tab:s3dis}
@@ -430,13 +430,13 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 		HybridTM\cite{hybridtm} & IROS'25 & 72.1 \\
 		PointSS (Ours) & -- & \textbf{73.8} \\ \bottomrule
 	\end{tabular}
-\end{table}
+\end{table*}
 
 \subsubsection{Experiment Results on the ModelNet40 Dataset}
 
 \cref{tab:ModelNet} summarizes the classification performance on ModelNet40. PointSS achieves an Overall Accuracy (OA) of 94.6\%, surpassing all SSM-based counterparts including Mamba3D and PointMamba, while remaining competitive with Transformer-based methods. Note that on this near-saturated benchmark, most methods cluster within a narrow accuracy range, and marginal gains of this magnitude should not be over-interpreted.
 
-\begin{table}[!t]
+\begin{table*}
 	\centering
 	\caption{Classification Performance Comparison on ModelNet40}
 	\label{tab:ModelNet}
@@ -453,7 +453,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 		PCM \cite{pcm} & AAAI'25 & 93.4 \\
 		PointSS (Ours) & -- & \textbf{94.6} \\ \bottomrule
 	\end{tabular}
-\end{table}
+\end{table*}
 
 \subsection{Computational Efficiency Analysis}
 
