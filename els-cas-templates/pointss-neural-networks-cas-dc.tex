@@ -24,6 +24,11 @@
 
 \graphicspath{{../IEEE-Transactions-LaTeX2e-templates-and-instructions/}}
 
+% Disable ORCID line in CAS front matter.
+\makeatletter
+\let\printorcid\relax
+\makeatother
+
 \begin{document}
 \let\WriteBookmarks\relax
 \def\floatpagepagefraction{1}
@@ -34,6 +39,8 @@
 \title[mode=title]{PointSS: Geometry-Aware Multi-Scale State Space Feature Learning for Point Clouds}
 
 \author[1,2,3]{Xin Wang}
+\cormark[1]                                                                 
+\ead{w_x@jlu.edu.cn} 
 \author[1]{Xinyuan Zhang}
 
 \affiliation[1]{organization={School of Software, Jilin University},
@@ -45,6 +52,7 @@
 \affiliation[3]{organization={Key Laboratory of Symbolic Computation and Knowledge Engineering of Ministry of Education, Jilin University},
   city={Changchun},
   country={China}}
+\cortext[1]{Corresponding author}
 
 \begin{abstract}Recently, State Space Models (SSMs) have demonstrated strong global modeling
 capabilities and linear computational complexity for point cloud analysis.
@@ -683,7 +691,7 @@ Despite these contributions, PointSS has several limitations. The scale constrai
 
 Future work will explore automatically learning the scale constraint factors to reduce the need for manual tuning. Extending PointSS to large-scale outdoor datasets and investigating more efficient geometric feature fusion strategies are also directions we intend to pursue.
 
-\section*{Acknowledgment}                                                    This paper is funded by 20260301004YY.
+\section*{Acknowledgments}                                                    This paper is funded by 20260301004YY.
 
 
 \bibliographystyle{cas-model2-names}
