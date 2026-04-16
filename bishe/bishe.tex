@@ -1171,21 +1171,23 @@ $\mathrm{TP}_{c}$为真阳性，$\mathrm{FP}_{c}$为假阳性，$\mathrm{FN}_{c}
 	\caption{在S3DIS上的分割性能对比}
 	\label{tab:s3dis}
 	\centering
-	\begin{tabular}{@{}llll@{}}
+	\begin{tabular}{@{}lll@{}}
 		\toprule
-		\textbf{模型}           & \textbf{出处} & \textbf{架构} & \textbf{mIoU} \\ \midrule
-		Point Transformer V2\cite{ptv2}  & NeurIPS'22 & Transformer & 72.6          \\
-		PointMetaBase\cite{pmb}         & CVPR'23 & Transformer & 72.0          \\
-		SuperpointTransformer\cite{spt} & ICCV'23 & Transformer & 68.1          \\
-		Swin3D\cite{Swin3D}                & CVMJ'23 & Transformer & 72.5          \\
-		PPT+SpareUNET\cite{ppt}         & CVPR'24 & Transformer & 72.7          \\
-		OA-CNNs\cite{oacnn}               & CVPR'24 & CNN         & 71.1          \\
-		OneFormer3D\cite{OneFormer3D}           & CVPR'24 & Transformer & 72.4          \\
-		Point Transformer V3\cite{ptv3}           & CVPR'24 & Transformer & 73.2          \\
-		PCM\cite{pcm}                   & AAAI'25 & SSM         & 69.8         \\
-		PointMSGT\cite{pointmsgt}      & Mathematics'24 & Transformer & 68.6         \\
-		PointGA\cite{pointga}           & Sci. Rep.'25 & Transformer & 66.2         \\
-		\textbf{PointSS}               & & \textbf{SSM}           & \textbf{75.9}          \\ \bottomrule
+		\textbf{模型}           & \textbf{出处} & \textbf{mIoU(\%)} \\ \midrule
+		\textit{w/o Mamba} \\
+		Point Transformer V2\cite{ptv2}  & NeurIPS'22 & 72.6          \\
+		PointMetaBase\cite{pmb}         & CVPR'23 & 72.0          \\
+		SuperpointTransformer\cite{spt} & ICCV'23 & 68.1          \\
+		Swin3D\cite{Swin3D}                & CVMJ'23 & 72.5          \\
+		PPT+SpareUNET\cite{ppt}         & CVPR'24 & 72.7          \\
+		OA-CNNs\cite{oacnn}               & CVPR'24 & 71.1          \\
+		OneFormer3D\cite{OneFormer3D}           & CVPR'24 & 72.4          \\
+		Point Transformer V3\cite{ptv3}           & CVPR'24 & 73.2          \\
+		PointMSGT\cite{pointmsgt}      & Mathematics'24 & 68.6         \\
+		PointGA\cite{pointga}           & Sci. Rep.'25 & 66.2         \\
+		\textit{w/ Mamba} \\
+		PCM\cite{pcm}                   & AAAI'25 & 69.8         \\
+		\textbf{PointSS}               & & \textbf{75.9}          \\ \bottomrule
 	\end{tabular}
 	
 	
