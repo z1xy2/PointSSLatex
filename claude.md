@@ -1,13 +1,11 @@
 这是一个论文的latex项目，我用同一个课题，该研究成果需要发一篇期刊论文和一篇毕设论文
 
-[elsarticle-template-num.tex](elsarticle-template-num.tex)是主要的论文文档，我主要写作在这里，该文档用于发表期刊论文
 [PointSS-翻译.pdf](PointSS-%E7%BF%BB%E8%AF%91.pdf)翻译后的[elsarticle-template-num.tex](elsarticle-template-num.tex)
 [bishe.tex](bishe.tex)是我的毕业论文，我有关毕设的都在这里
 
 [picture](IEEE-Transactions-LaTeX2e-templates-and-instructions/picture) 存储了所有论文图片
-[ref.bib](IEEE-Transactions-LaTeX2e-templates-and-instructions/ref.bib)存储了所有引用
+[pointss.tex](els-cas-templates/pointss.tex)是我小论文原文
 [mamba.pdf](mamba.pdf) mamba原文
-[IEEE-Transactions-LaTeX2e-templates-and-instructions](IEEE-Transactions-LaTeX2e-templates-and-instructions) 我要发表的期刊的tex文件夹
 
 
 # 毕设
@@ -37,7 +35,6 @@ pointcept/models/point_transformer_v3/point_transformer_v3m1_base.py
 pointcept/models/utils/structure.py
 
 毕设相较于小论文，新加了创新点：频谱，分支在feature/geometry-semantic-dual-path
-这部分频域的内容（基于Chebyshev多项式近似的频谱状态空间模型）写在[frequency_chapter.tex](frequency_chapter.tex)，继承到bishe.tex里了
 注意：频谱（第五章）是我在毕设里新加的创新点，和ASD-SSM不是一个东西，不要搞混。
 小论文用的分支是feature/asd-ssm
 
