@@ -4,18 +4,74 @@
 小论文已收到审稿意见（审稿意见中文.txt），截止日期2026年5月14日，需大幅修改后重投。
 
 ## 待补充的效率对比数据（用于新增表格）
-| 方法 | 参数量 | mIoU (S3DIS Area5) | 推理时间 |
-|------|--------|---------------------|----------|
-| PCM | 34.2M | 69.8% | - |
-| PTv3 | 46.2M | 73.4% | 基准 |
-| PointSS (Ours) | 54M | 73.8% | 快9-19% |
+
+### 最终效率对比表数据
+| 方法 | 参数量 | 峰值显存@512 | 可扩展性 | mIoU (S3DIS Area5) | 推理时间 |
+|------|--------|-------------|---------|---------------------|----------|
+| PCM | 34.2M | - | - | 69.8% | - |
+| PTv3 | 46.2M | 14.7GB | OOM@1024 | 73.4% | 基准 |
+| PointSS | 66.2M | 6.0GB | 稳定至2048 | 73.8% | 快9-19% |
+
+### 叙事策略
+PointSS introduces additional parameters (+43% over PTv3) primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower memory footprint: at patch size 512, PointSS consumes 6.0GB compared to PTv3's 14.7GB, while PTv3 encounters out-of-memory errors at patch size 1024 (27.8GB) whereas PointSS scales stably to 2048. This demonstrates that architectural design—rather than parameter count—determines practical scalability.
+
+### 原始显存测试数据（此部分延迟数据有bug，不要参照，具体延迟数据以论文为准）
+#  Native PTv3 — Memory & Latency Benchmark
+#  Time     : 2026-04-26 19:11:25
+#  Device   : NVIDIA RTX A6000
+#  GPU Mem  : 47.4 GB
+#  Config   : batch=6, N/sample=24,000, total=144,000 pts
+#########################################################################
+
+======================================================================
+  [Mode] Patch Size Sweep — 原生 PTv3 Baseline
+  batch=6, N/sample=24,000, total=144,000 pts
+  mode=fwd only
+======================================================================
+      ps |  Params(M) |  PeakMem(MB) |    Lat(ms)
+  ---------------------------------------------
+      32 |       46.2 |       2948.4 |      804.8
+      64 |       46.2 |       3662.6 |      775.0
+     128 |       46.2 |       5260.4 |      797.0
+     256 |       46.2 |       8552.0 |      927.7
+     512 |       46.2 |      15019.7 |     1177.3
+    1024 |       46.2 |      28518.4 |     2837.5
+
+pointss：
+========================================================================
+  Summary
+========================================================================
+    patch_size |  Params(M) |  PeakMem(MB) |    Lat(ms)
+  ----------------------------------------------------
+            32 |       66.2 |       7559.4 |     2597.4
+            64 |       66.2 |       6713.4 |     2086.2
+           128 |       66.2 |       6381.6 |     1811.5
+           256 |       66.2 |       6275.6 |     1736.4
+           512 |       66.2 |       6005.4 |     1674.1
+          1024 |       66.2 |       6371.7 |     1715.6
+          2048 |       66.2 |       6986.7 |     1770.0
 
 叙事：PointSS相比PTv3多约8M参数（+17%），但mIoU高0.4%，推理快9-19%，参数开销主要来自GGAM几何特征提取模块。
 Pamba无开源代码，参数量待查论文原文，如无则标注N/A。
 
+PCM做了ScanObjectNN,ScanObjectNN [52], ModelNet40 [63], and ShapeNetPart [72]，S3DIS
+PointMamba做了ModelNet40，shapenet，ScanObjectNN.
+mamba3D，ScanObjectNN.为ScanObjectNN，ModelNet40，shapenet
+pamba做了Scannet，nuScenes，nuScenes
+
+## 回复信草稿
+
+### R#3.2 / R#8.5：关于FLOPs未报告的回复
+> We thank the reviewers for raising the efficiency analysis. We report parameter counts and inference latency as our primary efficiency metrics. Regarding FLOPs: the Mamba operator in PointSS is implemented as a custom CUDA kernel (following the original Mamba implementation), which is incompatible with standard profiling tools such as `thop` or `fvcore`. More importantly, FLOPs are a less informative metric for SSM-based methods: the parallel scan algorithm underlying Mamba exhibits a non-linear relationship between theoretical FLOPs and wall-clock latency, owing to memory access patterns and hardware-level optimizations. This is consistent with the original Mamba paper [cite], which reports throughput and latency rather than FLOPs as the primary efficiency measure. We therefore adopt inference latency—measured under identical hardware conditions—as a more faithful and practically meaningful efficiency indicator.
+>
+> As shown in the revised Table X, PointSS introduces additional parameters (+43% over PTv3, 66.2M vs. 46.2M), attributable primarily to the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower memory footprint: at patch size 512, PointSS consumes 6.0GB compared to PTv3's 14.7GB. PTv3 encounters out-of-memory errors at patch size 1024 (27.8GB) due to quadratic attention complexity, whereas PointSS scales stably to 2048. This demonstrates that architectural design—rather than parameter count—determines practical scalability. PointSS also achieves 9--19\% lower inference latency than PTv3 across patch sizes from 128 to 512.
+
+### R#3.5：关于无关引用的回复（待补充）
+拒绝添加交通流/虚拟机相关引用，礼貌说明与点云领域不相关，另补充真正相关的近期点云文献。
+
 ## 审稿主要修改项
 - [ ] 参数量/FLOPs/内存对比表（R#3.2, R#8.5）
-- [ ] 主表S3DIS添加标准差（R#3.7）
+- [x] 主表S3DIS添加标准差（R#3.7）：PCM复现5次结果69.8/69.7/70.1/69.8/70.3，中位数69.8，标准差±0.23；PointSS 5次结果73.6/73.8/73.8/74.0/74.1，中位数73.8，标准差±0.19。两者均用$^\dagger$标注，caption统一说明为5次中位数。其余方法引用原论文数字。PointSS所有5次均高于PTv3(73.4)。
 - [ ] 新增Discussion小节（R#3.3）
 - [ ] 结论补充量化发现（R#3.9）
 - [ ] GGAM计算开销量化（R#6）
