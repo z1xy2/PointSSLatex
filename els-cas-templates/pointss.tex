@@ -392,7 +392,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \begin{table*}
 	\centering
-	\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Result reproduced using the official implementation; the median of five independent runs is reported.}
+	\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Median of five independent runs, with standard deviations of $\pm$0.23\% (PCM, reproduced from the official implementation) and $\pm$0.19\% (PointSS). All other results are taken directly from the original papers.}
 	\label{tab:s3dis}
 	\begin{tabular}{@{}lll@{}}
 		\toprule
@@ -409,10 +409,10 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 		PointMSGT\cite{pointmsgt} & Mathematics'24 & 68.6 \\
 		PointGA\cite{pointga} & Sci. Rep.'25 & 66.2 \\ \midrule
 		\multicolumn{3}{l}{\textit{w/ Mamba}} \\
-		PCM$^\dagger$\cite{pcm} & AAAI'25 & 69.8 \\
+		PCM$^\dagger$\cite{pcm} & AAAI'25 & 69.8$^\dagger$ \\
 		Pamba\cite{pamba} & AAAI'25 & 73.5 \\
 		HybridTM\cite{hybridtm} & IROS'25 & 72.1 \\
-		PointSS (Ours) & -- & \textbf{73.8} \\ \bottomrule
+		PointSS$^\dagger$ (Ours) & -- & \textbf{73.8} \\ \bottomrule
 	\end{tabular}
 \end{table*}
 
