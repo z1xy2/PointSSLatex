@@ -1,28 +1,27 @@
-%% 
+%%
 %% Copyright 2019-2024 Elsevier Ltd
-%% 
+%%
 %% Version 2.4
-%% 
+%%
 %% This file is part of the 'CAS Bundle'.
 %% --------------------------------------
-%% 
+%%
 %% It may be distributed under the conditions of the LaTeX Project Public
 %% License, either version 1.2 of this license or (at your option) any
 %% later version.  The latest version of this license is in
 %%    http://www.latex-project.org/lppl.txt
 %% and version 1.2 or later is part of all distributions of LaTeX
 %% version 1999/12/01 or later.
-%% 
+%%
 %% The list of all files belonging to the 'CAS Bundle' is
 %% given in the file `manifest.txt'.
-%% 
-%% Template article for cas-dc documentclass for 
+%%
+%% Template article for cas-dc documentclass for
 %% double column output.
 
 %\documentclass[a4paper,fleqn,longmktitle]{cas-dc}
 \documentclass[a4paper,fleqn]{cas-sc}
-\usepackage{lineno}
-\linenumbers
+
 %\usepackage[authoryear,longnamesfirst]{natbib}
 %\usepackage[authoryear]{natbib}
 \usepackage[numbers]{natbib}
@@ -99,7 +98,7 @@ structures such as surface normals and curvature. This issue is
 particularly pronounced at object boundaries (e.g., wall-pillar
 junctions), where accurate segmentation depends critically on
 interactions between spatially proximate points that are far apart
-after serialization. While PointGA \cite{pointga} and PointMSGT \cite{pointmsgt} address geometric feature extraction through trigonometric encoding and triangular reconstruction respectively, they do not tackle the fundamental spatial proximity loss inherent in SSM-based serialization.
+after serialization.
 
 \begin{figure*}
 	\centering
@@ -107,9 +106,12 @@ after serialization. While PointGA \cite{pointga} and PointMSGT \cite{pointmsgt}
 	\caption{Identification of the spatial proximity loss problem in existing SSMs (e.g., PCM) and our proposed PointSS solution.}
 	\label{fig:analysis}
 \end{figure*}
-Existing SSM-based methods struggle to establish effective hierarchical representations. Single-scale models (e.g., PointMamba) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context. Hierarchical approaches (e.g., PCM) allocate separate parameters for each downsampled scale, but their state transition parameters remain input-invariant across spatial locations, applying identical feature aggregation rules to flat surfaces and sharp boundaries alike.
+Existing SSM-based methods struggle to establish effective hierarchical representations. Single-scale models (e.g., PointMamba) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context.
 
-To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework. As depicted in the middle of \cref{fig:analysis}, PointSS explicitly injects geometric priors through windowed graph construction to compensate for spatial proximity loss. By constructing local graphs within serialization windows and extracting edge features encoding surface normals, curvature, and angular deviations, GGAM recovers the spatial relationships disrupted by serialization. Building on these geometric priors, PointSS employs input-dependent state transition parameters that adapt dynamically to local geometric characteristics, enabling adaptive feature aggregation. Through scale-decoupled parameterization, scale constraint factors control hierarchical decay rates while state transitions respond to local geometry. As shown on the right side of \cref{fig:analysis}, PointSS responds more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
+Hierarchical approaches (e.g., PCM) allocate separate parameters for each downsampled scale. However, their state transition parameters remain input-invariant across spatial locations. This means the network applies identical feature aggregation rules across an entire scale, failing to adapt to varying local geometric characteristics---for instance, processing flat surfaces and sharp boundaries with the same transition dynamics. Furthermore, allocating independent parameters for every scale introduces parameter growth and memory overhead. Consequently, the lack of dynamic, geometry-aware parameterization limits the capacity of existing SSMs to accurately model complex 3D scenes.
+
+
+To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework. As depicted in the middle of \cref{fig:analysis}, PointSS explicitly injects geometric priors to alleviate the loss of spatial proximity. Leveraging these geometric priors, we introduce an adaptive multi-scale learning mechanism with scale-decoupled parameterization. Fine scales maintain small state transition parameters for rapid state decay to capture local geometric detail, while coarse scales maintain large values for slow decay to model long-range global context. As shown on the right side of \cref{fig:analysis}, this design enables PointSS to respond more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
 
 The main contributions of this work are as follows:
 
@@ -118,13 +120,13 @@ The main contributions of this work are as follows:
 	explicit geometric priors through windowed neighborhoods and dual-
 	serialization fusion, effectively mitigating the loss of spatial proximity
 	and providing reliable geometric guidance for scale-adaptive learning.
-	
+
 	\item We design an Adaptive Scale-Decoupled State Space Model (ASD-SSM)
 	featuring a dynamic parameter generation mechanism. By adapting state
 	transition parameters $\bar{A}$ to local geometric characteristics, ASD-SSM
 	enables fine scales to capture geometric details while coarse scales model
 	semantic context, achieving effective hierarchical representations.
-	
+
 	\item Extensive experiments demonstrate that PointSS achieves 73.8\% mIoU
 	on S3DIS semantic segmentation and 94.6\% OA on ModelNet40 classification,
 	consistently outperforming major SSM-based counterparts while maintaining linear complexity.
@@ -161,10 +163,9 @@ utilizes a multi-scale framework with a Geometric Feature Extraction
 (GFE) module to reconstruct local triangular structures for detailed
 relationship modeling. Geo-CNN \cite{geo-cnn} further captures
 structural dependencies via basis decomposition and distance-weighted
-aggregation. RepSurf~\cite{repsurf} represents local surfaces via geometric primitives to enhance structural understanding. PointVector~\cite{pointvector} introduces vector-based representations to capture directional geometric information. Spectral-domain approaches such as PointWavelet~\cite{pointwavelet} analyze point cloud structure in the frequency domain for more expressive feature learning. Graph-based methods including dual-graph attention convolution~\cite{dgacn} and local-global graph convolution~\cite{lggcm} exploit both local and non-local geometric dependencies. Works on LiDAR-based segmentation~\cite{lidar_segmentation} further highlight the importance of structured geometric reasoning in large-scale scenes.However, effectively integrating explicit geometric priors
-with learned deep features while maintaining computational efficiency.
-
-However, these methods are primarily designed for Transformer or convolution-based architectures, where spatial relationships are preserved through attention mechanisms or local receptive fields. When applied to SSM-based methods, which serialize point clouds into 1D sequences, the fundamental challenge of spatial proximity loss remains unaddressed. Spatially adjacent points may become distant in the serialized sequence, causing information decay in the recurrent state propagation of SSMs. Existing geometric feature extraction techniques do not explicitly compensate for this serialization-induced proximity loss, limiting their effectiveness in SSM-based point cloud analysis.
+aggregation. RepSurf~\cite{repsurf} represents local surfaces via geometric primitives to enhance structural understanding. PointVector~\cite{pointvector} introduces vector-based representations to capture directional geometric information. Spectral-domain approaches such as PointWavelet~\cite{pointwavelet} analyze point cloud structure in the frequency domain for more expressive feature learning. Graph-based methods including dual-graph attention convolution~\cite{dgacn} and local-global graph convolution~\cite{lggcm} exploit both local and non-local geometric dependencies. Works on LiDAR-based segmentation~\cite{lidar_segmentation} further highlight the importance of structured geometric reasoning in large-scale scenes. However, effectively integrating explicit geometric priors
+with learned deep features while maintaining computational efficiency
+remains a significant challenge.
 
 
 \subsection{Multi-Scale Representation in Point Cloud Analysis}
@@ -191,6 +192,7 @@ state transitions to all points—processing flat surfaces and sharp boundaries
 with the same transition dynamics—preventing adaptation to local geometric
 variations. Furthermore, allocating independent parameters for each scale
 incurs parameter growth and memory overhead.
+These limitations motivate the design of PointSS, which we describe in detail in the following section.
 
 
 \section{Method}
@@ -390,7 +392,7 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 
 \begin{table*}
 	\centering
-	\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Median of five independent runs, with standard deviations of $\pm$0.23\% (PCM, reproduced from the official implementation) and $\pm$0.19\% (PointSS). All other results are taken directly from the original papers.}
+	\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Result reproduced using the official implementation; the median of five independent runs is reported.}
 	\label{tab:s3dis}
 	\begin{tabular}{@{}lll@{}}
 		\toprule
@@ -407,10 +409,10 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 		PointMSGT\cite{pointmsgt} & Mathematics'24 & 68.6 \\
 		PointGA\cite{pointga} & Sci. Rep.'25 & 66.2 \\ \midrule
 		\multicolumn{3}{l}{\textit{w/ Mamba}} \\
-		PCM$^\dagger$\cite{pcm} & AAAI'25 & 69.8$^\dagger$ \\
+		PCM$^\dagger$\cite{pcm} & AAAI'25 & 69.8 \\
 		Pamba\cite{pamba} & AAAI'25 & 73.5 \\
 		HybridTM\cite{hybridtm} & IROS'25 & 72.1 \\
-		PointSS$^\dagger$ (Ours) & -- & \textbf{73.8} \\ \bottomrule
+		PointSS (Ours) & -- & \textbf{73.8} \\ \bottomrule
 	\end{tabular}
 \end{table*}
 
@@ -456,14 +458,14 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 			grid=major,
 			grid style={dashed,gray!30},
 			]
-			
+
 			\addplot[color=blue, mark=square*, thick, solid] coordinates {
 				(128, 1.089)
 				(256, 1.147)
 				(512, 1.274)
 			};
 			\addlegendentry{PTv3}
-			
+
 			\addplot[color=orange, mark=*, thick, solid] coordinates {
 				(128,  0.850)
 				(256,  0.938)
@@ -471,10 +473,10 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 				(1024, 1.208)
 			};
 			\addlegendentry{PointSS (Ours)}
-			
+
 			\draw[color=blue, dashed, thick] (axis cs:512,1.274) -- (axis cs:1024,1.274);
 			\node[color=blue, font=\small\bfseries, anchor=south] at (axis cs:1024,1.274) {OOM};
-			
+
 		\end{axis}
 	\end{tikzpicture}
 	\caption{Inference time vs.\ patch size for PTv3 and PointSS.}
@@ -691,10 +693,10 @@ Despite these contributions, PointSS has several limitations. The scale constrai
 
 Future work will explore automatically learning the scale constraint factors to reduce the need for manual tuning. Extending PointSS to large-scale outdoor datasets and investigating more efficient geometric feature fusion strategies are also directions we intend to pursue.
 
-\section*{Acknowledgment}                                                                                                                                                               
+\section*{Acknowledgment}
 This paper is funded by 20260301004YY.
 
-\bibliographystyle{elsarticle-num}
+\bibliographystyle{cas-model2-names}
 \bibliography{../IEEE-Transactions-LaTeX2e-templates-and-instructions/ref}
 
 \end{document}

@@ -159,7 +159,7 @@ Following standard practice in the point cloud community, all other compared met
 
 To make these distinctions more visible to readers, we have revised the Introduction and Section 2 (Related Work) to explicitly contrast PointSS against the closest prior works (PCM, PointMamba, PointGA, PointMSGT) along the three dimensions above.
 
-**Modifications:** Strengthened novelty positioning in Introduction [TBD: lines]; clarified differentiation in Related Work [TBD: lines]; the Parameterization Comparison table at <span style="color:#c00000">lines 625–639</span> and the Incremental Improvement table at <span style="color:#c00000">lines 494–509</span> serve as quantitative evidence for points (2) and (3).
+**Modifications:** Strengthened novelty positioning in Introduction <span style="color:#c00000">lines 43–59</span> ; clarified differentiation in Related Work <span style="color:#c00000">lines 108–113</span> ;
 
 ---
 
