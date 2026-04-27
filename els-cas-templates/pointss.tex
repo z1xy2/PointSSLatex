@@ -98,7 +98,7 @@ structures such as surface normals and curvature. This issue is
 particularly pronounced at object boundaries (e.g., wall-pillar
 junctions), where accurate segmentation depends critically on
 interactions between spatially proximate points that are far apart
-after serialization.
+after serialization. While PointGA \cite{pointga} and PointMSGT \cite{pointmsgt} address geometric feature extraction through trigonometric encoding and triangular reconstruction respectively, they do not tackle the fundamental spatial proximity loss inherent in SSM-based serialization.
 
 \begin{figure*}
 	\centering
@@ -106,12 +106,9 @@ after serialization.
 	\caption{Identification of the spatial proximity loss problem in existing SSMs (e.g., PCM) and our proposed PointSS solution.}
 	\label{fig:analysis}
 \end{figure*}
-Existing SSM-based methods struggle to establish effective hierarchical representations. Single-scale models (e.g., PointMamba) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context.
+Existing SSM-based methods struggle to establish effective hierarchical representations. Single-scale models (e.g., PointMamba) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context. Hierarchical approaches (e.g., PCM) allocate separate parameters for each downsampled scale, but their state transition parameters remain input-invariant across spatial locations, applying identical feature aggregation rules to flat surfaces and sharp boundaries alike.
 
-Hierarchical approaches (e.g., PCM) allocate separate parameters for each downsampled scale. However, their state transition parameters remain input-invariant across spatial locations. This means the network applies identical feature aggregation rules across an entire scale, failing to adapt to varying local geometric characteristics---for instance, processing flat surfaces and sharp boundaries with the same transition dynamics. Furthermore, allocating independent parameters for every scale introduces parameter growth and memory overhead. Consequently, the lack of dynamic, geometry-aware parameterization limits the capacity of existing SSMs to accurately model complex 3D scenes.
-
-
-To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework. As depicted in the middle of \cref{fig:analysis}, PointSS explicitly injects geometric priors to alleviate the loss of spatial proximity. Leveraging these geometric priors, we introduce an adaptive multi-scale learning mechanism with scale-decoupled parameterization. Fine scales maintain small state transition parameters for rapid state decay to capture local geometric detail, while coarse scales maintain large values for slow decay to model long-range global context. As shown on the right side of \cref{fig:analysis}, this design enables PointSS to respond more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
+To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework. As depicted in the middle of \cref{fig:analysis}, PointSS explicitly injects geometric priors through windowed graph construction to compensate for spatial proximity loss. Unlike PCM's fixed state transition parameters, PointSS generates them dynamically based on local geometric characteristics, enabling adaptive feature aggregation. PointSS further employs scale-decoupled parameterization: scale constraint factors remain fixed across scales to control hierarchical decay rates, while state transition parameters adapt to local geometry. This design avoids the parameter redundancy of PCM's per-scale independent parameterization. As shown on the right side of \cref{fig:analysis}, PointSS responds more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
 
 The main contributions of this work are as follows:
 
@@ -192,7 +189,8 @@ state transitions to all points—processing flat surfaces and sharp boundaries
 with the same transition dynamics—preventing adaptation to local geometric
 variations. Furthermore, allocating independent parameters for each scale
 incurs parameter growth and memory overhead.
-These limitations motivate the design of PointSS, which we describe in detail in the following section.
+
+PointSS addresses these limitations through explicit geometric prior injection, input-dependent state transitions, and scale-decoupled parameterization. While PointMamba and PCM rely solely on learned features from serialized sequences, PointSS constructs windowed local graphs to extract surface normals, curvature, and angular deviations, directly compensating for spatial proximity loss. This design choice is distinct from PointGA's trigonometric encoding \cite{pointga} and PointMSGT's triangular reconstruction \cite{pointmsgt}, which focus on geometric feature extraction but are not tailored to address the fundamental spatial proximity loss inherent in SSM-based serialization. Unlike PCM's fixed $\bar{A}$ parameters that apply identical state transitions across all spatial locations within each scale, PointSS generates $\bar{A}$ dynamically based on local geometric characteristics, enabling adaptive feature aggregation that responds to varying surface properties---processing flat surfaces and sharp boundaries with distinct transition dynamics. By decoupling scale control from spatial adaptation---where scale constraint factors remain fixed across scales to hierarchically control state decay rates, while $\bar{A}$ adapts to local geometry---PointSS avoids PCM's parameter redundancy from per-scale independent parameterization while maintaining effective multi-scale modeling. These design choices motivate the architecture of PointSS, which we describe in detail in the following section.
 
 
 \section{Method}
