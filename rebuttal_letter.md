@@ -149,12 +149,17 @@ Following standard practice in the point cloud community, all other compared met
 ## Comment R#6.1 — Limited Novelty
 <span style="color:#1f6feb">Novelty is somewhat limited; similar ideas of geometric feature enhancement and multi-scale modeling exist in prior work. The paper should more clearly articulate its unique contributions.</span>
 
-**Response:** [TBD — will explicitly contrast PointSS against the closest prior works (PCM for multi-scale SSM, PointGA/PointMSGT for geometric feature enhancement), highlighting:
-1. **Novel combination**: First framework that addresses serialization-induced proximity loss *jointly* via explicit geometric priors and scale-adaptive state decay.
-2. **GGAM novelty**: Dual-serialization with cross-sequence attention is novel; existing geometric methods rely on KNN, which has different complexity characteristics.
-3. **ASD-SSM novelty**: First to make Ā input-dependent and scale-decoupled in SSM-based point cloud analysis; PCM only differentiates Ā per scale (input-invariant within scale).]
+**Response:** We thank the reviewer for raising this important concern. We agree that geometric feature enhancement and multi-scale modeling are well-established directions in point cloud analysis. However, we respectfully argue that PointSS makes three distinct technical contributions that, to our knowledge, have not been jointly addressed in prior work:
 
-**Modifications:** [TBD — likely in Introduction and a strengthened Discussion section.]
+**(1) GGAM is specifically designed to mitigate SSM-induced spatial proximity loss**, a problem that does not arise in attention- or convolution-based geometric methods (e.g., PointGA, PointMSGT, RepSurf). These prior methods rely on KNN-based neighborhoods ($\mathcal{O}(N\log N)$) and are agnostic to whether the backbone is sequential. In contrast, GGAM (i) constructs local neighborhoods by partitioning the serialized 1D sequence into fixed-size contiguous windows (size 64), avoiding the explicit KNN search required by KNN-based geometric methods and reducing graph construction cost to $\mathcal{O}(N)$; (ii) employs dual-serialization (Z-order + Hilbert) with cross-sequence attention to recover lost proximity along complementary serialization paths; and (iii) injects a geometric consistency gate to modulate the fused representation. <span style="color:#c00000">This combination is, to our knowledge, new in the SSM-based point cloud literature.</span>
+
+**(2) ASD-SSM is the first SSM-based point cloud method that makes the state transition parameter $\bar{A}$ simultaneously input-dependent AND scale-decoupled.** The closest prior work (PCM, AAAI'25) allocates separate $\bar{A}$ per scale, but within each scale $\bar{A}$ remains input-invariant—identical state transitions are applied to flat surfaces and sharp boundaries alike. Standard Mamba and PointMamba use a single shared $\bar{A}$. Our ablation in the Parameterization Comparison table directly quantifies the gain of this design: <span style="color:#c00000">ASD-SSM achieves 73.8% mIoU versus 71.6% for the input-invariant per-scale baseline (+2.2%)</span>, which is substantially larger than the typical inter-method gaps on this saturated benchmark.
+
+**(3) GGAM and ASD-SSM are functionally coupled rather than independently stacked.** The geometric priors produced by GGAM provide the patch-level content features that drive ASD-SSM's scale-aware parameter generator. Without GGAM, the parameter generator falls back to surface-level features that lack geometric structure. We have verified this dependency in the progressive ablation: <span style="color:#c00000">adding ASD-SSM to a GGAM-equipped baseline yields +1.9% mIoU</span>, confirming complementary—not redundant—gains.
+
+To make these distinctions more visible to readers, we have revised the Introduction and Section 2 (Related Work) to explicitly contrast PointSS against the closest prior works (PCM, PointMamba, PointGA, PointMSGT) along the three dimensions above.
+
+**Modifications:** Strengthened novelty positioning in Introduction [TBD: lines]; clarified differentiation in Related Work [TBD: lines]; the Parameterization Comparison table at <span style="color:#c00000">lines 625–639</span> and the Incremental Improvement table at <span style="color:#c00000">lines 494–509</span> serve as quantitative evidence for points (2) and (3).
 
 ---
 
