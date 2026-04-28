@@ -189,9 +189,9 @@ The consistent performance gains across indoor (S3DIS), synthetic (ModelNet40), 
 
 This moderate parameter increase (+13%) is well justified by the substantial performance gain (73.8% vs. 73.4% mIoU, +0.4%) and improved efficiency (59% memory reduction, 9–19% faster inference).
 
-**(2) Memory overhead.** GGAM's memory footprint primarily comes from storing dual-serialization intermediate features (hidden_dim=64 for both Z-order and Hilbert paths) and cross-attention maps. Importantly, <span style="color:#c00000">this overhead remains constant across patch sizes due to the fixed neighborhood size (k=64)</span>, whereas attention-based methods incur quadratic memory growth. This design choice is key to PointSS's superior scalability: while PTv3 encounters OOM at patch size 1024 (27.8GB), PointSS maintains stable 6.0GB memory usage even at patch size 2048.
+**(2) Memory overhead.** GGAM's memory footprint primarily comes from storing dual-serialization intermediate features (hidden_dim=64 for both Z-order and Hilbert paths) and cross-attention maps. Importantly, <span style="color:#c00000">GGAM's overhead remains constant across patch sizes because it operates on fixed-size neighborhoods (k=64) within the serialization window</span>. In contrast, PTv3's self-attention operates on the entire patch: as patch size increases from 512 to 1024, the attention sequence length doubles, leading to quadratic memory growth (14.7GB → 27.8GB, OOM). This design choice is key to PointSS's superior scalability: PointSS maintains stable 6.0GB memory usage even at patch size 2048.
 
-**(3) Latency overhead.** <span style="color:#c00000">GGAM's forward pass accounts for approximately 18–22% of total inference time</span> across patch sizes 128–512. Despite this overhead, PointSS still achieves 9–19% faster inference than PTv3 overall, demonstrating that the linear-complexity SSM backbone more than compensates for GGAM's cost.
+**(3) Latency overhead.** While GGAM introduces additional computation for dual-serialization and geometric feature extraction, <span style="color:#c00000">the overall system still achieves 9–19% faster inference than PTv3 across patch sizes 128–512</span>. This demonstrates that the linear-complexity SSM backbone more than compensates for GGAM's overhead, resulting in a net efficiency gain.
 
 **(4) Graph construction complexity.** Critically, GGAM's graph construction does NOT require expensive KNN search. Instead, it directly partitions the serialized 1D sequence into fixed-size contiguous windows (size k=64), treating each window as a local neighborhood. This reduces graph construction to <span style="color:#c00000">O(N) complexity</span> — a simple reshaping operation — compared to O(N log N) or O(N²) for KNN-based methods. The dual-serialization (Z-order + Hilbert) performs this windowing twice with different orderings, still maintaining O(N) total complexity.
 
@@ -204,18 +204,19 @@ In summary, while GGAM introduces moderate parameter and memory overhead, its de
 ## Comment R#6.4 — Hyperparameter Sensitivity
 <span style="color:#1f6feb">Key hyperparameters (e.g., scale constraint factors) appear to be manually designed and seem sensitive, lacking robustness analysis or automatic tuning schemes.</span>
 
-**Response:** Section 4.5 already includes an extensive ablation on the scale constraint factors α_s (Table for ablation of α_s, lines 602–620 in the revised manuscript), covering uniform, non-uniform increasing, and reversed configurations. The results show that the chosen configuration (0.3, 0.6, 0.9) is robust within a moderate range:
+**Response:** We thank the reviewer for this important observation. We address the concerns regarding the scale constraint factor α as follows:
 
-- (0.3, 0.5, 0.7): 73.3%
-- (0.3, 0.6, 0.9): **73.8%** (best)
-- (0.3, 0.7, 0.9): 73.6%
-- (0.4, 0.6, 0.9): 73.3%
+**(1) Robustness analysis.** We have conducted systematic sensitivity analysis in Table VII (lines 602–620), evaluating nine configurations of α across three scales. The results demonstrate robustness within reasonable ranges:
 
-The performance varies by less than 0.5% across reasonable choices, indicating that the method is **not overly sensitive** to the exact values, as long as α_s increases monotonically from fine to coarse scales.
+- When α follows a monotonically increasing pattern from fine to coarse scales, <span style="color:#c00000">performance remains stable: configurations (0.3,0.5,0.7), (0.3,0.6,0.9), and (0.3,0.7,0.9) achieve 73.3%–73.8% mIoU, with variation <0.5%</span>.
+- The model tolerates moderate boundary adjustments: <span style="color:#c00000">varying α₁ ∈ [0.2, 0.4] while keeping other scales fixed yields 73.2%–73.3% mIoU</span>, indicating that exact values are not critical.
+- Only physically inconsistent configurations cause significant degradation. For instance, <span style="color:#c00000">reversing the scale ordering (0.9,0.6,0.3) drops performance to 66.5%</span>, which aligns with the design principle: fine scales require rapid state decay (small α) to capture local geometric detail, while coarse scales require slow decay (large α) to maintain global context.
 
-We have explicitly acknowledged in the Limitations section that automatic tuning of α_s is a worthwhile direction, and we plan to investigate learnable α_s parameterization in future work.
+**(2) Design rationale.** The scale constraint factors are not arbitrary hyperparameters but encode a clear physical principle. In the discrete state space model h_k = Ā·h_{k-1} + B̄·u_k, the magnitude of Ā controls state decay rate. By constraining Ā_s ∈ [0, α_s] with α increasing across scales, we ensure that fine scales respond rapidly to local variations while coarse scales retain long-range dependencies. This principle is dataset-agnostic and provides practical guidance: users can reliably adopt a monotonically increasing pattern (e.g., 0.3→0.6→0.9 for three scales) without dataset-specific tuning.
 
-**Modifications:** Strengthened the analysis paragraph following the α_s ablation table [TBD: lines]; added explicit discussion of robustness in Conclusion.
+**(3) Toward automatic tuning.** We acknowledge that manual specification of α remains a limitation. As stated in our Conclusion (Section VI, lines 686–692), future work will explore learning α as trainable parameters or deriving them via neural architecture search. However, the current design already provides practical robustness: the systematic ablation demonstrates that the method is stable within reasonable ranges, and the physical interpretation offers clear guidance for hyperparameter selection.
+
+**Modifications:** Strengthened the analysis paragraph following Table VII at lines 602–620; added explicit discussion of robustness and future directions in Conclusion at lines 686–692.
 
 ---
 
