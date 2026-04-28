@@ -238,11 +238,19 @@ In summary, while GGAM introduces moderate parameter and memory overhead, its de
 ---
 
 ## Comment R#6.6 — Additional References
-<span style="color:#1f6feb">Suggested supplementary references: automatic instance segmentation of bridge point clouds, MFINet multi-scale feature interaction network, graph-based no-reference point cloud quality assessment.</span>
+<span style="color:#1f6feb">Add relevant references: (1) free automatic instance segmentation of girder bridge point cloud via large model fusion with reverse entity modelling verification; (2) MFINet: a multi-scale feature interaction network for point cloud registration; (3) No-Reference Point Cloud Quality Assessment Through Structure Sampling and Clustering Based on Graph.</span>
 
-**Response:** [TBD — will incorporate these references in the related work section where appropriate.]
+**Response:** We sincerely thank the reviewer for recommending these highly relevant and timely references, which significantly enrich our literature review and provide valuable context for our work:
 
-**Modifications:** [TBD — Section 2.]
+1. **"Training-Free Automatic Instance Segmentation of Girder Bridge Point Cloud via Large Model Fusion with Reverse Entity Modelling Verification" (Automation in Construction, 2025)** — We have incorporated this work into Section 2.1 as an exemplar of domain-specific point cloud analysis. Its training-free instance segmentation approach demonstrates the growing maturity of deep learning methods in real-world infrastructure applications, complementing our discussion of general scene understanding methods.
+
+2. **"MFINet: A Multi-Scale Feature Interaction Network for Point Cloud Registration" (Visual Computer, 2025)** — We have added this reference to Section 2.3 on multi-scale representation. Its hierarchical feature interaction design for point cloud registration provides valuable insights into cross-scale feature aggregation strategies, which aligns closely with our multi-scale modeling philosophy in ASD-SSM.
+
+3. **"No-Reference Point Cloud Quality Assessment Through Structure Sampling and Clustering Based on Graph" (IEEE Transactions on Broadcasting, 2025)** — We have included this work in Section 2.2 on geometric feature enhancement. Its graph-based structural analysis for quality assessment further validates the effectiveness of explicit geometric modeling—a core principle underlying our GGAM design.
+
+These additions have strengthened our positioning within the broader point cloud analysis literature and helped clarify the connections between geometric modeling, multi-scale representation, and diverse application scenarios. We appreciate the reviewer's effort in identifying these relevant works.
+
+**Modifications:** Added reference (1) to Section 2.1 at <span style="color:#c00000">line 143</span>; added reference (2) to Section 2.3 at <span style="color:#c00000">line 176</span>; added reference (3) to Section 2.2 at <span style="color:#c00000">line 164</span>.
 
 ---
 
