@@ -227,88 +227,48 @@ where $k$ denotes the position index in the serialized sequence, $x_k$ represent
 
 In this recurrent mechanism, each state $x_k$ depends on the previous state $x_{k-1}$ and current input $u_k$, establishing sequential dependencies. As discussed in Section I, serialization inevitably sacrifices spatial proximity—spatially adjacent points often become distant in the sequence. This loss of proximity prevents the recurrent state update from effectively aggregating information across spatial neighbors, limiting the model's ability to capture local geometric structures such as surface normals and curvature.
 
-To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to explicitly inject geometric priors into the model. As illustrated in \cref{fig:ggam}, GGAM consists of two parts: (1) Graph Construction and Geometric Feature Extraction, and (2) Geometric Feature Enhancement and Fusion. The first part constructs a graph from the serialized point sequence and extracts a geometric feature vector for each point. To capture complementary spatial structure, this process runs in parallel on two serialization streams—Z-order and Hilbert—yielding two independent sets of geometric features. The second part enhances and fuses these dual-stream features through a cross-attention mechanism and an adaptive gating strategy.
+To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to explicitly inject geometric priors into the model. As illustrated in \cref{fig:ggam}, GGAM consists of two stages: (1) Graph Construction and Geometric Feature Extraction, and (2) Geometric Feature Enhancement and Fusion. The first stage constructs local graphs from the serialized point sequence and extracts geometric features. To capture complementary spatial structure, this process runs in parallel on two serialization streams—Z-order and Hilbert—yielding two independent feature sets $\mathbf{H}_z$ and $\mathbf{H}_h$. The second stage enhances and fuses these dual-stream features through cross-attention and adaptive gating.
 
 \begin{figure*}
 	\centering
 	\includegraphics[width=.9\textwidth]{picture/ggam.jpg}
-	\caption{Architecture of the Global Geometry-Aware Mechanism (GGAM).}
+	\caption{Architecture of the Global Geometry-Aware Mechanism (GGAM). Key notation: $\mathbf{H}_z, \mathbf{H}_h$ are geometric features from Z-order and Hilbert serialization; $\mathbf{H}''_z, \mathbf{H}''_h$ are enhanced features after self-attention and cross-attention; $\alpha_z, \alpha_h$ are adaptive fusion weights; $\gamma$ is the geometric consistency gate.}
 	\label{fig:ggam}
 \end{figure*}
 
-Traditional methods for computing geometric relationships (e.g., curvature and surface normals) rely on K-Nearest Neighbor (KNN) searches, which are computationally expensive for large-scale point clouds. Inspired by Point Transformer V3 \cite{ptv3}, which showed that serialization-based windowed neighborhoods can replace KNN while reducing complexity from $\mathcal{O}(N\log N)$ to $\mathcal{O}(N)$ without sacrificing performance, we adopt this construction to enable efficient geometric feature extraction.
+\subsubsection{Graph Construction and Geometric Feature Extraction}
 
-Given the point cloud $\{p_1, p_2, \ldots, p_N\}$, the serialization method sorts these points into a sequence according to a space-filling curve. For example, a Z-order serialization of five points might yield $Q = (p_3, p_5, p_2, p_1, p_4)$, where the index of each point in $Q$ reflects the order in which the curve visits it. In general, let $\pi$ be the permutation induced by the serialization. The serialized sequence is defined as:
-\begin{equation}
-	Q = (p_{\pi(1)}, p_{\pi(2)}, \ldots, p_{\pi(N)})
-\end{equation}
-where $q_i := p_{\pi(i)}$ denotes the $i$-th point in the serialized order. The sequence is then partitioned into non-overlapping windows:
-\begin{equation}
-	W_m = (q_{(m-1) \cdot 64 + 1}, q_{(m-1) \cdot 64 + 2}, \ldots, q_{m \cdot 64})
-\end{equation}
-where $m = 1, 2, \ldots, \lfloor N/64 \rfloor$ is the window index, and the window size is fixed at 64, which provides a sufficient neighborhood for stable PCA-based estimation of local geometric properties such as surface normals and curvature. If the last window has fewer than $64$ points, it is padded following the strategy of PTv3~\cite{ptv3}.
+Following Point Transformer V3 \cite{ptv3}, we partition the serialized sequence into non-overlapping windows of 64 consecutive points. Within each window, we construct a fully-connected local graph where each point is connected to all other points in the same window. This windowed neighborhood construction reduces complexity from $\mathcal{O}(N\log N)$ (KNN-based) to $\mathcal{O}(N)$. The window size of 64 provides a sufficient neighborhood for stable PCA-based estimation of local geometric properties such as surface normals and curvature.
 
-For each point $q_i$, its neighborhood $\mathcal{N}(q_i)$ consists of all other points within the same window, forming a fully connected local graph:
-\begin{equation}
-	\mathcal{N}(q_i) = \left\{q_j : q_j \in W_{\lceil i/64 \rceil},\ j \neq i\right\}
-\end{equation}
-
-For each pair $(q_i, q_j)$ with $q_j \in \mathcal{N}(q_i)$, an 8-dimensional geometric feature vector is extracted:
+For each edge $(q_i, q_j)$ connecting two points in the serialized sequence within the same window, we extract an 8-dimensional geometric feature vector:
 \begin{equation}
 	\mathbf{f}_{ij} = [\Delta q_{ij},\ \mathbf{n}_i \cdot \mathbf{n}_j,\ \cos\theta_i,\ \cos\theta_j,\ \kappa_i,\ \kappa_j] \in \mathbb{R}^8
 \end{equation}
-where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vector; $\mathbf{n}_i, \mathbf{n}_j \in \mathbb{R}^3$ are the surface normals at $q_i$ and $q_j$, estimated via PCA applied to the 3D coordinates of points within the local window. $\mathbf{n}_i \cdot \mathbf{n}_j \in \mathbb{R}$ is their dot product, measuring the normal consistency between the two endpoints—near smooth surfaces it approaches 1, while near geometric boundaries it drops sharply. $\cos\theta_i$ and $\cos\theta_j$ are the cosines of the angles between $\Delta q_{ij}$ and the surface normals $\mathbf{n}_i$ and $\mathbf{n}_j$, respectively:
+where $\Delta q_{ij} = q_j - q_i \in \mathbb{R}^3$ is the relative position vector; $\mathbf{n}_i \cdot \mathbf{n}_j \in \mathbb{R}$ is the dot product of surface normals (approaches 1 on smooth surfaces, drops sharply at boundaries); $\cos\theta_i, \cos\theta_j \in \mathbb{R}$ are edge-to-normal angles (near zero on planes, large at geometric edges); and $\kappa_i, \kappa_j \in \mathbb{R}$ denote surface curvatures at the two endpoints.
+
+The surface normals $\mathbf{n}_i, \mathbf{n}_j$ are estimated via PCA applied to the 3D coordinates of points within the local window. The angles are computed as:
 \begin{equation}
 	\cos\theta_i = \frac{\mathbf{n}_i \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}, \quad \cos\theta_j = \frac{\mathbf{n}_j \cdot \Delta q_{ij}}{\|\Delta q_{ij}\|}
 \end{equation}
-$\cos\theta_i$ measures how much the edge direction $\Delta q_{ij}$ deviates from the tangent plane at $q_i$: it is near zero on smooth regions and grows large near geometric edges, with $\cos\theta_j$ defined analogously at $q_j$. $\kappa_i, \kappa_j \in \mathbb{R}$ denote the surface curvatures at the two endpoints.
 
-The normal-based components—$\mathbf{n}_i \cdot \mathbf{n}_j$, $\cos\theta_i$, $\cos\theta_j$, $\kappa_i$, and $\kappa_j$—are all rotation-invariant geometric quantities by design~\cite{clusterNet, riconv}: rotating the point cloud globally leaves these values unchanged. In contrast, raw normal vectors rotate with the point cloud and do not share this invariance. Such rotation invariance has been shown to enhance model robustness to rotational variations~\cite{clusterNet, riconv}.
+The normal-based components—$\mathbf{n}_i \cdot \mathbf{n}_j$, $\cos\theta_i$, $\cos\theta_j$, $\kappa_i$, and $\kappa_j$—are rotation-invariant geometric quantities by design~\cite{clusterNet, riconv}, enhancing model robustness to rotational variations.
 
-Each edge feature is passed through an MLP, and for each point $q_i$, the outputs are aggregated via mean pooling over its neighbor set $\mathcal{N}(q_i)$:
-\begin{equation}
-	\mathbf{H}_i = \frac{1}{|\mathcal{N}(q_i)|} \sum_{q_j \in \mathcal{N}(q_i)} \text{MLP}(\mathbf{f}_{ij})
-\end{equation}
-The resulting feature $\mathbf{H}_i \in \mathbb{R}^C$ encodes the local geometric context of $q_i$. Since the Z-order serialization method favors local clustering while the Hilbert serialization method better preserves spatial continuity, graph construction runs in parallel on both serializations, yielding two complementary geometric feature vectors $\mathbf{H}_z$ and $\mathbf{H}_h$ per point, which are passed to the second part of GGAM.
+Edge features are aggregated via mean pooling over each point's neighborhood, yielding per-point geometric features $\mathbf{H}_i \in \mathbb{R}^C$. Since Z-order serialization favors local clustering while Hilbert serialization better preserves spatial continuity, graph construction runs in parallel on both serializations, producing two complementary feature sets $\mathbf{H}_z$ and $\mathbf{H}_h$.
 
-The Geometric Feature Enhancement and Fusion module processes $\mathbf{H}_z$ and $\mathbf{H}_h$ through three sequential steps: self-attention within each stream, cross-attention between streams, and adaptive gated fusion.
+\subsubsection{Geometric Feature Enhancement and Fusion}
 
-Self-attention is applied within each stream, where $\text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{Softmax}(\mathbf{Q}\mathbf{K}^\top / \sqrt{d})\mathbf{V}$:
-\begin{equation}
-	\begin{aligned}
-		\mathbf{A}_z = \text{Attention}(\mathbf{H}_z, \mathbf{H}_z, \mathbf{H}_z), \\
-		\mathbf{A}_h = \text{Attention}(\mathbf{H}_h, \mathbf{H}_h, \mathbf{H}_h)
-	\end{aligned}
-\end{equation}
-with residual connections:
-\begin{equation}
-	\mathbf{H}'_z = \mathbf{H}_z + \mathbf{A}_z, \quad \mathbf{H}'_h = \mathbf{H}_h + \mathbf{A}_h
-\end{equation}
-Cross-attention is then applied, where each stream retains its own queries while the keys and values are exchanged between streams:
-\begin{equation}
-	\begin{aligned}
-		\mathbf{A}'_z = \text{Attention}(\mathbf{H}'_z, \mathbf{H}'_h, \mathbf{H}'_h), \\
-		\mathbf{A}'_h = \text{Attention}(\mathbf{H}'_h, \mathbf{H}'_z, \mathbf{H}'_z)
-	\end{aligned}
-\end{equation}
-The final output is obtained via residual addition:
-\begin{equation}
-	\begin{aligned}
-		\mathbf{H}''_z = \mathbf{H}'_z + \mathbf{A}'_z, \quad \mathbf{H}''_h = \mathbf{H}'_h + \mathbf{A}'_h
-	\end{aligned}
-\end{equation}
+The dual-stream features $\mathbf{H}_z$ and $\mathbf{H}_h$ are enhanced through self-attention within each stream followed by cross-attention between streams, both with residual connections (see \cref{fig:ggam}). This produces enhanced features $\mathbf{H}''_z$ and $\mathbf{H}''_h$ that capture both within-serialization and cross-serialization geometric relationships.
 
-To adaptively combine the two enhanced features, an adaptive gated unit generates a scalar weight for each stream:
+To adaptively combine the two enhanced features, an adaptive gated unit generates scalar fusion weights:
 \begin{equation}
 	[\alpha_z, \alpha_h] = \text{Softmax}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
 \end{equation}
-where $\|$ denotes concatenation. The fused feature is then:
+where $\|$ denotes concatenation, and $\alpha_z, \alpha_h \in \mathbb{R}$ satisfy $\alpha_z + \alpha_h = 1$. The fused feature is:
 \begin{equation}
 	\mathbf{H}_{\text{fused}} = \alpha_z \mathbf{H}''_z + \alpha_h \mathbf{H}''_h
 \end{equation}
-where $\alpha_z, \alpha_h \in \mathbb{R}$ are scalar weights satisfying $\alpha_z + \alpha_h = 1$, broadcast uniformly across all channels.
 
-Since the two streams are constructed over different serialization-induced window partitions, their fused representation may contain cross-stream inconsistencies. To mitigate this, a geometric consistency constraint module derives a learnable scalar gate $\gamma \in [0,1]$ from both streams to adaptively modulate the fused representation:
+Since the two streams are constructed over different serialization-induced window partitions, their fused representation may contain cross-stream inconsistencies. To mitigate this, a geometric consistency constraint module derives a learnable scalar gate $\gamma \in [0,1]$ to adaptively modulate the fused output:
 \begin{equation}
 	\gamma = \text{Sigmoid}(\text{MLP}([\mathbf{H}''_z \| \mathbf{H}''_h]))
 \end{equation}
