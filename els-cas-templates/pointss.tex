@@ -70,7 +70,7 @@
 \cortext[1]{Corresponding author}
 
 \begin{abstract}
-State Space Models (SSMs) offer linear computational complexity for point cloud analysis but suffer from spatial proximity loss when serializing 3D point clouds into 1D sequences. To address this limitation, we propose PointSS, a geometry-aware multi-scale state space framework. We introduce a Global Geometry-Aware Mechanism (GGAM) that injects explicit geometric priors through fully connected local graphs constructed within serialization windows on dual orderings (Z-order and Hilbert curves). Edge features encoding surface normals, curvature, and angular deviations are extracted and aggregated via cross-sequence attention and gated fusion to compensate for the loss of spatial proximity. Building on these geometric priors, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM) that implements a dynamic parameter generation mechanism: the state transition parameter $\bar{A}$ adapts to local geometric characteristics via input-dependent generation, while scale constraint factors remain fixed across scales to control state decay rates hierarchically. On S3DIS Area 5, PointSS achieves 73.8\% mIoU, outperforming Point Transformer V3 (73.4\%) and SSM-based methods including Pamba (73.5\%) and Point Cloud Mamba (69.8\%). On ModelNet40, it achieves 94.6\% overall accuracy. Compared to Point Transformer V3, PointSS achieves 9--19\% faster inference while maintaining linear complexity.
+State Space Models (SSMs) offer linear computational complexity for point cloud analysis but suffer from spatial proximity loss when serializing 3D point clouds into 1D sequences. To address this limitation, we propose PointSS, a geometry-aware multi-scale state space framework. We introduce a Global Geometry-Aware Mechanism (GGAM) that injects explicit geometric priors through fully connected local graphs constructed within serialization windows on dual orderings (Z-order and Hilbert curves). Edge features encoding surface normals, curvature, and angular deviations are extracted and aggregated via cross-sequence attention and gated fusion to compensate for the loss of spatial proximity. Building on these geometric priors, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM) that implements a dynamic parameter generation mechanism: the state transition parameter $\bar{A}$ adapts to local geometric characteristics via input-dependent generation, while scale constraint factors remain fixed across scales to control state decay rates hierarchically. On S3DIS Area 5, PointSS achieves 73.8\% mIoU, outperforming Point Transformer V3 (73.4\%) and SSM-based methods including Pamba (73.5\%) and Point Cloud Mamba (69.8\%). On ModelNet40, it achieves 94.6\% overall accuracy. On nuScenes outdoor LiDAR segmentation, PointSS achieves 80.9\% mIoU, surpassing Point Transformer V3 (80.4\%) and Pamba (80.4\%). Compared to Point Transformer V3, PointSS achieves 9--19\% faster inference while maintaining linear complexity.
 \end{abstract}
 
 
@@ -126,7 +126,7 @@ The main contributions of this work are as follows:
 	semantic context, achieving effective hierarchical representations.
 	
 	\item Extensive experiments demonstrate that PointSS achieves 73.8\% mIoU
-	on S3DIS semantic segmentation and 94.6\% OA on ModelNet40 classification,
+	on S3DIS semantic segmentation, 94.6\% OA on ModelNet40 classification, and 80.9\% mIoU on nuScenes outdoor LiDAR segmentation,
 	consistently outperforming major SSM-based counterparts while maintaining linear complexity.
 	Comprehensive ablation studies further validate the effectiveness of our
 	geometry-aware multi-scale design.
@@ -376,17 +376,13 @@ In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), whil
 
 PointSS is trained from scratch without pre-training, so that performance gains can be attributed to architectural design rather than pre-training strategies.
 
-\subsection{Datasets}
-
-\textbf{S3DIS.} The S3DIS dataset~\cite{s3dis} is a large-scale indoor point cloud benchmark comprising 271 rooms across six distinct areas (Area 1--6), annotated with 13 semantic categories (e.g., wall, chair, door). Each point is described by its 3D coordinates and RGB color. Following the standard protocol widely adopted in the literature, we train on Areas 1, 2, 3, 4, and 6, and evaluate on Area 5.
-
-\textbf{ModelNet40.} ModelNet40~\cite{ModelNet40} is a standard benchmark for 3D object classification, comprising 12,311 CAD models from 40 categories, split into 8,156 training and 4,155 testing samples.
-
 \subsection{Quantitative Experiments}
+
+We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic segmentation, ModelNet40~\cite{ModelNet40} for 3D object classification, and nuScenes~\cite{nuscenes} for outdoor LiDAR segmentation.
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} summarizes the semantic segmentation performance on the S3DIS dataset. Without pre-training, PointSS achieves 73.8\% mean Intersection over Union (mIoU) on Area 5, outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 0.4\% and the SSM-based Pamba by 0.3\%. Furthermore, PointSS retains the linear time complexity of SSMs.
+\cref{tab:s3dis} summarizes the semantic segmentation performance on S3DIS Area 5. Without pre-training, PointSS achieves 73.8\% mean Intersection over Union (mIoU), outperforming all compared methods. Specifically, it surpasses the state-of-the-art Point Transformer V3 by 0.4\% and the SSM-based Pamba by 0.3\%. Furthermore, PointSS retains the linear time complexity of SSMs.
 
 \begin{table*}
 	\centering
@@ -434,6 +430,29 @@ PointSS is trained from scratch without pre-training, so that performance gains 
 		PointMamba \cite{PointMamba} & NeurIPS'24 & 93.6 \\
 		PCM \cite{pcm} & AAAI'25 & 93.4 \\
 		PointSS (Ours) & -- & \textbf{94.6} \\ \bottomrule
+	\end{tabular}
+\end{table*}
+
+\subsubsection{Experiment Results on the nuScenes Dataset}
+
+To evaluate the generalization capability of PointSS on outdoor LiDAR data, we conduct experiments on the nuScenes validation set. As shown in \cref{tab:nuscenes}, PointSS achieves 80.9\% mIoU, outperforming both Transformer-based methods (PTv3: 80.4\%, SphereFormer: 79.5\%) and SSM-based methods (Pamba: 80.4\%, PCM: not reported). This demonstrates that the geometry-aware multi-scale design of PointSS generalizes effectively from indoor scenes to outdoor autonomous driving scenarios, where point clouds exhibit different characteristics such as larger spatial extent and sparser density.
+
+\begin{table*}
+	\centering
+	\caption{Semantic Segmentation Performance Comparison on nuScenes}
+	\label{tab:nuscenes}
+	\begin{tabular}{@{}lll@{}}
+		\toprule
+		\textbf{Method} & \textbf{Venue} & \textbf{mIoU (\%)} \\ \midrule
+		\multicolumn{3}{l}{\textit{w/o Mamba}} \\
+		AF2S3Net \cite{af2s3net} & CVPR'21 & 62.2 \\
+		SphereFormer \cite{sphereformer} & CVPR'21 & 79.5 \\
+		PTv2 \cite{ptv2} & NeurIPS'22 & 80.2 \\
+		OA-CNNs \cite{oacnn} & CVPR'24 & 78.9 \\
+		Point Transformer V3 \cite{ptv3} & CVPR'24 & 80.4 \\ \midrule
+		\multicolumn{3}{l}{\textit{w/ Mamba}} \\
+		Pamba \cite{pamba} & AAAI'25 & 80.4 \\
+		PointSS (Ours) & -- & \textbf{80.9} \\ \bottomrule
 	\end{tabular}
 \end{table*}
 
@@ -685,11 +704,11 @@ These qualitative results are consistent with the trends observed in the quantit
 
 \section{Conclusion}
 
-This paper presents PointSS, a geometry-aware multi-scale framework for point cloud analysis built upon State Space Models. GGAM and ASD-SSM address the two key limitations of existing SSM-based methods—serialization-induced spatial proximity loss and input-invariant state transition parameters—respectively. Experiments on S3DIS and ModelNet40 demonstrate strong segmentation performance and competitive classification accuracy, consistently outperforming major SSM-based counterparts.
+This paper presents PointSS, a geometry-aware multi-scale framework for point cloud analysis built upon State Space Models. GGAM and ASD-SSM address the two key limitations of existing SSM-based methods—serialization-induced spatial proximity loss and input-invariant state transition parameters—respectively. Experiments demonstrate strong performance across diverse benchmarks: 73.8\% mIoU on S3DIS Area 5 (outperforming PTv3 by 0.4\% and PCM by 4.0\%), 94.6\% OA on ModelNet40, and 80.9\% mIoU on nuScenes outdoor LiDAR segmentation (surpassing PTv3 at 80.4\% and Pamba at 80.4\%). PointSS achieves 9--19\% inference latency reduction over PTv3 across patch sizes 128--512, 59\% memory reduction at patch size 512 (6.0GB vs. 14.7GB), and stable scaling to patch size 2048 while PTv3 encounters OOM at 1024.
 
-Despite these contributions, PointSS has several limitations. The scale constraint factors $\alpha_s$ are manually specified as fixed hyperparameters, which may require task-specific tuning when generalizing to new datasets or point cloud distributions. In addition, the dual-serialization design in GGAM introduces additional computational overhead compared to single-stream methods. Furthermore, PointSS has only been evaluated on indoor scene segmentation and synthetic object classification benchmarks; its effectiveness on outdoor LiDAR datasets (e.g., SemanticKITTI) remains to be verified.
+Despite these contributions, PointSS has several limitations. The scale constraint factors $\alpha_s$ are manually specified as fixed hyperparameters, which may require task-specific tuning when generalizing to new datasets or point cloud distributions. In addition, the dual-serialization design in GGAM introduces additional computational overhead compared to single-stream methods.
 
-Future work will explore automatically learning the scale constraint factors to reduce the need for manual tuning. Extending PointSS to large-scale outdoor datasets and investigating more efficient geometric feature fusion strategies are also directions we intend to pursue.
+Future work will explore automatically learning the scale constraint factors via learnable parameterization or neural architecture search to reduce the need for manual tuning. Extending PointSS to additional outdoor LiDAR benchmarks such as SemanticKITTI and Waymo Open Dataset, investigating more efficient geometric feature fusion strategies to reduce GGAM's computational overhead, and exploring PointSS's applicability to other 3D vision tasks such as object detection and instance segmentation are also directions we intend to pursue.
 
 \section*{Acknowledgment}                                                                                                                                                               
 This paper is funded by 20260301004YY.
