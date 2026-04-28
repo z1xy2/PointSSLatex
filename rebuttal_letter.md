@@ -223,9 +223,17 @@ In summary, while GGAM introduces moderate parameter and memory overhead, its de
 ## Comment R#6.5 — Method Section Clarity
 <span style="color:#1f6feb">The method section, especially GGAM, is dense in content; the description could be clearer, with many symbols and limited readability.</span>
 
-**Response:** [TBD — will revise Section 3.2 (GGAM) by: (1) introducing a notation table; (2) consolidating equations where possible; (3) adding intuitive prose explanations before each block of equations; (4) splitting long sentences.]
+**Response:** We sincerely thank the reviewer for this constructive feedback. To improve readability, we have restructured the GGAM section as follows:
 
-**Modifications:** [TBD — Section 3.2.]
+**(1) Added hierarchical structure.** Introduced two subsubsections—"Graph Construction and Geometric Feature Extraction" and "Geometric Feature Enhancement and Fusion"—to clearly delineate the two-stage pipeline.
+
+**(2) Reduced equation and symbol density.** <span style="color:#c00000">Removed equations describing standard operations (e.g., serialization formalism, attention mechanisms, windowing) and replaced them with concise prose supplemented by references to Fig. 5. Equation count reduced from 15 to 7 (−53%); symbol count reduced from ~40 to ~20 (−52%).</span> The remaining equations focus on our core contributions: the 8-dimensional geometric feature design (Eq. 2–3) and the adaptive dual-stream fusion mechanism (Eq. 4–7).
+
+**(3) Enhanced figure-text coordination.** Expanded Fig. 5 caption to explicitly define key symbols ($\mathbf{H}_z, \mathbf{H}_h, \mathbf{H}''_z, \mathbf{H}''_h, \alpha_z, \alpha_h, \gamma$), allowing readers to reference the figure for notation rather than parsing dense text. Standard operations (attention, pooling) are now illustrated in the figure and cited via references, while the text focuses on design rationale and novel contributions.
+
+**(4) Improved prose clarity.** Split long sentences, removed non-standard terminology (e.g., "normal consistency" → "dot product of surface normals"), and added bridging sentences between major blocks.
+
+**Modifications:** Restructured Section 3.2 (GGAM) at <span style="color:#c00000">lines 220–280</span>: added subsubsections, reduced equations from 15 to 7, reduced symbols from ~40 to ~20, enhanced Fig. 5 caption.
 
 ---
 
