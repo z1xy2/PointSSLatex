@@ -129,17 +129,9 @@ Following standard practice in the point cloud community, all other compared met
 ## Comment R#3.8
 <span style="color:#1f6feb">Add further details on how simulations were conducted. Perhaps add a flowchart that clearly identifies how the entire system works.</span>
 
-**Response:** We thank the reviewer for this valuable suggestion. We have substantially expanded Section 4.1 (Implementation Details) with comprehensive experimental protocol information:
+**Response:** We thank the reviewer for this suggestion. We have strengthened the description of Fig. 2 in the revised manuscript, providing a step-by-step breakdown of the complete system pipeline so that the overall workflow is clear at a glance. Specifically, the revised figure caption now describes the four key stages in sequence: (1) input preprocessing and point cloud serialization; (2) GGAM for geometric feature extraction via dual-serialization with cross-attention fusion; (3) U-shaped encoder-decoder with ASD-SSM for multi-scale state space feature learning; (4) prediction head for semantic segmentation or classification output. This description has been added to the caption of Fig. 2 at <span style="color:#c00000">lines 207–209</span> to make the system workflow immediately accessible.
 
-**(1) Expanded experimental details.** The revised Implementation Details section now includes:
-- **Dataset preprocessing** (\textit{lines 337–343}): detailed descriptions of block sampling strategies (S3DIS: $1.5\text{m}\times1.5\text{m}$, 40,960 points per block; ModelNet40: 1,024 points per object; nuScenes: full-sweep, 34 classes), coordinate normalization, color feature extraction, and serialization method (Hilbert curve).
-- **Data augmentation** (\textit{lines 344–347}): specific augmentation operations including random rotation, scaling $[0.9, 1.1]$, translation $\pm0.2\text{m}$, chromatic jitter (std 0.02), and random color dropping.
-- **Training configuration** (\textit{lines 348–355}): complete optimizer settings (AdamW, weight decay 0.05), learning rate schedule (warmup from $6\times10^{-5}$ to $6\times10^{-3}$ over 10 epochs, cosine decay to $6\times10^{-6}$), training duration (300 epochs, batch size 6, AMP), total training time (~48 hours per run on a single A6000 GPU), and reproducibility seed (2024).
-- **Architecture configuration** (\textit{lines 356–362}): complete channel dimensions, patch size, scale constraint factors $(\alpha_1, \alpha_2, \alpha_3)=(0.3, 0.6, 0.9)$, expansion factors $(1,2,4)$, and loss function.
-
-**(2) System flowchart.** We have revised the caption of \cref{fig:architecture} to explicitly describe it as a system flowchart, with a step-by-step breakdown of the four stages: (1) input preprocessing and serialization, (2) GGAM geometric feature extraction, (3) U-shaped encoder-decoder with ASD-SSM, and (4) prediction head. This provides readers with a clear, concise overview of the complete pipeline.
-
-**Modifications:** Expanded Implementation Details section at <span style="color:#c00000">lines 331–362</span>; revised \cref{fig:architecture} caption at <span style="color:#c00000">lines 207–209</span>.
+**Modifications:** Revised Fig. 2 caption with step-by-step pipeline description at <span style="color:#c00000">lines 207–209</span>.
 
 ---
 
@@ -379,7 +371,7 @@ The following are **TBD** and will be addressed in subsequent revision passes:
 - New Discussion section (R#3.3)
 - Introduction restructure (R#3.4, R#3.6)
 - Comparative related-work table + new citations (R#3.5, R#6.6)
-- Simulation/flowchart description (R#3.8) ✓ Done (lines 331–362, architecture caption lines 207–209)
+- Simulation/flowchart description (R#3.8) ✓ Done (Fig. 2 caption + pipeline description)
 - Conclusion revision (R#3.9)
 - Novelty positioning prose (R#6.1, R#8.1)
 - Outdoor LiDAR limitation discussion (R#6.2, R#8.3)

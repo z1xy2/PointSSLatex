@@ -204,7 +204,7 @@ The overall architecture of the PointSS model is illustrated in \cref{fig:archit
 \begin{figure}
 	\centering
 	\includegraphics[width=.9\columnwidth]{picture/architecture.jpg}
-	\caption{The overview of the proposed PointSS. The encoder and decoder employ a patch-based strategy for point cloud upsampling and down-sampling. The notation (number of points, feature dimension) in Feature Learning indicates the tensor shape at each stage.}
+	\caption{System flowchart of the proposed PointSS framework. The pipeline consists of four stages: (1) input preprocessing and point cloud serialization; (2) GGAM for geometric feature extraction via dual-serialization with cross-attention fusion; (3) U-shaped encoder-decoder with ASD-SSM for multi-scale state space feature learning; (4) prediction head for semantic segmentation or classification output. The notation $(N, C)$ denotes the number of points and feature dimension at each stage.}
 	\label{fig:architecture}
 \end{figure}
 
