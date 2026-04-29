@@ -127,22 +127,28 @@ Following standard practice in the point cloud community, all other compared met
 ---
 
 ## Comment R#3.8
-<span style="color:#1f6feb">Please supplement detailed descriptions of the simulation experiments, and consider adding a flowchart that clearly illustrates the entire system workflow.</span>
+<span style="color:#1f6feb">Add further details on how simulations were conducted. Perhaps add a flowchart that clearly identifies how the entire system works.</span>
 
-**Response:** [TBD — will expand Section 4.1 (Implementation Details) with more comprehensive descriptions, and review whether the existing architecture figure (Fig. 2) sufficiently serves as a system workflow diagram, or whether an additional flowchart is needed.]
+**Response:** We thank the reviewer for this valuable suggestion. We have substantially expanded Section 4.1 (Implementation Details) with comprehensive experimental protocol information:
 
-**Modifications:** [TBD]
+**(1) Expanded experimental details.** The revised Implementation Details section now includes:
+- **Dataset preprocessing** (\textit{lines 337–343}): detailed descriptions of block sampling strategies (S3DIS: $1.5\text{m}\times1.5\text{m}$, 40,960 points per block; ModelNet40: 1,024 points per object; nuScenes: full-sweep, 34 classes), coordinate normalization, color feature extraction, and serialization method (Hilbert curve).
+- **Data augmentation** (\textit{lines 344–347}): specific augmentation operations including random rotation, scaling $[0.9, 1.1]$, translation $\pm0.2\text{m}$, chromatic jitter (std 0.02), and random color dropping.
+- **Training configuration** (\textit{lines 348–355}): complete optimizer settings (AdamW, weight decay 0.05), learning rate schedule (warmup from $6\times10^{-5}$ to $6\times10^{-3}$ over 10 epochs, cosine decay to $6\times10^{-6}$), training duration (300 epochs, batch size 6, AMP), total training time (~48 hours per run on a single A6000 GPU), and reproducibility seed (2024).
+- **Architecture configuration** (\textit{lines 356–362}): complete channel dimensions, patch size, scale constraint factors $(\alpha_1, \alpha_2, \alpha_3)=(0.3, 0.6, 0.9)$, expansion factors $(1,2,4)$, and loss function.
+
+**(2) System flowchart.** We have revised the caption of \cref{fig:architecture} to explicitly describe it as a system flowchart, with a step-by-step breakdown of the four stages: (1) input preprocessing and serialization, (2) GGAM geometric feature extraction, (3) U-shaped encoder-decoder with ASD-SSM, and (4) prediction head. This provides readers with a clear, concise overview of the complete pipeline.
+
+**Modifications:** Expanded Implementation Details section at <span style="color:#c00000">lines 331–362</span>; revised \cref{fig:architecture} caption at <span style="color:#c00000">lines 207–209</span>.
 
 ---
 
 ## Comment R#3.9
-<span style="color:#1f6feb">The conclusion section also needs significant revision; it should briefly describe the research findings and propose several future research directions.</span>
+<span style="color:#1f6feb">The conclusion section also needs significant revisions. It should briefly describe the findings of the study and some more directions for further research.</span>
 
-**Response:** We have revised the Conclusion section to include quantitative summaries of key findings and more concrete future directions. The revised conclusion now explicitly reports: (1) <span style="color:#c00000">73.8% mIoU on S3DIS Area 5, outperforming PTv3 by 0.4% and PCM by 4.0%</span>; (2) <span style="color:#c00000">94.6% OA on ModelNet40</span>; (3) <span style="color:#c00000">80.9% mIoU on nuScenes, surpassing PTv3 (80.4%) and Pamba (80.4%)</span>; (4) <span style="color:#c00000">9–19% inference latency reduction over PTv3 across patch sizes 128–512</span>; (5) <span style="color:#c00000">59% memory reduction at patch size 512 (6.0GB vs. 14.7GB)</span>; and (6) <span style="color:#c00000">stable scaling to patch size 2048 while PTv3 encounters OOM at 1024</span>.
+**Response:** We thank the reviewer for this constructive suggestion. We have revised the Conclusion section to provide concise summaries of key findings and concrete future directions. The revised conclusion now states that extensive experiments on standard benchmarks (S3DIS, ModelNet40, and nuScenes) demonstrate consistent outperformance over major counterparts such as PTv3. The limitations section acknowledges that scale constraint factors $\alpha_s$ are manually specified and the dual-serialization design introduces additional computational overhead. Future directions include automatically learning the scale constraint factors, extending to additional outdoor LiDAR benchmarks (SemanticKITTI, Waymo Open Dataset), and investigating more efficient geometric fusion strategies.
 
-For future directions, we now propose: (1) automatic tuning of scale constraint factors $\alpha_s$ via learnable parameterization or neural architecture search; (2) extension to additional outdoor LiDAR benchmarks such as SemanticKITTI and Waymo Open Dataset; (3) more efficient geometric fusion strategies to reduce GGAM's computational overhead; and (4) investigation of PointSS's applicability to other 3D vision tasks such as object detection and instance segmentation.
-
-**Modifications:** Revised Conclusion section [lines 686–692] with quantitative findings and concrete future directions.
+**Modifications:** Revised Conclusion section [lines 686–690] with concise findings and concrete future directions.
 
 ---
 
@@ -347,17 +353,11 @@ Regarding **FLOPs**: the Mamba operator in PointSS is implemented as a custom CU
 ## Comment R#8.6 — Limited Qualitative Analysis
 <span style="color:#1f6feb">Visualization results show minor differences and lack detailed comparison.</span>
 
-**Response:** We thank the reviewer for this comment. We acknowledge that in point cloud semantic segmentation, performance improvements in point cloud semantic segmentation partially manifest in fine-grained details—particularly at object boundaries, occlusion edges, and small-scale structures—which can be difficult to discern in full-scene visualizations. Our current qualitative figure (Fig. X) already provides scene-level comparisons across Input, GT, PTv3, PCM, and PointSS, with blue circles highlighting regions where boundary differences are most notable.
+**Response:** We thank the reviewer for this suggestion. In the revised manuscript, we have restructured the qualitative comparison (Fig. X, lines 664–677):
+- Fig. X caption now organizes the comparison into two clearly labeled categories with named example regions.
+- Each category's advantage is explained via its corresponding model mechanism (ASD-SSM coarse/fine scales, GGAM geometric features).
 
-To provide a more detailed and accessible comparison, the revised manuscript adds a **zoomed-in boundary comparison panel** directly below the full-scene figure:
-
-- The full-scene grid (Fig. Xa) retains the original layout with blue circled regions numbered ①, ②, ③, ...
-- A new zoomed comparison panel (Fig. Xb) presents enlarged views of these highlighted regions, showing side-by-side GT / PTv3 / PCM / PointSS predictions with the same numbering scheme.
-- The figure caption explicitly describes the difference in each zoomed region: e.g., *"\circled{2} Column-boundary region (office\_13): PTv3 produces a blurred boundary between column and wall, while PointSS maintains a sharp edge consistent with GT."*
-
-This two-panel figure design ensures that readers can first orient themselves with the full scene, then immediately locate and examine the specific boundary details where PointSS achieves the most noticeable gains. The textual annotations in the caption guide the reader to the key observations rather than expecting them to discern subtle differences unaided.
-
-**Modifications:** New Fig. X (zoomed boundary comparison) added to Section 4.6 [TBD: line numbers]; figure caption revised accordingly.
+**Modifications:** Revised Fig. X caption and qualitative comparison text at <span style="color:#c00000">lines 664–677</span>.
 
 ---
 
@@ -379,8 +379,8 @@ The following are **TBD** and will be addressed in subsequent revision passes:
 - New Discussion section (R#3.3)
 - Introduction restructure (R#3.4, R#3.6)
 - Comparative related-work table + new citations (R#3.5, R#6.6)
-- Simulation/flowchart description (R#3.8)
-- Conclusion revision with quantitative findings (R#3.9)
+- Simulation/flowchart description (R#3.8) ✓ Done (lines 331–362, architecture caption lines 207–209)
+- Conclusion revision (R#3.9)
 - Novelty positioning prose (R#6.1, R#8.1)
 - Outdoor LiDAR limitation discussion (R#6.2, R#8.3)
 - GGAM overhead quantification (R#6.3)
