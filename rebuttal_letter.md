@@ -268,9 +268,15 @@ These additions have strengthened our positioning within the broader point cloud
 ## Comment R#8.1 — Limited Novelty
 <span style="color:#1f6feb">The method is largely a combination of existing techniques (Mamba/SSM, multi-scale learning, feature fusion); contributions are incremental rather than conceptual.</span>
 
-**Response:** [TBD — will respond by emphasizing the novel insights underlying the combination, mirroring R#6.1.]
+**Response:** We sincerely thank the reviewer for this valuable feedback. We fully acknowledge that SSM-based architectures, multi-scale modeling, and feature fusion are well-established techniques in deep learning. In response to this concern, we have substantially revised the Introduction and Related Work sections to more clearly articulate the specific technical contributions that distinguish PointSS from prior work:
 
-**Modifications:** [TBD]
+**(1) GGAM addresses a specific challenge arising from SSM-based serialization.** Unlike prior geometric enhancement methods (e.g., PointGA, PointMSGT, RepSurf) that address general feature extraction problems, GGAM specifically compensates for the spatial proximity information loss inherent to 1D serialization required by SSMs. We now emphasize three key technical aspects: (i) GGAM constructs local neighborhoods by partitioning the serialized 1D sequence into fixed-size contiguous windows (size 64), reducing graph construction cost to $\mathcal{O}(N)$ compared to KNN-based approaches; (ii) dual-serialization employs both Z-order and Hilbert curves to extract complementary geometric features, then fuses them via cross-sequence attention; and (iii) a geometric consistency gate modulates the fused representation. <span style="color:#c00000">We have added detailed comparisons with PointGA, PointMSGT, and RepSurf in the Related Work section to clarify these distinctions.</span>
+
+**(2) ASD-SSM introduces a novel parameterization strategy.** ASD-SSM makes the state transition parameter $\bar{A}$ simultaneously input-dependent AND scale-decoupled. We now explicitly contrast this with PCM (AAAI'25), which allocates separate $\bar{A}$ per scale but keeps $\bar{A}$ input-invariant within each scale, and with standard Mamba/PointMamba, which use a single shared $\bar{A}$. To quantify the benefit of this design, we reference the ablation result in the Parameterization Comparison table: <span style="color:#c00000">ASD-SSM achieves 73.8% mIoU versus 71.6% for the input-invariant per-scale baseline (+2.2%)</span>, demonstrating that this parameterization choice yields substantial gains.
+
+**(3) Functional coupling between GGAM and ASD-SSM.** GGAM and ASD-SSM are not independently stacked modules but functionally coupled: the geometric priors produced by GGAM provide the patch-level content features that drive ASD-SSM's scale-aware parameter generator. We now explicitly reference the progressive ablation result showing that <span style="color:#c00000">adding ASD-SSM to a GGAM-equipped baseline yields +1.9% mIoU</span>, confirming complementary rather than redundant contributions.
+
+**Modifications:** Strengthened novelty positioning in Introduction <span style="color:#c00000">lines 43–66</span>; clarified differentiation in Related Work <span style="color:#c00000">lines 118–123</span>.
 
 ---
 
