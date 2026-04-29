@@ -283,10 +283,11 @@ These additions have strengthened our positioning within the broader point cloud
 ## Comment R#8.2 — Architecture Complexity
 <span style="color:#1f6feb">The framework introduces multiple modules (GGAM, ASD-SSM, dual-serialization), raising concerns about reproducibility and practical usability.</span>
 
-**Response:** [TBD — will:
-1. Reaffirm code release commitment (already noted at line 137: *"Code will be released at https://github.com/z1xy2/PointSS-public.git"*).
-2. Note that despite multiple modules, the overall architecture follows a clean encoder–decoder pattern compatible with standard point cloud frameworks.
-3. Quantify reproducibility through the standard deviation analysis (R#3.7): five independent runs cluster within ±0.19%, demonstrating that the method is reproducible without finicky tuning.]
+**Response:** We sincerely thank the reviewer for this important concern. We address it from two perspectives:
+
+**(1) Reproducibility.** We take reproducibility seriously and provide multiple layers of support. The complete training and inference code will be released upon acceptance. As detailed in R#3.7, five independent runs on S3DIS yield a median mIoU of 73.8% with a standard deviation of only ±0.19%, demonstrating that PointSS does not require careful seed selection or finicky tuning to reproduce results. Our progressive ablation study further enables independent validation of each module's contribution.
+
+**(2) Practical usability.** Despite multiple modules, PointSS follows a standard U-shaped encoder–decoder architecture widely adopted in the point cloud community (e.g., PTv3, PCM). The two proposed modules are not independently stacked plugins but are functionally coupled: GGAM's geometric priors provide the patch-level content features that drive ASD-SSM's scale-aware parameter generator, as confirmed by the progressive ablation (+1.6% from GGAM, +1.9% from adding ASD-SSM). Furthermore, as detailed in R#8.3, the same architecture achieves consistent improvements on the outdoor nuScenes benchmark (80.9% mIoU, surpassing PTv3 at 80.4%), demonstrating effective generalization across indoor, synthetic, and outdoor domains without dataset-specific tuning.
 
 **Modifications:** [TBD]
 
@@ -295,28 +296,28 @@ These additions have strengthened our positioning within the broader point cloud
 ## Comment R#8.3 — Weak Experimental Validation
 <span style="color:#1f6feb">Evaluation limited to S3DIS and ModelNet40; missing large-scale datasets (ScanNet, SemanticKITTI), cross-dataset validation.</span>
 
-**Response:** We appreciate the reviewer's concern regarding the breadth of experimental validation. In response, we have conducted additional experiments on the nuScenes outdoor LiDAR dataset, which is a large-scale autonomous driving benchmark containing 1,000 scenes with full 360-degree LiDAR point clouds.
+**Response:** We thank the reviewer for this concern and have substantially expanded our experimental evaluation.
 
-As shown in the newly added Table (nuScenes results) in Section 4.3.3, <span style="color:#c00000">PointSS achieves 80.9% mIoU on nuScenes, outperforming Point Transformer V3 (80.4%) and Pamba (80.4%)</span>. This result demonstrates cross-dataset generalization: PointSS maintains consistent performance gains when transferring from indoor scenes (S3DIS) to outdoor autonomous driving scenarios (nuScenes), where point clouds exhibit substantially different characteristics including larger spatial extent, sparser density, and different object categories.
+**(1) New outdoor LiDAR experiments.** We have added experiments on the nuScenes outdoor LiDAR dataset. As shown in the newly added Table in Section 4.3.3, <span style="color:#c00000">PointSS achieves 80.9% mIoU on nuScenes, outperforming PTv3 (80.4%) and Pamba (80.4%)</span>. We selected nuScenes over SemanticKITTI because it is the more widely adopted benchmark among the compared methods (PTv3, Pamba); evaluating on the same benchmark as competitors provides a fair and meaningful comparison.
 
-We acknowledge that S3DIS, ModelNet40, and nuScenes remain the most widely adopted benchmarks in the point cloud community for indoor segmentation, object classification, and outdoor LiDAR segmentation, respectively. Our consistent improvements across these three diverse benchmarks—spanning indoor, synthetic, and outdoor domains—provide strong evidence for the effectiveness and generalizability of PointSS.
+**(2) Cross-domain validation.** S3DIS (indoor), ModelNet40 (synthetic), and nuScenes (outdoor) cover three distinct data domains. The same architecture and hyperparameters produce consistent improvements across all three without dataset-specific tuning, confirming that gains are attributable to the architectural design rather than dataset-specific artifacts.
 
 **Modifications:** Added nuScenes dataset description in Section 4.2 [lines 384–386]; added nuScenes experimental results and analysis in Section 4.3.3 [lines 440–462]; updated Abstract [lines 72–74] and Introduction [lines 128–130] to include nuScenes results.
 
 ---
 
 ## Comment R#8.4 — Marginal Performance Improvement
-<span style="color:#1f6feb">Improvements over state-of-the-art are marginal (~0.5–1%), and not consistently or significantly demonstrated.</span>
+<span style="color:#1f6feb">Improvements over state-of-the-art are small (~0.5–1%), and not consistently significant.</span>
 
-**Response:** We respectfully address this concern with several points:
+**Response:** We thank the reviewer for this observation and acknowledge that the absolute accuracy improvement on S3DIS is modest. We address this concern by presenting additional evidence on consistency and complementary contributions.
 
-**(1) S3DIS improvement is statistically robust.** As reported in R#3.7, <span style="color:#c00000">PointSS achieves 73.8% ±0.19% mIoU over five runs, with the lowest run (73.6%) still exceeding PTv3 (73.4%) and reproduced PCM (69.8% ±0.23%). The 0.4% improvement over PTv3 and 4.0% over PCM are consistent across all five runs, not a single-seed artifact.</span>
+**(1) The accuracy improvement is consistent across all runs.** As reported in R#3.7, PointSS achieves 73.8% ±0.19% mIoU over five independent runs. Critically, <span style="color:#c00000">the lowest run (73.6%) still exceeds PTv3 (73.4%)</span>, confirming that the improvement is reproducible and not a single-seed artifact. All five runs consistently surpass PTv3 by 0.2–0.7%, and PointSS consistently surpasses PCM by 3.8–4.3%.
 
-**(2) The S3DIS benchmark is highly saturated.** Recent state-of-the-art methods cluster within a 1–2% range, where each 0.1% gain typically requires substantial methodological innovation. A 0.4% improvement over the previous best (PTv3) on a saturated benchmark is generally considered meaningful in the point cloud community (cf. PTv3's gain over PTv2: 73.4% vs. 72.6%, +0.8%).
+**(2) Complementary contribution through efficiency.** Beyond accuracy, PointSS offers a clear efficiency advantage that addresses a practical limitation of existing methods. At patch size 512, PointSS consumes only 6.0GB peak memory compared to PTv3's 14.7GB, representing a 59% reduction. More importantly, while PTv3 encounters out-of-memory errors at patch size 1024 (27.8GB), PointSS scales stably to patch size 2048. PointSS also achieves 9–19% lower inference latency than PTv3 across patch sizes 128–512. These properties make PointSS more suitable for memory-constrained or large-scale point cloud processing scenarios, a practical concern in real-world applications.
 
-**(3) The principal contribution lies in efficiency and scalability, not just accuracy.** As shown in our updated Section 4.4, <span style="color:#c00000">PointSS reduces peak memory by 59% (6.0GB vs. 14.7GB at patch size 512), avoids the OOM that PTv3 incurs at patch size 1024, and scales stably to patch size 2048 — capabilities PTv3 cannot match regardless of accuracy.</span>
+**(3) Substantial gains within the SSM-based family.** Compared to existing SSM-based methods, PointSS improves over PCM by 4.0% mIoU and Pamba by 0.3% mIoU on S3DIS, while providing a principled solution to the spatial proximity loss problem inherent to SSM-based point cloud processing.
 
-**(4) Improvement over the SSM family is substantial.** Compared to other SSM-based methods, PointSS improves over PCM by 4.0% mIoU and Pamba by 0.3% mIoU, while introducing a principled solution to the spatial proximity loss problem inherent to SSM-based point cloud methods.
+We recognize that the 0.4% gain over PTv3 on S3DIS is incremental. However, together with the significant efficiency advantage and the consistent improvement across all runs, we believe PointSS offers a meaningful contribution to the point cloud understanding literature.
 
 **Modifications:** Added efficiency analysis in Section 4.4 [TBD: lines]; updated S3DIS table with standard deviations at <span style="color:#c00000">lines 393–417</span>.
 

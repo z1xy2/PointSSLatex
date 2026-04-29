@@ -2,6 +2,7 @@
 
 # 审稿修改（小论文 pointss.tex）
 小论文已收到审稿意见（审稿意见中文.txt），截止日期2026年5月14日，需大幅修改后重投。
+审稿意见英文原文为[审稿意见.txt](els-cas-templates/%E5%AE%A1%E7%A8%BF%E6%84%8F%E8%A7%81.txt)
 论文的回复信为[rebuttal_letter.md](rebuttal_letter.md)
 
 ## 审稿意见注意点（重要）
