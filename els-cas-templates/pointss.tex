@@ -661,20 +661,18 @@ Regarding window size expansion, moderate increases in the expansion factor enha
 
 \subsection{Qualitative Experiment}
 
-\cref{fig:vis} presents a comparison of segmentation results among PointSS, Point Transformer, and Point Cloud Mamba across four scenes on the S3DIS dataset. As highlighted by the circles in the figure, PointSS demonstrates advantages in the following three types of regions.
+\cref{fig:vis} presents qualitative comparisons on S3DIS Area-5, curated into two categories: (a) large flat surface regions (e.g., walls, windows, columns, whiteboards), where PointSS maintains consistent segmentation without fragmented predictions; (b) complex boundary regions (e.g., bookshelf-clutter junctions, small objects), where PointSS produces sharper boundaries and more accurate fine-grained predictions compared to PTv3.
 
-For structures with large spatial spans such as windows (upper circle in office\_10), baseline methods produce noticeably fragmented or incomplete predictions; PointSS, by contrast, yields more complete segmentation regions with higher agreement with the ground truth. This improvement is attributed to GGAM's explicit modeling of geometric relationships within windowed neighborhoods, which compensates for the context discontinuity caused by the loss of spatial proximity during serialization.
+For large flat surfaces, PTv3 occasionally produces fragmented predictions on spatially extended surfaces. PointSS, in contrast, yields more complete and consistent segmentation regions with higher agreement with the ground truth. This improvement is attributed to ASD-SSM's coarse-grained scales, which retain broader contextual information through slow state decay, enabling more coherent predictions over extended surfaces.
 
-In regions comprising small, irregular objects such as clutter (lower circle in office\_12 and office\_14), baseline methods tend to confuse these regions with surrounding tables and chairs, resulting in unstable boundary predictions. PointSS leverages the rapid state decay at fine-grained scales within its multi-scale architecture to respond more effectively to local geometric variations, yielding more accurate category predictions in such regions.
+For complex boundary regions, baseline methods tend to produce blurred or misclassified predictions at category boundaries (e.g., bookshelf-clutter junctions) and tend to confuse small objects with surrounding furniture. PointSS leverages GGAM's explicit geometric feature extraction to preserve sharp boundary contours, while ASD-SSM's fine-grained scales with rapid state decay respond more effectively to local geometric variations, yielding sharper boundaries and more accurate fine-grained predictions.
 
-At category boundaries such as those between bookcase and wall (office\_13), baseline methods exhibit blurred or misclassified predictions, whereas PointSS produces sharper and more accurate boundaries. Through slow state decay, ASD-SSM's coarse-grained scales retain broader contextual information, thereby improving boundary prediction consistency.
-
-These qualitative results are consistent with the trends observed in the quantitative experiments, further validating the effectiveness of PointSS in complex indoor scenes.
+These qualitative results are consistent with the trends observed in the quantitative experiments, further validating the effectiveness of PointSS in both boundary refinement and global consistency across complex indoor scenes.
 
 \begin{figure*}[!t]
 	\centering
-	\includegraphics[width=\textwidth]{picture/visualize.JPG}
-	\caption{Qualitative comparison of semantic segmentation results on four representative indoor scenes (Area 5 of S3DIS).}
+	\includegraphics[width=0.95\textwidth]{picture/visualize.JPG}
+	\caption{Qualitative comparison on S3DIS Area-5. (a) Large flat surface regions (e.g., walls, windows, columns, whiteboards): PTv3 produces fragmented predictions on spatially extended surfaces, while PointSS maintains consistent segmentation. (b) Complex boundary regions (e.g., bookshelf-clutter junctions, small objects): PTv3 produces blurred boundaries and misclassifications, while PointSS produces sharper and more accurate boundary predictions. Best viewed in color.}
 	\label{fig:vis}
 \end{figure*}
 

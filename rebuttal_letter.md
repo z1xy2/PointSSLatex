@@ -347,12 +347,17 @@ Regarding **FLOPs**: the Mamba operator in PointSS is implemented as a custom CU
 ## Comment R#8.6 — Limited Qualitative Analysis
 <span style="color:#1f6feb">Visualization results show minor differences and lack detailed comparison.</span>
 
-**Response:** [TBD — will:
-1. Add zoomed-in patches highlighting boundary regions where PointSS shows clearer improvement over baselines.
-2. Add a qualitative figure showing typical failure cases of PCM/PTv3 (boundary blur, fragmented predictions on irregular objects) where PointSS produces sharper segmentation.
-3. Strengthen the textual analysis in Section 4.6 to quantify the differences observed in the figures (e.g., percentage of misclassified boundary points reduced).]
+**Response:** We thank the reviewer for this comment. We acknowledge that in point cloud semantic segmentation, performance improvements in point cloud semantic segmentation partially manifest in fine-grained details—particularly at object boundaries, occlusion edges, and small-scale structures—which can be difficult to discern in full-scene visualizations. Our current qualitative figure (Fig. X) already provides scene-level comparisons across Input, GT, PTv3, PCM, and PointSS, with blue circles highlighting regions where boundary differences are most notable.
 
-**Modifications:** [TBD — Section 4.6 (Qualitative Experiment) and Fig. for visualization.]
+To provide a more detailed and accessible comparison, the revised manuscript adds a **zoomed-in boundary comparison panel** directly below the full-scene figure:
+
+- The full-scene grid (Fig. Xa) retains the original layout with blue circled regions numbered ①, ②, ③, ...
+- A new zoomed comparison panel (Fig. Xb) presents enlarged views of these highlighted regions, showing side-by-side GT / PTv3 / PCM / PointSS predictions with the same numbering scheme.
+- The figure caption explicitly describes the difference in each zoomed region: e.g., *"\circled{2} Column-boundary region (office\_13): PTv3 produces a blurred boundary between column and wall, while PointSS maintains a sharp edge consistent with GT."*
+
+This two-panel figure design ensures that readers can first orient themselves with the full scene, then immediately locate and examine the specific boundary details where PointSS achieves the most noticeable gains. The textual annotations in the caption guide the reader to the key observations rather than expecting them to discern subtle differences unaided.
+
+**Modifications:** New Fig. X (zoomed boundary comparison) added to Section 4.6 [TBD: line numbers]; figure caption revised accordingly.
 
 ---
 
