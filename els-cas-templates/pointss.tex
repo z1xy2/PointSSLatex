@@ -204,7 +204,7 @@ The overall architecture of the PointSS model is illustrated in \cref{fig:archit
 \begin{figure}
 	\centering
 	\includegraphics[width=.9\columnwidth]{picture/architecture.jpg}
-	\caption{System flowchart of the proposed PointSS framework. The pipeline consists of four stages: (1) Input point cloud preprocessing and Hilbert curve serialization; (2) GGAM for geometric feature extraction via dual-serialization (Z-order and Hilbert) with cross-attention fusion; (3) U-shaped encoder-decoder with ASD-SSM for multi-scale state space feature learning; (4) Prediction head for semantic segmentation or classification output. The notation $(N, C)$ denotes the number of points and feature dimension at each stage.}
+	\caption{The overview of the proposed PointSS. The encoder and decoder employ a patch-based strategy for point cloud upsampling and down-sampling. The notation (number of points, feature dimension) in Feature Learning indicates the tensor shape at each stage.}
 	\label{fig:architecture}
 \end{figure}
 
@@ -330,15 +330,9 @@ Through these mechanisms, ASD-SSM achieves scale-decoupled state-space modeling:
 
 \subsection{Implementation Details}
 
-We conduct experiments for point cloud analysis on three benchmarks: S3DIS for indoor semantic segmentation, ModelNet40 for 3D object classification, and nuScenes for outdoor LiDAR semantic segmentation.
+We conduct experiments for point cloud analysis on the indoor semantic segmentation dataset S3DIS and the 3D object classification dataset ModelNet40. All experiments were performed on an Nvidia A6000 GPU. For network training, we employed the AdamW optimizer and the OneCycleLR learning rate scheduler, with an initial maximum learning rate of $6 \times 10^{-3}$. The scheduling mechanism included a linear warm-up phase followed by a cosine annealing cycle. The model was trained for 300 epochs with a batch size of 6, utilizing Automatic Mixed Precision (AMP) to enhance training efficiency.
 
-\textbf{Dataset Preprocessing.} Following the standard protocols established by PTv3 \cite{ptv3} and PCM \cite{pcm}, raw point clouds are preprocessed by coordinate normalization and color feature extraction. For S3DIS, each room is sampled into blocks of $1.5\text{m} \times 1.5\text{m}$ with 40,960 points per block; for ModelNet40, the official ModelNet40H5 files are used with 1,024 points per object; for nuScenes, the full-sweep point cloud with 34 classes is adopted. The Hilbert curve is employed as the default serialization order for point cloud sequence conversion.
-
-\textbf{Data Augmentation.} During training, random rotation around the vertical axis, random scaling within $[0.9, 1.1]$, and random translation within $\pm0.2\text{m}$ are applied to the point cloud blocks. Chromatic jitter with standard deviation 0.02 and random color dropping are also applied. No point-level augmentation is used during evaluation.
-
-\textbf{Training Configuration.} All experiments are conducted on a single Nvidia A6000 GPU with 48GB memory. The AdamW optimizer is employed with a weight decay of 0.05. The learning rate follows a OneCycleLR schedule: it linearly warms up from $6 \times 10^{-5}$ to the peak of $6 \times 10^{-3}$ over the first 10 epochs, then decays via cosine annealing to the minimum of $6 \times 10^{-6}$ over the remaining 290 epochs. Training runs for 300 epochs with a batch size of 6, using Automatic Mixed Precision (AMP) for both forward and backward passes. The model is trained from scratch without any pre-training, so that performance gains can be attributed solely to architectural design. For reproducibility, a fixed random seed (2024) is used across all runs. The total training time on S3DIS is approximately 48 hours per run.
-
-\textbf{Architecture Configuration.} The encoder channel dimensions are set to $(32, 64, 128, 256, 512)$ and the decoder channel dimensions to $(64, 64, 128, 256)$. The patch size is uniformly set to 128 points per patch. The scale constraint factors are fixed at $(\alpha_1, \alpha_2, \alpha_3) = (0.3, 0.6, 0.9)$ across all scales, with expansion factors $(1, 2, 4)$ for the three-scale configuration. Cross-entropy loss is used as the training objective. A complete system pipeline diagram is illustrated in \cref{fig:architecture}.
+In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The patch size was uniformly set to 128. We employ cross-entropy as the loss function, which is widely used for classification and segmentation tasks.
 
 PointSS is trained from scratch without pre-training, so that performance gains can be attributed to architectural design rather than pre-training strategies.
 
