@@ -266,7 +266,7 @@ These additions have strengthened our positioning within the broader point cloud
 # Response to Reviewer #8
 
 ## Comment R#8.1 — Limited Novelty
-<span style="color:#1f6feb">The method is largely a combination of existing techniques (Mamba/SSM, multi-scale learning, feature fusion); contributions are incremental rather than conceptually breakthrough.</span>
+<span style="color:#1f6feb">The method is largely a combination of existing techniques (Mamba/SSM, multi-scale learning, feature fusion); contributions are incremental rather than conceptual.</span>
 
 **Response:** [TBD — will respond by emphasizing the novel insights underlying the combination, mirroring R#6.1.]
 
