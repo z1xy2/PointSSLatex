@@ -345,7 +345,7 @@ Regarding **FLOPs**: the Mamba operator in PointSS is implemented as a custom CU
 ---
 
 ## Comment R#8.6 — Limited Qualitative Analysis
-<span style="color:#1f6feb">Visualization results show subtle differences and lack detailed comparison.</span>
+<span style="color:#1f6feb">Visualization results show minor differences and lack detailed comparison.</span>
 
 **Response:** [TBD — will:
 1. Add zoomed-in patches highlighting boundary regions where PointSS shows clearer improvement over baselines.
