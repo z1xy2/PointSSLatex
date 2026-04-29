@@ -328,13 +328,15 @@ We recognize that the 0.4% gain over PTv3 on S3DIS is incremental. However, toge
 
 **Response:** We have added a comprehensive efficiency analysis in Section 4.4. The new comparison reports:
 
-| Method   | Params | Peak Mem @512 | Scalability   | mIoU (S3DIS Area 5) | Inference Speed |
-|----------|--------|---------------|---------------|---------------------|-----------------|
-| PCM      | 34.2M  | —             | —             | 69.8%               | —               |
-| PTv3     | 46.2M  | 14.7GB        | OOM @1024     | 73.4%               | baseline        |
-| **PointSS** | **52.2M**  | **6.0GB**         | **stable @2048**  | **73.8%**               | **9–19% faster**    |
+| Method    | Params (M) | Peak Mem @512 | Patch Size Tested | mIoU (%) | Inference Time |
+|-----------|------------|---------------|-------------------|----------|----------------|
+| PCM       | 34.2       | ---           | ---               | 69.8     | ---            |
+| PTv3      | 46.2       | 14.7GB        | $\leq$512         | 73.4     | 1.00$\times$  |
+| **PointSS** | **52.2** | **6.0GB**   | **$\leq$2048$^\star$** | **73.8** | **0.81--0.91$\times$** |
 
-<span style="color:#c00000">**Key observations:** Despite a +13% parameter increase over PTv3, PointSS achieves a 59% reduction in peak memory at patch size 512 and scales stably to patch size 2048, while PTv3 encounters OOM at 1024. Inference is 9–19% faster across patch sizes 128–512.</span>
+$^\star$PTv3 encounters OOM at patch size 1024.
+
+<span style="color:#c00000">**Key observations:** Despite a +13% parameter increase over PTv3, PointSS achieves a 59% reduction in peak memory at patch size 512 and scales stably to patch size 2048, while PTv3 encounters OOM at patch size 1024 (27.8GB). Inference time is normalized relative to PTv3; PointSS is 0.81--0.91$\times$ the PTv3 latency (i.e., 9--19\% faster).</span>
 
 Regarding **FLOPs**: the Mamba operator in PointSS is implemented as a custom CUDA kernel, which is incompatible with standard profiling tools (`thop`, `fvcore`). FLOPs are also a less informative metric for SSM-based methods because the parallel scan algorithm exhibits non-linear FLOP-to-latency relationships due to memory access patterns. We therefore use measured inference latency under identical hardware as the primary efficiency indicator, consistent with the original Mamba paper.
 
