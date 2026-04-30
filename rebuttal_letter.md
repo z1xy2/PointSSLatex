@@ -35,11 +35,15 @@ Xin Wang and Xinyuan Zhang
 # Response to Reviewer #3
 
 ## Comment R#3.1
-<span style="color:#1f6feb">The abstract lacks logical coherence. The authors are advised to add a sentence describing numerical results and the degree of improvement compared to other methods.</span>
+<span style="color:#1f6feb">The abstract is not coherent. It would be good if authors can write a sentence describing numerical results and improvement over other methods.</span>
 
-**Response:** [TBD — to be addressed in next revision pass.]
+**Response:** We thank the reviewer for this suggestion. We have thoroughly restructured the abstract to strengthen coherence and added explicit numerical comparisons with other methods.
 
-**Modifications:** [TBD]
+<span style="color:#c00000">**Revised Abstract (Section "Abstract"):**</span>
+
+> Point cloud analysis with State Space Models (SSMs) achieves linear complexity but loses spatial proximity during serialization. We propose PointSS, a geometry-aware multi-scale SSM framework that addresses this limitation through two key designs. First, we introduce a Global Geometry-Aware Mechanism (GGAM) that constructs fully connected local graphs within serialization windows on dual orderings (Z-order and Hilbert curves), extracting and aggregating edge features---surface normals, curvature, and angular deviations---via cross-sequence attention and gated fusion. Second, building on these geometric priors, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM) where the state transition parameter $\bar{A}$ is generated independently per patch from local geometric content, while scale constraint factors control state decay rates hierarchically. On S3DIS Area 5, PointSS achieves 73.8\% mIoU, consistently outperforming PTv3 (73.4\%) across all five independent runs and surpassing Pamba (73.5\%) and PCM (69.8\%). On ModelNet40 and nuScenes outdoor LiDAR segmentation, PointSS achieves 94.6\% accuracy and 80.9\% mIoU, exceeding PTv3 by 0.2\% and 0.5\% respectively. Notably, PointSS reduces peak GPU memory from 14.7GB to 6.0GB at patch size 512 (59\% reduction) and scales stably to patch size 2048, where PTv3 encounters out-of-memory errors, while achieving 9--19\% faster inference.
+
+The revised abstract: (1) reorganizes the technical content around a clear problem--solution--results structure, with one sentence per innovation; (2) explicitly reports numerical improvements on all three datasets, including the per-run comparison against PTv3 on S3DIS Area 5; and (3) incorporates memory efficiency as a key quantitative advantage alongside accuracy, demonstrating that PointSS's improvement over PTv3 is not marginal on all fronts.
 
 ---
 
