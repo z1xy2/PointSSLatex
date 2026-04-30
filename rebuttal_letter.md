@@ -44,23 +44,25 @@ Xin Wang and Xinyuan Zhang
 ---
 
 ## Comment R#3.2
-<span style="color:#1f6feb">The discussion of the proposed model's complexity and the uncertainty of model parameters is insufficient.</span>
+<span style="color:#1f6feb">The complexity of the proposed model and the model parameter uncertainty are not enough mentioned.</span>
 
-**Response:** We thank the reviewer for raising the efficiency analysis. We address this concern in two parts:
+**Response:** We thank the reviewer for this important concern. We have added a comprehensive efficiency analysis in Section 4.4 with the following key findings:
 
-**(1) Computational complexity and efficiency metrics.** We have added a dedicated computational efficiency analysis comparing parameters, peak memory, and inference latency across multiple patch sizes between PointSS, PTv3, and PCM (see revised Section 4.4 and the new efficiency comparison table). The results show that:
+<span style="color:#c00000">**Efficiency comparison (new Table in Section 4.4):**</span>
 
-- <span style="color:#c00000">PointSS introduces additional parameters (52.2M vs. PTv3's 46.2M, +13%), attributable primarily to the GGAM geometric feature extraction module.</span>
-- <span style="color:#c00000">However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower memory footprint: at patch size 512, PointSS consumes 6.0GB compared to PTv3's 14.7GB. PTv3 encounters out-of-memory errors at patch size 1024, whereas PointSS scales stably to 2048.</span>
-- <span style="color:#c00000">PointSS achieves 9–19% lower inference latency than PTv3 across patch sizes from 128 to 512.</span>
+| Method | Params (M) | Peak Mem @512 | Scalability | mIoU (S3DIS Area5) | Inference Time |
+|--------|------------|---------------|-------------|---------------------|----------------|
+| PCM | 34.2 | --- | --- | 69.8 ±0.23% | --- |
+| PTv3 | 46.2 | 14.7GB | OOM @1024 | 73.4% | Baseline |
+| **PointSS** | **66.2** | **6.0GB** | **Stable to 2048** | **73.8 ±0.19%** | **9–19% faster** |
 
-This demonstrates that architectural design—rather than parameter count—determines practical scalability.
+<span style="color:#c00000">PointSS introduces additional parameters (+43% over PTv3) primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower memory footprint: at patch size 512, PointSS consumes 6.0GB compared to PTv3's 14.7GB (59% reduction), while PTv3 encounters out-of-memory errors at patch size 1024 (27.8GB) whereas PointSS scales stably to 2048. PointSS also achieves 9–19% lower inference latency than PTv3 across patch sizes from 128 to 512. This demonstrates that architectural design—rather than parameter count—determines practical scalability.</span>
 
-**(2) Regarding FLOPs.** The Mamba operator in PointSS is implemented as a custom CUDA kernel (following the original Mamba implementation), which is incompatible with standard profiling tools such as `thop` or `fvcore`. More importantly, FLOPs are a less informative metric for SSM-based methods: the parallel scan algorithm underlying Mamba exhibits a non-linear relationship between theoretical FLOPs and wall-clock latency, owing to memory access patterns and hardware-level optimizations. This is consistent with the original Mamba paper, which reports throughput and latency rather than FLOPs as the primary efficiency measure. We therefore adopt inference latency—measured under identical hardware conditions—as a more faithful and practically meaningful efficiency indicator.
+**Regarding FLOPs:** The Mamba operator in PointSS is implemented as a custom CUDA kernel, which is incompatible with standard profiling tools (`thop`, `fvcore`). More importantly, FLOPs are a less informative metric for SSM-based methods: the parallel scan algorithm exhibits a non-linear relationship between theoretical FLOPs and wall-clock latency due to memory access patterns. Consistent with the original Mamba paper, we report inference latency—measured under identical hardware conditions—as a more faithful efficiency indicator.
 
-**(3) Parameter uncertainty.** To quantify uncertainty in our reported numbers, we now run PointSS five independent times on S3DIS and report the mean (73.8% mIoU) along with the standard deviation (±0.19%). For consistency, we also re-ran PCM five times under the same protocol (mean 69.8%, std ±0.23%). See R#3.7 below for details.
+**Parameter uncertainty:** All five independent runs of PointSS exceed PTv3 (73.4%), with mean 73.8% and standard deviation ±0.19%. PCM achieves 69.8% ±0.23% over five runs. See R#3.7 for details.
 
-**Modifications:** Added new efficiency analysis in Section 4.4 [TBD: line numbers]; revised Table for S3DIS comparison at <span style="color:#c00000">lines 393–417</span> with standard deviations.
+**Modifications:** Added efficiency comparison table and analysis in Section 4.4; revised S3DIS comparison table at <span style="color:#c00000">lines 393–417</span> with standard deviations.
 
 ---
 
