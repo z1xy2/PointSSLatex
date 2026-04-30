@@ -107,7 +107,7 @@ Regarding the comparative table summarizing related works: [TBD — to be added 
 ---
 
 ## Comment R#3.7
-<span style="color:#1f6feb">Are the results shown in the figure from a single run or an average of multiple runs? If the latter, it is recommended to add standard deviation error bars to determine whether the results overlap with the closest competing methods.</span>
+<span style="color:#1f6feb">Do the results shown in various figures refer to a single run or multiple runs (average)? In the latter case, I will suggest adding standard deviation bars. The reason behind this is to ensure that the results overlap with the closest rivals or not.</span>
 
 **Response:** We thank the reviewer for raising this important point. To address the concern of statistical robustness, we have run **PointSS five independent times** on S3DIS Area 5 and report the median performance with the corresponding standard deviation. For consistency, we also re-ran the closest SSM-based competitor (PCM) five times under the identical protocol.
 
