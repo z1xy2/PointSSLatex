@@ -76,9 +76,17 @@ This demonstrates that architectural design—rather than parameter count—dete
 ## Comment R#3.4
 <span style="color:#1f6feb">The authors should clarify the motivation for using the proposed method in the introduction.</span>
 
-**Response:** [TBD — will reorganize the introduction to make the motivation more explicit before introducing the technical contributions.]
+**Response:** We thank the reviewer for this suggestion. While the Introduction already discusses the limitations of existing methods (lines 86-102: spatial proximity loss in SSMs; line 110: inadequate hierarchical representations), we have now added an explicit motivation statement to make our core rationale clearer.
 
-**Modifications:** [TBD]
+**Modifications:** Revised lines 112-115 in the Introduction:
+
+---
+
+"To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework <span style="color:#c00000">motivated by two key observations: (1) serialization-induced spatial proximity loss can be compensated through explicit geometric priors from local graph structures, and (2) hierarchical point cloud understanding requires scale-adaptive state transitions that respond to local geometric characteristics rather than applying uniform aggregation rules.</span> As depicted in the middle of \cref{fig:analysis}, PointSS explicitly injects geometric priors through windowed graph construction to compensate for spatial proximity loss."
+
+---
+
+This revision makes the core motivation explicit at the beginning of our method introduction.
 
 ---
 
