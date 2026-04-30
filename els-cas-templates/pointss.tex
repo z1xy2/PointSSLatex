@@ -438,11 +438,11 @@ To evaluate the generalization capability of PointSS on outdoor LiDAR data, we c
 	\end{tabular}
 \end{table*}
 
-\subsection{Computational Efficiency Analysis}
+\subsection{Computational Cost and Performance Analysis}
 
 \begin{table}[t]
 \centering
-\caption{Efficiency comparison on S3DIS Area 5. Peak memory measured at patch size 512 with batch size 6. Inference time normalized relative to PTv3 baseline. PTv3 encounters out-of-memory errors at patch size 1024.}
+\caption{Computational cost and performance comparison on S3DIS Area 5. Peak memory measured at patch size 512 with batch size 6. Inference time normalized relative to PTv3 baseline. PTv3 encounters out-of-memory errors at patch size 1024.}
 \label{tab:efficiency}
 \begin{tabular}{lccccc}
 \toprule
@@ -455,6 +455,8 @@ PTv3   & 46.2   & 14.7GB   & $\leq$512       & 73.4  & 1.00$\times$ \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+As shown in \cref{tab:efficiency}, PointSS introduces additional parameters compared to PTv3 (52.2M vs. 46.2M, +13\%), primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower memory footprint: at patch size 512, PointSS consumes only 6.0GB compared to PTv3's 14.7GB, representing a 59\% reduction. More critically, while PTv3 encounters out-of-memory errors at patch size 1024 due to quadratic attention complexity, PointSS scales stably to patch size 2048, demonstrating that architectural design—rather than parameter count—determines practical scalability.
 
 \begin{figure}
 	\centering
