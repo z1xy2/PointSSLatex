@@ -100,9 +100,9 @@ Regarding the comparative table summarizing related works: [TBD — to be added 
 ## Comment R#3.6
 <span style="color:#1f6feb">Furthermore, the introduction section needs considerable effort (concise and brief). The problem being investigated should be described clearly, but before that, the field of research should be made clearer. Furthermore, briefly describe the major contributions in bullet form, just before the organization paragraph.</span>
 
-**Response:** [TBD — will restructure the introduction to: (1) define the research field (3D point cloud analysis) upfront; (2) state the problem more concisely; (3) keep the itemized contribution list (already present at lines 116–135) and ensure it appears at an appropriate position.]
+**Response:** We thank the reviewer for this suggestion. The research field (3D point cloud analysis) is established in the opening sentence. The contributions are presented in enumerated form (lines 116–133). We have added an organization paragraph after the contribution list to outline the paper structure.
 
-**Modifications:** [TBD]
+**Modifications:** Added organization paragraph (line 135).
 
 ---
 
