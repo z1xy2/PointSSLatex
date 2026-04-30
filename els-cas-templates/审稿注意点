@@ -1,64 +1,30 @@
+文段里有关TBD的的注意点和问题可以忽略，因为本身我的rebuttal_letter就还没有改完
+
 ● 现在我已经读取了两份文件，可以进行详细对比。以下是我发现的问题：
 
   ---
-  对比分析：你的 rebuttal_letter.md vs 师兄的参考版本
-  一、整体语气问题（最关键）
+批评成立的地方
+对于可以直接修改的意见，师兄的做法确实更好。比如 R#6.5（方法部分太密）、R#3.6（Introduction 结构）、R#6.7（语言问题），这些就应该直接说"Thanks, we have restructured Section 3.2, reducing equations from 15 to 7"，然后给原文。你确实在这类评论上说了太多。
 
-  师兄的风格：每条意见都以 Thanks. 或 Thanks for your nice advice. 开头，极其简洁。然后直接说"我们做了什么修改"，不解释"为什么要做"，不论证"我们本来没问题"。
+批评不成立的地方
+R#6.1 和 R#8.4 这两条，你不应该完全接受，必须要辩护。
+原因是：这两条是影响录用决定的判断性意见，而不是"这个图画得不好看"这种可修复的意见。
 
-  你的问题：多处回复读起来像在辩护而非接受意见。
+审稿人说 novelty limited → 如果你只说"感谢，我们改了 Introduction"，审稿人下一轮还是会投 reject，因为他的核心判断没有被改变
+审稿人说 improvement marginal → 同理，你不解释 efficiency 优势，他凭什么改变评分？
 
-  举几个具体例子：
+师兄那篇 SSPNet 的审稿意见以格式、缺失实验、缺少引用为主，这类意见做了就是做了，审稿人能直接看到，所以"Thanks + 改了"就够了。你面对的是对方法本身的质疑，性质不同。
 
-  R#6.1（创新性不足）：
+真正的问题不是"辩护还是接受"
+而是辩护的方式。你现在的写法是先铺垫、再论证、再给数字，读起来像在说服对方。更好的结构是：
 
-  ▎ "We fully acknowledge that geometric feature enhancement and multi-scale modeling are well-established directions in point cloud analysis."
+把数字和事实放在最前面，让证据说话，而不是先表态再举证。
 
-  这句话本身没问题，但你紧接着花了大量篇幅解释"但我们的方法其实不一样"。审稿人说创新性不足，你直接全盘接受就行了——"感谢您的意见，我们已加强了Introduction和Related
-  Work中对创新点的描述"，然后直接告诉他在哪几行。而不是先说"这些方向已经成熟"（潜台词：但我们还是新颖的），再开始解释。
+比如 R#8.4，与其说"We recognize it's incremental, but..."，不如直接开头：
 
-  师兄的做法是：对于"novelty is limited"这类意见，他直接说Thanks. We have modified the expression to make it more comprehensible. 然后给出修改后的原文，审稿人自己看就明白了。
+"All five independent runs exceed PTv3 (73.4%), and PointSS reduces peak memory by 59% at patch size 512. We have added this analysis in Section 4.4."
 
-  R#8.4（性能提升不大）：
-
-  ▎ "We recognize that the 0.4% gain over PTv3 on S3DIS is incremental."
-
-  你在承认incremental之后又加了一大段辩护："但是我们有如下优势……"这读起来就是"虽然你说incremental，但我还是要辩解一下"。师兄从不这样——他承认就是承认，辩护要极简。
-
-  ---
-  二、R#3.5 无关引用的处理（需要调整）
-
-  你的回复：
-
-  ▎ "these works focus on urban traffic flow prediction and cloud data center virtual machine allocation, which fall outside the scope of 3D point cloud analysis. Including them would not provide meaningful technical context for our work"
-
-  这个回复过于生硬。你说"不在点云范围内，没意义"——审稿人可能会觉得你在说他的建议没意义。
-
-  师兄在处理类似情况（R3要求加PETA数据集）时是这样说的：
-
-  ▎ "Thanks for your nice advice. We provided experiments on the PETA dataset in Tab. 6 of the revised manuscript."
-
-  他先说谢谢建议，然后直接告诉你在论文哪里补充了。从来不解释"为什么不接受"，而是用行动表示接受了。
-
-  给你的建议：删掉解释"为什么不相关"那一整段。直接说：
-
-  ▎ "We thank the reviewer for this suggestion. After careful consideration, we have instead added several recent point cloud references that more directly contextualize our contributions in Section 2, including [TBD references]. The suggested
-  ▎ traffic flow and cloud computing references have not been included as they address different application domains."
-
-  这样既拒绝了，又给了台阶，而且把话题引向了"我们加了什么"而非"我们为什么不加你给的"。
-
-  ---
-  三、很多回复缺具体修改内容（[TBD] 太多）
-
-  以下回复目前是空的或只有占位符：
-  - R#3.1（摘要）
-  - R#3.3（Discussion）
-  - R#3.4（引言动机）
-  - R#3.5（相关工作表格）
-  - R#3.9（结论）
-  - R#6.7（语言润色）
-
-  师兄的每一句话都有具体的修改内容对应——比如他会写"Section 1, line 20 has been modified to: ..."，让审稿人直接能找到。审稿人不需要猜测你做了什么，他需要直接看到改了什么。
+同样是辩护，但读起来是在陈述事实，而不是在争辩。
 
   ---
   四、回复长度问题
@@ -91,20 +57,10 @@
   manuscript, available for review."
 
   ---
-  七、正面评价
-
-  你做得好的地方：
-  - R#3.7（标准差）回复很完整，数据充分
-  - R#3.8（图描述）给出了具体修改内容
-  - R#6.6（额外引用）的处理很得当——接受了并给出了具体引用位置
-  - 整体结构清晰，reviewer分组合理
-  - FLOPs的辩护理由合理且有技术依据
-
   ---
   总结：核心改进方向
 
   1. 语气再谦逊一点——少解释"我们为什么没问题"，多展示"我们具体改了什么"
-  2. 占位符 [TBD] 要么填上要么删掉——不能让审稿人看到一堆空白
   3. R#3.5处理方式要改——不要解释为什么不接受，直接说"我们加了更相关的引用"
   4. 回复压缩——每条意见的回复控制在3段以内
   5. Line numbers要准确——如果不确定，宁可写 "throughout Section X" 也不要写不确定的行号
@@ -146,3 +102,9 @@
   Line number只是辅助，真正的修改内容必须直接呈现。
 
   需要我帮你把几个关键回复里的[TBD]部分填上具体修改内容吗？
+
+  关于引入原文引用后能删什么
+可以删，但要区分两类内容：
+✅ 可以删掉/大幅压缩的：那些用来"描述修改内容"的解释性段落。比如 R#6.3 里你花了大段话描述 GGAM 的 overhead 如何如何，如果直接引用新增的 Section 4.4 原文，这些解释就可以缩成一两句引导语。
+❌ 不能删的：回应审稿人质疑的逻辑论证部分。比如你解释为什么不报 FLOPs、为什么拒绝那些引用，这些是说服审稿人的内容，不是描述修改的内容，引原文替代不了。
+
