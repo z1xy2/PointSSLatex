@@ -67,9 +67,15 @@ This demonstrates that architectural design—rather than parameter count—dete
 ## Comment R#3.3
 <span style="color:#1f6feb">Discussions" section should be added in a more highlighting, argumentative way. The author should analysis the reason why the tested results is achieved.</span>
 
-**Response:** [TBD — a dedicated Discussion section will be added before Conclusion, analyzing why GGAM works (geometric prior compensates for serialization-induced proximity loss), why ASD-SSM works (scale-decoupled state decay matches scale-specific modeling needs), and why PointSS scales better than PTv3 (linear vs. quadratic complexity).]
+**Response:** We thank the reviewer for this constructive suggestion. We have added a new Discussion section (Section 4.6) that analyzes the underlying mechanisms behind PointSS's performance gains.
 
-**Modifications:** [TBD]
+**Modifications:** Added Section 4.6 Discussion (between Qualitative Experiment and Conclusion):
+
+<span style="color:#c00000">The performance gains of PointSS arise from addressing two structural deficiencies in existing SSM-based methods: serialization-induced spatial proximity loss and input-invariant state transition parameters.</span>
+
+<span style="color:#c00000">**Why GGAM recovers spatial proximity.** Serialization systematically displaces spatially adjacent points into distant sequence positions, causing their interactions to decay before reaching each other's hidden states. GGAM is effective because its windowed graph construction is aligned with the serialization granularity—it explicitly reconstructs the local neighborhoods that serialization disrupts, injecting geometric priors precisely where proximity loss is most severe. This is confirmed by the stratified gains in Table 3: points in the highest proximity-loss group (20–30%) gain +5.4% IoU, while low-loss points gain only +0.7%. Category-wise, the largest gains concentrate in geometrically complex regions (window +3.5%, clutter +3.3%, door +3.0%), where boundary accuracy depends critically on local neighborhood integrity—regions that globally applied methods such as PointGA and PointMSGT cannot systematically address.</span>
+
+<span style="color:#c00000">**Why dynamic $\bar{A}$ parameterization outperforms static alternatives.** Existing SSMs apply a shared, input-invariant $\bar{A}$ uniformly across all scales and spatial locations, implicitly treating flat surfaces and sharp boundaries identically. ASD-SSM resolves this by decoupling the decay range from its content adaptation: the scale constraint factor $\alpha_s$ fixes the value range per scale (fine $\bar{A}_1 \in [0,0.3]$ for rapid local response; coarse $\bar{A}_3 \in [0,0.9]$ for long-range memory), while the patch-level generator adapts $\bar{A}$ dynamically within that range based on local geometry. Two ablation results confirm this: Independent Parameters (71.6%) already outperforms Shared Parameters (70.8%), yet ASD-SSM (73.8%) substantially exceeds both, showing that dynamic, input-dependent generation is the decisive factor. Reversing the $\alpha_s$ ordering to (0.9, 0.6, 0.3) causes a drop to 66.5%, confirming that the monotonically increasing decay pattern encodes a physically motivated design principle rather than a tuned hyperparameter.</span>
 
 ---
 
