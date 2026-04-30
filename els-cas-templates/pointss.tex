@@ -132,10 +132,12 @@ The main contributions of this work are as follows:
 	geometry-aware multi-scale design.
 \end{enumerate}
 
+The remainder of this paper is organized as follows. \cref{sec:related} reviews related work. \cref{sec:method} presents the proposed PointSS framework. \cref{sec:experiment} reports experimental results. \cref{sec:conclusion} concludes the paper.
+
 Code will be released at https://github.com/z1xy2/PointSS-public.git
 
 
-\section{Related Work}
+\section{Related Work}\label{sec:related}
 \subsection{Deep Learning-based Point Cloud Semantic Analysis}
 PointNet \cite{pointnet} pioneers handling the unordered nature of point clouds via symmetric functions. To overcome its limited capacity for local detail modeling, PointNet++ \cite{PointNet++} introduces hierarchical sampling. Subsequent works like DGCNN \cite{DGCNN} enhance local feature modeling via dynamic graph construction. KPConv~\cite{KPConv} generalizes convolution to point clouds through kernel point operators, while PAConv~\cite{paconv} and CurveNet~\cite{curvenet} further advance local feature learning via position-adaptive kernels and curve-based aggregation. PointMLP~\cite{pointmlp} revisits network design by building an effective residual MLP framework with geometric affine modules. However, these convolution-based methods remain constrained by limited receptive fields, limiting effective hierarchical feature construction.
 
@@ -193,7 +195,7 @@ variations. Furthermore, allocating independent parameters for each scale
 incurs parameter growth and memory overhead.
 
 
-\section{Method}
+\section{Method}\label{sec:method}
 
 \subsection{Framework Overview}
 
@@ -326,7 +328,7 @@ Bidirectional Feature Learning and Fusion: A bidirectional feature learning stra
 
 Through these mechanisms, ASD-SSM achieves scale-decoupled state-space modeling: fine scales maintain small $\bar{A}$ values for rapid state decay to capture local geometric detail, while coarse scales maintain large $\bar{A}$ values for slow decay to model long-range global context. After feature extraction across all scales, the features $\text{Points}_{1:S}$ are concatenated channel-wise at each point position. The concatenated representation is then mapped back to the original dimension $C$ through a linear projection followed by an MLP, yielding the multi-scale fused point cloud representation $\text{Points}' \in \mathbb{R}^{N \times C}$.
 
-\section{Experiments}
+\section{Experiments}\label{sec:experiment}
 
 \subsection{Implementation Details}
 
@@ -676,7 +678,7 @@ These qualitative results are consistent with the trends observed in the quantit
 	\label{fig:vis}
 \end{figure*}
 
-\section{Conclusion}
+\section{Conclusion}\label{sec:conclusion}
 
 This paper presents PointSS, a geometry-aware multi-scale framework for point cloud analysis built upon State Space Models. GGAM and ASD-SSM address the serialization-induced spatial proximity loss and input-invariant state transition parameters of existing SSM-based methods, respectively. Extensive experiments on standard benchmarks (S3DIS, ModelNet40, and nuScenes) demonstrate the effectiveness of the proposed approach, consistently outperforming major counterparts such as PTv3.
 
