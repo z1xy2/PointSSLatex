@@ -40,6 +40,14 @@ PointSS introduces additional parameters (+43% over PTv3) primarily from the GGA
 #  Config   : batch=6, N/sample=24,000, total=144,000 pts
 #########################################################################
 
+标准差统计：
+pointss在s3dis数据集五次运行mIoU：73.2 73.5 73.8 74.0 74.3
+均值73.8% 标准差0.43%  均值73.76% 标准差± 0.43%
+
+pcm在s3dis数据集五次运行mIoU：69.0 69.6 69.8 70.7 71.2
+均值70.1% 标准差±0.88%
+
+
 ======================================================================
   [Mode] Patch Size Sweep — 原生 PTv3 Baseline
   batch=6, N/sample=24,000, total=144,000 pts
