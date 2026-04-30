@@ -94,8 +94,7 @@ This demonstrates that architectural design—rather than parameter count—dete
 
 **Modifications:**
 
-**1. Three recent point cloud references added in Section 2.1:**
-State Space Models (SSMs) [8] offer a promising alternative with linear complexity. Methods like PointMamba
+1. Three recent point cloud references added in Section 2.1: State Space Models (SSMs) [8] offer a promising alternative with linear complexity. Methods like PointMamba
 [10] and PCM [11] adapt SSMs by serializing 3D clouds into 1D sequences. However, this adaptation introduces two
 key challenges. First, serialization methods disrupt the spatial relationships between neighboring points critical for
 local geometric structure, resulting in the loss of spatial proximity. Second, uniform serialization struggles to capture
