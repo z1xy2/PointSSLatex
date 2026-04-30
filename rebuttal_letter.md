@@ -80,9 +80,9 @@ This demonstrates that architectural design—rather than parameter count—dete
 
 **Modifications:** Revised Section 1 (Introduction):
 
----
-
 "To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework <span style="color:#c00000">motivated by two key observations: (1) serialization-induced spatial proximity loss can be compensated through explicit geometric priors from local graph structures, and (2) hierarchical point cloud understanding requires scale-adaptive state transitions that respond to local geometric characteristics rather than applying uniform aggregation rules.</span>"
+
+This revision makes the core motivation explicit at the beginning of our method introduction.
 
 ---
 
