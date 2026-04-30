@@ -65,7 +65,7 @@ This demonstrates that architectural design—rather than parameter count—dete
 ---
 
 ## Comment R#3.3
-<span style="color:#1f6feb">A "Discussion" section should be added in a more prominent and argumentative manner, in which the authors analyze the reasons behind the experimental results.</span>
+<span style="color:#1f6feb">Discussions" section should be added in a more highlighting, argumentative way. The author should analysis the reason why the tested results is achieved.</span>
 
 **Response:** [TBD — a dedicated Discussion section will be added before Conclusion, analyzing why GGAM works (geometric prior compensates for serialization-induced proximity loss), why ASD-SSM works (scale-decoupled state decay matches scale-specific modeling needs), and why PointSS scales better than PTv3 (linear vs. quadratic complexity).]
 

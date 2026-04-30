@@ -698,6 +698,39 @@ These qualitative results are consistent with the trends observed in the quantit
 	\label{fig:vis}
 \end{figure*}
 
+\subsection{Discussion}
+
+The performance gains of PointSS arise from addressing two structural deficiencies
+in existing SSM-based methods: serialization-induced spatial proximity loss and
+input-invariant state transition parameters.
+
+\textbf{Why GGAM recovers spatial proximity.}
+Serialization systematically displaces spatially adjacent points into distant sequence
+positions, causing their interactions to decay before reaching each other's hidden states.
+GGAM is effective because its windowed graph construction is \emph{aligned} with the
+serialization granularity---it explicitly reconstructs the local neighborhoods that
+serialization disrupts, injecting geometric priors precisely where proximity loss is most
+severe. This is confirmed by the stratified gains in \cref{tab:ggam_fragmentation}: points
+in the highest proximity-loss group (20--30\%) gain +5.4\% IoU, while low-loss points gain
+only +0.7\%. Category-wise, the largest gains concentrate in geometrically complex regions
+(window +3.5\%, clutter +3.3\%, door +3.0\%), where boundary accuracy depends critically
+on local neighborhood integrity---regions that globally applied methods such as
+PointGA~\cite{pointga} and PointMSGT~\cite{pointmsgt} cannot systematically address.
+
+\textbf{Why dynamic $\bar{A}$ parameterization outperforms static alternatives.}
+Existing SSMs apply a shared, input-invariant $\bar{A}$ uniformly across all scales and
+spatial locations, implicitly treating flat surfaces and sharp boundaries identically.
+ASD-SSM resolves this by decoupling the decay \emph{range} from its \emph{content
+	adaptation}: the scale constraint factor $\alpha_s$ fixes the value range per scale (fine
+$\bar{A}_1 \in [0,0.3]$ for rapid local response; coarse $\bar{A}_3 \in [0,0.9]$ for
+long-range memory), while the patch-level generator adapts $\bar{A}$ dynamically within
+that range based on local geometry. Two ablation results confirm this: Independent
+Parameters (71.6\%) already outperforms Shared Parameters (70.8\%), yet ASD-SSM (73.8\%)
+substantially exceeds both, showing that \emph{dynamic, input-dependent} generation is the
+decisive factor. Reversing the $\alpha_s$ ordering to (0.9, 0.6, 0.3) causes a drop to
+66.5\%, confirming that the monotonically increasing decay pattern encodes a physically
+motivated design principle rather than a tuned hyperparameter.
+
 \section{Conclusion}\label{sec:conclusion}
 
 This paper presents PointSS, a geometry-aware multi-scale framework for point cloud analysis built upon State Space Models. GGAM and ASD-SSM address the serialization-induced spatial proximity loss and input-invariant state transition parameters of existing SSM-based methods, respectively. Extensive experiments on standard benchmarks (S3DIS, ModelNet40, and nuScenes) demonstrate the effectiveness of the proposed approach, consistently outperforming major counterparts such as PTv3.
