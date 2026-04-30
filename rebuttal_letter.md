@@ -56,15 +56,15 @@ The revised abstract: (1) reorganizes the technical content around a clear probl
 
 | Method | Params (M) | Peak Mem @512 | Scalability | mIoU (S3DIS Area5) | Inference Time |
 |--------|------------|---------------|-------------|---------------------|----------------|
-| PCM | 34.2 | --- | --- | 69.8 ±0.23% | --- |
+| PCM | 34.2 | --- | --- | 69.8 ±0.88% | --- |
 | PTv3 | 46.2 | 14.7GB | OOM @1024 | 73.4% | Baseline |
-| **PointSS** | **66.2** | **6.0GB** | **Stable to 2048** | **73.8 ±0.19%** | **9–19% faster** |
+| **PointSS** | **66.2** | **6.0GB** | **Stable to 2048** | **73.8 ±0.43%** | **9–19% faster** |
 
 <span style="color:#c00000">PointSS introduces additional parameters (+43% over PTv3) primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower memory footprint: at patch size 512, PointSS consumes 6.0GB compared to PTv3's 14.7GB (59% reduction), while PTv3 encounters out-of-memory errors at patch size 1024 (27.8GB) whereas PointSS scales stably to 2048. PointSS also achieves 9–19% lower inference latency than PTv3 across patch sizes from 128 to 512. This demonstrates that architectural design—rather than parameter count—determines practical scalability.</span>
 
 **Regarding FLOPs:** The Mamba operator in PointSS is implemented as a custom CUDA kernel, which is incompatible with standard profiling tools (`thop`, `fvcore`). More importantly, FLOPs are a less informative metric for SSM-based methods: the parallel scan algorithm exhibits a non-linear relationship between theoretical FLOPs and wall-clock latency due to memory access patterns. Consistent with the original Mamba paper, we report inference latency—measured under identical hardware conditions—as a more faithful efficiency indicator.
 
-**Parameter uncertainty:** All five independent runs of PointSS exceed PTv3 (73.4%), with mean 73.8% and standard deviation ±0.19%. PCM achieves 69.8% ±0.23% over five runs. See R#3.7 for details.
+**Parameter uncertainty:** All five independent runs of PointSS exceed PTv3 (73.4%), with mean 73.8% and standard deviation ±0.43%. PCM achieves 69.8% ±0.88% over five runs. See R#3.7 for details.
 
 **Modifications:** Added efficiency comparison table and analysis in Section 4.4; revised S3DIS comparison table at <span style="color:#c00000">lines 393–417</span> with standard deviations.
 
@@ -299,7 +299,7 @@ These additions have strengthened our positioning within the broader point cloud
 
 **Response:** We sincerely thank the reviewer for this important concern. We address it from two perspectives:
 
-**(1) Reproducibility.** We take reproducibility seriously and provide multiple layers of support. The complete training and inference code will be released upon acceptance. As detailed in R#3.7, five independent runs on S3DIS yield a median mIoU of 73.8% with a standard deviation of only ±0.19%, demonstrating that PointSS does not require careful seed selection or finicky tuning to reproduce results. Our progressive ablation study further enables independent validation of each module's contribution.
+**(1) Reproducibility.** We take reproducibility seriously and provide multiple layers of support. The complete training and inference code will be released upon acceptance. As detailed in R#3.7, five independent runs on S3DIS yield a mean mIoU of 73.8% with a standard deviation of only ±0.43%, demonstrating that PointSS does not require careful seed selection or finicky tuning to reproduce results. Our progressive ablation study further enables independent validation of each module's contribution.
 
 **(2) Practical usability.** Despite multiple modules, PointSS follows a standard U-shaped encoder–decoder architecture widely adopted in the point cloud community (e.g., PTv3, PCM). The two proposed modules are not independently stacked plugins but are functionally coupled: GGAM's geometric priors provide the patch-level content features that drive ASD-SSM's scale-aware parameter generator, as confirmed by the progressive ablation (+1.6% from GGAM, +1.9% from adding ASD-SSM). Furthermore, as detailed in R#8.3, the same architecture achieves consistent improvements on the outdoor nuScenes benchmark (80.9% mIoU, surpassing PTv3 at 80.4%), demonstrating effective generalization across indoor, synthetic, and outdoor domains without dataset-specific tuning.
 
@@ -325,11 +325,11 @@ These additions have strengthened our positioning within the broader point cloud
 
 **Response:** We thank the reviewer for this observation and acknowledge that the absolute accuracy improvement on S3DIS is modest. We address this concern by presenting additional evidence on consistency and complementary contributions.
 
-**(1) The accuracy improvement is consistent across all runs.** As reported in R#3.7, PointSS achieves 73.8% ±0.19% mIoU over five independent runs. Critically, <span style="color:#c00000">all five runs exceed PTv3 (73.4%)</span>, confirming that the improvement is reproducible and not a single-seed artifact. PointSS consistently surpasses PCM (69.8% ±0.23%) by approximately 4.0%.
+**(1) The accuracy improvement is consistent across all runs.** As reported in R#3.7, PointSS achieves 73.8% ±0.43% mIoU over five independent runs. Critically, <span style="color:#c00000">all five runs exceed PTv3 (73.4%)</span>, confirming that the improvement is reproducible and not a single-seed artifact. PointSS consistently surpasses PCM (69.8% ±0.88%) by approximately 4.0%.
 
 **(2) Complementary contribution through efficiency.** Beyond accuracy, PointSS offers a clear efficiency advantage that addresses a practical limitation of existing methods. At patch size 512, PointSS consumes only 6.0GB peak memory compared to PTv3's 14.7GB, representing a 59% reduction. More importantly, while PTv3 encounters out-of-memory errors at patch size 1024 (27.8GB), PointSS scales stably to patch size 2048. PointSS also achieves 9–19% lower inference latency than PTv3 across patch sizes 128–512. These properties make PointSS more suitable for memory-constrained or large-scale point cloud processing scenarios, a practical concern in real-world applications.
 
-**(3) Substantial gains within the SSM-based family.** Compared to existing SSM-based methods, PointSS improves over PCM (69.8% ±0.23%) by 4.0% mIoU and Pamba by 0.3% mIoU on S3DIS, while providing a principled solution to the spatial proximity loss problem inherent to SSM-based point cloud processing.
+**(3) Substantial gains within the SSM-based family.** Compared to existing SSM-based methods, PointSS improves over PCM (69.8% ±0.88%) by 4.0% mIoU and Pamba by 0.3% mIoU on S3DIS, while providing a principled solution to the spatial proximity loss problem inherent to SSM-based point cloud processing.
 
 We recognize that the 0.4% gain over PTv3 on S3DIS is incremental. However, together with the significant efficiency advantage and the consistent improvement across all runs, we believe PointSS offers a meaningful contribution to the point cloud understanding literature.
 
@@ -344,9 +344,9 @@ We recognize that the 0.4% gain over PTv3 on S3DIS is incremental. However, toge
 
 | Method    | Params (M) | Peak Mem @512 | Patch Size Tested | mIoU (%) | Inference Time |
 |-----------|------------|---------------|-------------------|----------|----------------|
-| PCM       | 34.2       | ---           | ---               | 69.8 ±0.23 | ---            |
+| PCM       | 34.2       | ---           | ---               | 69.8 ±0.88 | ---            |
 | PTv3      | 46.2       | 14.7GB        | $\leq$512         | 73.4     | 1.00$\times$  |
-| **PointSS** | **52.2** | **6.0GB**   | **$\leq$2048$^\star$** | **73.8 ±0.19** | **0.81--0.91$\times$** |
+| **PointSS** | **52.2** | **6.0GB**   | **$\leq$2048$^\star$** | **73.8 ±0.43** | **0.81--0.91$\times$** |
 
 $^\star$PTv3 encounters OOM at patch size 1024.
 

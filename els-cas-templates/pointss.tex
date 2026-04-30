@@ -368,7 +368,7 @@ We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic 
 
 \begin{table*}
 	\centering
-	\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Median of five independent runs, with standard deviations of $\pm$0.23\% (PCM, reproduced from the official implementation) and $\pm$0.19\% (PointSS). All other results are taken directly from the original papers.}
+	\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Mean of five independent runs, with standard deviations of $\pm$0.88\% (PCM, reproduced from the official implementation) and $\pm$0.43\% (PointSS). All other results are taken directly from the original papers.}
 	\label{tab:s3dis}
 	\begin{tabular}{@{}lll@{}}
 		\toprule
@@ -449,7 +449,7 @@ To evaluate the generalization capability of PointSS on outdoor LiDAR data, we c
 Method & Params & Peak Mem & Patch Size & mIoU & Inference \\
        & (M)    & @512     & Tested     & (\%)  & Time \\
 \midrule
-PCM    & 34.2      &--- &--- & 69.8  &---  \\
+PCM    & 34.2      &--- &--- & 70.1  &---  \\
 PTv3   & 46.2   & 14.7GB   & $\leq$512       & 73.4  & 1.00$\times$ \\
 \textbf{PointSS} & \textbf{52.2} & \textbf{6.0GB} & \textbf{$\leq$2048} & \textbf{73.8} & \textbf{0.81--0.91}$\times$ \\
 \bottomrule
