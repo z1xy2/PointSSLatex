@@ -151,196 +151,115 @@ booktitle = {Proceedings of the IEEE International Conference on Computer Vision
 ## 页码
 要是pages = {106141 - 106151},这种格式
 
-## 不需要的字段
-这几个字段出现的话需要删除，是多余字段
-  - ✓ language = {English} - 0 个剩余
-  - ✓ copyright = {...} - 0 个剩余
-  - ✓ address = {...} - 0 个剩余
-  - ✓ key = {...} - 0 个剩余
-  - ✓ keywords = {...} - 0 个剩余
-  - ✓ note = {...} - 0 个剩余
 
-## 其他
-对于标题和会议名/期刊名，要遵循实词首字母大写，一些特数词比如ShapeNets，看需要大写，LORA大写，
-像这个LORA: LOW-RANK ADAPTATION OF LARGE LANGUAGE MODELS完全都大写的肯定是不对的
 
-下面是我的调试命令，你不必理会：
-我在ref.bib添加了@inproceedings{pcm ,的引用，参照claude.md的格式统一部分帮我修正一下格式
+# 回复审稿你需要知道的
+文段里有关TBD的的注意点和问题可以忽略，因为本身我的rebuttal_letter就还没有改完
 
-我当前的内容写在elsarticle-template-num.tex，但是我现在要投其他期刊IEEE-Transactions-LaTeX2e-templates-and-instructions，其tex文件在[IEEE-Transactions-LaTeX2e-templates-and-instructions](IEEE-Transactions-LaTeX2e-templates-and-instructions)，你帮我把东西腾过去，并翻译为英文，注意要符合点云的专业术语表述
-
-IEEE-Transactions-LaTeX2e-templates-and-instructions下，我的新翻译的论文PointSS(2).pdf已经写好，我想投稿tnnls，其latex格式如bare_jrnl_new_sample4.tex，上面有我之前写的内容，之前的翻译的不好，现在是弃稿（但是你可以参照上面的一些东西，比如文章引用名等），我想将我新翻译的文章原封不动地转移到tnnls要求的tex文件上，格式不用管（tex已经提供），你能否帮我转移？
-
-对于我的
-[bare_jrnl_new_sample4.tex](IEEE-Transactions-LaTeX2e-templates-and-instructions/bare_jrnl_new_sample4.tex)
-我需要你作为一个假如说对点云领域并不了解的论文审稿人，你看看我的论文语言表述是否清楚明白
-我老师给我提了一种修改建议，就是我可以参照别人的论文是怎么表达的，套到我的论文中，因为我想表达的每一句，其实在其他论文中都应该有相似的表达。你帮我一句句核对一下，看看每一句是否清楚明白，并且尽量帮我找到其他论文中相似的表达，并给出这篇论文的信息。
-我给你了一些论文，在[ref_papers](ref_papers)，里面有8篇txt文献，建议你将所有txt文献读完再给我结果,由于txt文件比较大，我建议你按需读取，比如我要改method部分，那就只读取这部分（Grep定位）
-
-此外对于引言之后部分，要保证术语或描述和引言对齐，防止读者对新引入的概念或描述产生困惑。也就是说，改文章正文内容前，你必须先读引言，再进行修改（我的意思是我清空上下文只前，读一次即可）。
-对于形容词的使用也要额外关注，形容词是最容易用的不够学术的地方。
-比较容易出现比如：太过绝对化的，比如all这种，best这种
-没有依据的，你说一个东西显著地提升了什么，需要有依据，尤其是实验依据。
-
-提示词（自用，你可以忽略）：这句写的怎么样，是否清晰易读，如果是一些搭配（比如说是一些固定搭配，比如动宾搭配，形容词+名词搭配，学术名词比如point-independent design，请给出已有的文献作为支撑），如果有逻辑链条，看看是否通顺
-对于parameter的改动实际上只涉及state transition parameter也就是A参数，其他参数本身就是输入无关的
-
- bare_jrnl_new_sample4.tex已经写完，我现在想写我的大论文bishe.tex，有些内容相较于大论文有些变动，你现在帮我改改大论文的摘要部分，让表述和小论文统一（小论文已经定稿，不需要改了）
-注意：之后不用管bishe.tex，这个文件已被废弃，内容和数值以 毕业设计.pdf 为准，其文字版在 毕业设计_unlocked.txt
-
-E:\jlu\vis_result_open3d 是我的可视化代码以及预测数据，有关可视化的代码以及最终预测结果都在这里，具体详细信息可以看该项目下的claude.md文件
-
-一下是关于bishe.tex对于切比雪夫多项式的一些内容提示，你可以选择性阅读
-● 根据代码和论文内容的深入分析，以下是 Chebyshev SSM 相对于 ASD-SSM 的独特优势和可写亮点：
+● 现在我已经读取了两份文件，可以进行详细对比。以下是我发现的问题：
 
   ---
-  1. 与 ASD-SSM 的互补性（最核心卖点）
+批评成立的地方
+对于可以直接修改的意见，师兄的做法确实更好。比如 R#6.5（方法部分太密）、R#3.6（Introduction 结构）、R#6.7（语言问题），这些就应该直接说"Thanks, we have restructured Section 3.2, reducing equations from 15 to 7"，然后给原文。你确实在这类评论上说了太多。
 
-  ASD-SSM 和 Chebyshev SSM 解决的是不同维度的多尺度问题：
+批评不成立的地方
+R#6.1 和 R#8.4 这两条，你不应该完全接受，必须要辩护。
+原因是：这两条是影响录用决定的判断性意见，而不是"这个图画得不好看"这种可修复的意见。
 
-  ┌────────────┬──────────────────────────────────┬───────────────────────────────┐
-  │    维度    │             ASD-SSM              │         Chebyshev SSM         │
-  ├────────────┼──────────────────────────────────┼───────────────────────────────┤
-  │ 作用域     │ 时序/空间域（窗口大小 2P vs 4P） │ 频谱域（频率分量 T₀, T₁, T₂） │
-  ├────────────┼──────────────────────────────────┼───────────────────────────────┤
-  │ 多尺度方式 │ 不同大小的序列窗口               │ 不同阶的频率带                │
-  ├────────────┼──────────────────────────────────┼───────────────────────────────┤
-  │ 捕捉内容   │ 局部 vs 全局的序列依赖           │ 平滑 vs 尖锐的几何结构        │
-  └────────────┴──────────────────────────────────┴───────────────────────────────┘
+审稿人说 novelty limited → 如果你只说"感谢，我们改了 Introduction"，审稿人下一轮还是会投 reject，因为他的核心判断没有被改变
+审稿人说 improvement marginal → 同理，你不解释 efficiency 优势，他凭什么改变评分？
 
-  二者是正交的——ASD-SSM 回答"看多远"，Chebyshev SSM 回答"看什么频率的几何特征"。实验证明二者叠加有协同效应（73.5% + 75.2% → 76.8%，不是简单相加）。
+师兄那篇 SSPNet 的审稿意见以格式、缺失实验、缺少引用为主，这类意见做了就是做了，审稿人能直接看到，所以"Thanks + 改了"就够了。你面对的是对方法本身的质疑，性质不同。
 
-  ---
-  2. 从序列建模到图谱建模的跨越
+真正的问题不是"辩护还是接受"
+而是辩护的方式。你现在的写法是先铺垫、再论证、再给数字，读起来像在说服对方。更好的结构是：
 
-  标准 Mamba 和 ASD-SSM 都依赖序列化（Hilbert curve）后的一维序列建模，本质上丢失了点云的拓扑结构。Chebyshev SSM 通过图拉普拉斯显式建模点之间的拓扑关系，在序列化之上恢复了局部几何连接信息。
+把数字和事实放在最前面，让证据说话，而不是先表态再举证。
 
-  可以这样写：ASD-SSM 在序列化空间中进行多尺度建模，但序列化不可避免地引入了拓扑信息损失；Chebyshev SSM 通过图拉普拉斯在频谱域补偿了这一损失，使模型同时具备序列建模能力和拓扑感知能力。
+比如 R#8.4，与其说"We recognize it's incremental, but..."，不如直接开头：
 
-  ---
-  3. 频率特异性的状态空间建模
+"All five independent runs exceed PTv3 (73.4%), and PointSS reduces peak memory by 59% at patch size 512. We have added this analysis in Section 4.4."
 
-  这是一个很好的理论亮点：不同频率分量天然需要不同的序列建模策略。
-
-  - 低频分量（T₁）：对应大面积平滑区域（如墙面、地面），需要长程依赖，状态衰减慢
-  - 高频分量（T₂+）：对应边界、棱角等急剧变化区域，需要短程聚焦，状态衰减快
-
-  如果用单一 Mamba 处理所有频率，必然在长短程依赖之间妥协。独立 Mamba 让每个频带学习最优的状态转移动力学。
-
-  与 ASD-SSM 的区别：ASD-SSM 通过 α 约束因子显式控制不同尺度的衰减率；Chebyshev SSM 让不同频带的 Mamba 自由学习各自的最优动力学，无需人为设定约束。
+同样是辩护，但读起来是在陈述事实，而不是在争辩。
 
   ---
-  4. 避免昂贵的特征分解——O(K·N) 复杂度
+  四、回复长度问题
 
-  传统谱方法需要对拉普拉斯矩阵做特征分解，复杂度 O(N³)。Chebyshev 多项式递推只需 K 次稀疏矩阵-向量乘法，复杂度 O(K·N)，K 通常取 3。这使得频谱分析在大规模点云上可行。
+  你的多个回复过于冗长（尤其是R#6.1、R#6.3），而师兄的回复通常很简洁——一个审稿意见的回复一般不超过3-4段。审稿人每天看很多rebuttal，简洁的回复让人感觉你尊重他们的时间。
 
-  ---
-  5. 序列化窗口图构建——零额外开销
+  例如R#6.3的GGAM开销分析，你写了4个部分（参数/内存/延迟/图构建复杂度），内容详尽但太长了。可以压缩为：
 
-  图的构建直接复用序列化的顺序（Hilbert curve），以序列中前后 ±P/2 的邻居构建边，权重用高斯核。不需要额外的 kNN 搜索，复杂度 O(N)。这意味着 Chebyshev SSM 的图构建几乎没有额外计算开销。
-
-  ---
-  6. 可学习的频率融合
-
-  Softmax 权重 α_ℓ 自适应学习不同频带的重要性，不同任务/数据集可以自动调整。这比均匀融合或硬选择更灵活，且具有可解释性——可以可视化各频带的权重分布来分析模型行为。
+  ▎ "We thank the reviewer for this concern. GGAM introduces +13% parameters (6.0M additional), primarily from dual-serialization encoders. Critically, GGAM operates on fixed-size neighborhoods (k=64) within each window, resulting in O(N) graph
+  ▎  construction without expensive kNN search. As detailed in the revised Section 4.4, this linear design enables PointSS to maintain 6.0GB at patch size 2048, whereas PTv3 encounters OOM at 1024."
 
   ---
-  7. 建议的论文写法角度
+  五、一个具体表述问题
 
-  在论文中，可以从以下几个角度突出 Chebyshev SSM 的贡献：
+  R#6.1中：
 
-  1. 理论动机：SSM 的序列化建模丢失拓扑信息 → 用谱域方法补偿
-  2. 方法创新：首次将 Chebyshev 多项式近似的图谱分析与状态空间模型结合用于点云理解
-  3. 设计哲学：ASD-SSM 解决"多尺度序列建模"，Chebyshev SSM 解决"多频率几何建模"，二者正交互补
-  4. 效率优势：O(K·N) 线性复杂度，图构建零额外开销
-  5. 实验验证：独立 Mamba 优于共享 Mamba（+1.4%）、K=3 最优平衡精度与计算量、与 ASD-SSM 组合有协同效应
+  ▎ "ASD-SSM makes the state transition parameter $\bar{A}$ simultaneously input-dependent AND scale-decoupled"
 
-  需要我帮你把这些内容直接写进 frequency_chapter.tex 吗？
+  这里你说"simultaneously"，但你的意思是 $\bar{A}$ 既是输入相关的（input-dependent）又是尺度解耦的（scale-decoupled）。实际上，标准的Mamba通过Δ已经使 $\bar{A}$ 输入相关了，你的ASD-SSM的创新在于per-patch 的输入相关 +
+  scale-aware的上界约束。"simultaneously input-dependent AND scale-decoupled" 这个表述容易让人困惑——审稿人可能会追问"那标准的Mamba不也是input-dependent吗"。
 
-✻ Brewed for 2m 7s
+  建议改为更准确的表述：
 
-❯ 问题来了，Chebyshev本身是滤波器，它并非真正频域，如果评审人问起来，如何回答 
-
-● 这是一个非常好的问题，也是审稿人很可能会问的。让我帮你梳理清楚这个问题的本质和回答策略。
-
-  问题的核心
-
-  审稿人的潜在质疑是：
-
-  真正的频域处理应该是 x̂ = U^T x（图傅里叶变换），你做的 T_k(L̃)x 只是多项式图滤波，始终在顶点域计算，从未真正进入频域。凭什么叫"频谱"方法？
-
-  回答思路
-
-  1. 数学等价性——这是最硬的防线
-
-  多项式滤波器 g(L) 和频域滤波器 g(Λ) 是严格等价的：
-
-  $$g(L)x = U,g(\Lambda),U^T x$$
-
-  因为 L = UΛU^T，所以 g(L) = U g(Λ) U^T。对 L 施加多项式，数学上等价于在特征值空间施加同一个多项式滤波器。区别仅是计算路径不同（O(KN) vs O(N³)），滤波效果完全一致。
-
-  所以准确的说法是：我们隐式地在频域操作，而非显式地。
-
-  2. 这是谱图理论领域的标准术语
-
-  ChebNet（Defferrard et al., NeurIPS 2016）、GCN（Kipf & Welling, ICLR 2017）都称自己为"spectral methods"，尽管它们同样使用多项式近似而非显式特征分解。这一术语在社区中已被广泛接受。如果审稿人质疑这个命名，那整个 spectral GNN 领域都需要改名。  
-
-  3. 需要诚实承认的一点：T_k 不是严格的带通滤波器
-
-  这一点需要注意——T_k(λ) 在 [-1, 1] 上振荡 k 次，它并不干净地分离出第 k 个频带。所以如果你在论文里写"T_0 是低频、T_1 是中频、T_2 是高频"，审稿人可以合理地质疑这个说法。
-
-  更准确的描述是：
-  - T_0(L̃)x = x：原始信号（零跳邻域）
-  - T_1(L̃)x = L̃x：一跳邻域聚合，反映局部差异信息
-  - T_k(L̃)x：k 跳邻域聚合，捕捉更大范围的结构变化
-
-  k 跳聚合与频率之间有相关性但不等同。低阶多项式更侧重低频成分，高阶多项式能表达更高频变化，但不是精确的频带分离。
-
-  4. 建议的论文表述策略
-
-  避免说：
-  - ~~"将信号分解到不同频带"~~
-  - ~~"频域分解"~~
-  - ~~"频谱分离"~~
-
-  建议说：
-
-  基于 Chebyshev 多项式对图拉普拉斯的多项式展开，隐式地实现了对图信号不同尺度谱特征的近似提取。不同阶的 Chebyshev 基函数 T_k(L̃)x
-  对应不同跳数的邻域聚合，低阶捕捉平滑的局部结构，高阶捕捉更大感受野的结构变化。通过为每阶分量配置独立的状态空间模型，使不同尺度的谱特征获得各自最优的序列建模动力学。
-
-  这个表述：
-  - 用了"隐式"和"近似"来限定，不过度声称
-  - 用"谱特征"而非"频率"，更准确
-  - 强调的是"不同跳数的邻域聚合"这个可验证的事实
-  - 将创新点落在"独立 SSM 对不同阶的处理"上，而非滤波本身
-
-  5. 如果审稿人追问"那你的方法和多尺度 GNN 有什么区别？"
-
-  区别在于：
-  - 普通多尺度 GNN（如不同层的 GCN）做的是叠加的多跳聚合，第 k 层看到的是前 k-1 层已经混合过的特征
-  - Chebyshev 基是正交的，T_k 彼此在谱域正交（关于权函数 1/√(1-λ²)），不同阶提取的信息有正交性保证，减少冗余
-  - 并且每阶配置独立 Mamba 进行后续序列建模，这是 GNN 框架下做不到的
+  ▎ "ASD-SSM generates $\bar{A}$ independently for each patch based on its local geometric content, while the scale constraint factor $\alpha_s$ explicitly controls the state decay range at each scale."
 
   ---
-  总结：不必回避"Chebyshev 不是真正频域"这个事实，但要强调（1）数学等价性，（2）社区术语惯例，（3）将表述从"频率分解"调整为"多阶谱特征的近似提取"。这样既诚实又站得住脚。
+  六、Summary表的问题
 
-$$\bar{A} = \exp(\Delta A)$$
-  - $A$：可学习参数（对角矩阵），训练时通过梯度更新，但对所有输入是固定的（不随输入变化）                                                                                                                                                           
-  - $\Delta_t$：输入相关的标量/向量，由 $\Delta_t = \text{softplus}(\text{Linear}(x_t))$ 生成，每个输入点产生不同的 $\Delta$
-  - $\Delta_t A$：是每一步动态计算的乘积，因为 $\Delta_t$ 随输入变化，所以 $\bar{A} = \exp(\Delta_t A)$ 也随输入变化
+  你末尾的Summary表里，Line numbers列混合了具体行号和 [TBD]，这会让人觉得很多工作没完成。审稿人第一眼看到一堆 [TBD] 会有不好的印象。建议：要么填上具体行号，要么删掉这个表，在信中直接说明"All major revisions are reflected in the revised
+  manuscript, available for review."
 
-  你可以这样理解：$A$ 决定了衰减的"方向和结构"（哪些维度衰减快、哪些慢），$\Delta$ 决定了衰减的"整体速率"。$\Delta$ 能做的只是对 $A$ 做一个统一的缩放，不能改变 $A$ 内部各维度之间的相对关系。
-  
-最终用于递推公式 $h_t = \bar{A}h_{t-1} + \bar{B}x_t$ 的是 $\bar{A}$，三者关系是：
-                                                                                                                                                                                                                                                    
-  $$A \xrightarrow{\text{乘以} \Delta_t} \Delta_t A \xrightarrow{\text{矩阵指数}} \bar{A} = \exp(\Delta_t A)$$                                                                                                                                         
-  - $A$：连续时间的状态矩阵，可学习参数，固定不变                                                                                                                                                                                                   
-  - $\Delta_t A$：离散化的中间量，因为 $\Delta_t$ 随输入变化所以它也变
-  - $\bar{A}$：最终参与递推的离散状态转移矩阵
+  ---
+  ---
+  总结：核心改进方向
 
-  由于 $A$ 是对角矩阵（Mamba中的简化），假设 $A = \text{diag}(a_1, a_2, ..., a_N)$，那么：
+  1. 语气再谦逊一点——少解释"我们为什么没问题"，多展示"我们具体改了什么"
+  3. R#3.5处理方式要改——不要解释为什么不接受，直接说"我们加了更相关的引用"
+  4. 回复压缩——每条意见的回复控制在3段以内
+  5. Line numbers要准确——如果不确定，宁可写 "throughout Section X" 也不要写不确定的行号
 
-  $$\bar{A} = \text{diag}(e^{\Delta_t a_1}, e^{\Delta_t a_2}, ..., e^{\Delta_t a_N})$$
 
-  $\Delta_t$ 是标量，对所有维度做等比例缩放。所以 $\Delta_t$ 只能整体加速或减速衰减，不能改变 $a_1, a_2, ..., a_N$ 之间的相对比例关系。这就是为什么说光靠 $\Delta$ 的输入相关性还不够——你的 ASD-SSM 让 $A$
-  本身也随输入变化，才能真正改变不同维度的相对动力学。
+## 重要提示
+
+❯ 我师兄会直接把修改后的文段或图标直接搬进来，而不是像目前这样给一个行号让他自己去找
+
+● 这一点非常关键。师兄的rebuttal letter里大量直接嵌入修改后的原文，对于修改或添加的地方进行标红，让审稿人无需翻回论文就能看到改了什么。
+
+  典型例子（他的R3第5条）：
+                                                                                                                                                                                                                                                      Response: Thanks for your nice advice.
+  "…
+  4.3. Comparison with state-of-the-arts
+  …
+  Results on PETA: As shown in Table 6, SSPNet with both ResNet50
+  and Swin-S can achieve the SOTA results. SSPNet with Swin-S
+  obtains the best result on the PETA dataset.
+  …"
+
+  审稿人读这封回信的同时就看到了修改后的内容，而不是被告知"请自行查阅line 384-386"。
+
+  这样做的好处：
+  1. 审稿人不需要切换窗口/翻页去找你的修改
+  2. 避免了理解偏差——你自己摘录的片段就是你认为的修改，审稿人和你对"改了什么都清楚"
+  3. 显得你认真准备、态度端正——把东西送到审稿人眼前，而不是让他费力去找
+  4. 对于表格修改，直接把新表格的LaTeX代码或截图贴进来，审稿人直接对比
+
+  对于你的rebuttal_letter.md，至少以下几个重要回复需要这样改：
+
+  - R#3.7（标准差表格）→ 直接贴出新表格的对比
+  - R#3.2（效率分析）→ 直接贴出新的效率对比表
+  - R#3.9（结论修改）→ 把新结论段落原文引用进来
+  - R#3.5（拒绝引用+新增引用）→ 把新增的related work段落引用进来
+  - R#6.6（新增引用）→ 直接把引用的上下文原文贴进来
+
+  Line number只是辅助，真正的修改内容必须直接呈现。
+
+  需要我帮你把几个关键回复里的[TBD]部分填上具体修改内容吗？
+
+  关于引入原文引用后能删什么
+可以删，但要区分两类内容：
+✅ 可以删掉/大幅压缩的：那些用来"描述修改内容"的解释性段落。比如 R#6.3 里你花了大段话描述 GGAM 的 overhead 如何如何，如果直接引用新增的 Section 4.4 原文，这些解释就可以缩成一两句引导语。
+❌ 不能删的：回应审稿人质疑的逻辑论证部分。比如你解释为什么不报 FLOPs、为什么拒绝那些引用，这些是说服审稿人的内容，不是描述修改的内容，引原文替代不了。
+

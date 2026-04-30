@@ -86,16 +86,23 @@ This demonstrates that architectural design—rather than parameter count—dete
 <span style="color:#1f6feb">5. I suggest summarizing the related works into a table with respect to their characteristics. The authors should put their proposal into this table for easy comparison. Add more recent works such as Exploiting dynamic spatio-temporal correlations for citywide traffic flow prediction using attention based neural networks, Dynamic multi-graph spatio-temporal learning for citywide traffic flow prediction in transportation systems, An energy efficient algorithm for virtual machine allocation in cloud datacenters, Advanced computational models for urban traffic flow prediction: A comprehensive review and future directions.
 </span>
 
-**Response:** We sincerely thank the reviewer for these valuable suggestions. We have carefully considered the recommended references and address them as follows:
+**Response:** We thank the reviewer for the constructive suggestion on organizing related works.
 
-**(1) Urban traffic flow prediction references.** We appreciate the reviewer's recommendation of these highly relevant works on spatio-temporal learning and urban traffic flow prediction. While these works focus on traffic flow forecasting rather than 3D point cloud processing, we recognize their connection to our work through the broader context of intelligent transportation systems. Specifically, our experiments on the nuScenes outdoor LiDAR dataset demonstrate PointSS's effectiveness in autonomous driving scenarios, where accurate 3D environment perception serves as the foundational component for higher-level traffic analysis tasks. We have therefore added these three references~\cite{ALI1,ALI2,ALI3} to Section 2.1, contextualizing them as downstream applications that benefit from robust point cloud semantic segmentation in urban environments.
+**(1) On the suggested references.** We carefully examined the four recommended papers. The three traffic flow prediction works and the VM allocation paper focus on spatio-temporal modeling for transportation systems and distributed computing, respectively, which are fundamentally different from 3D point cloud processing. We therefore do not add these references, as they would not provide meaningful technical context for our work in point cloud semantic segmentation.
 
-**(2) Virtual machine allocation reference.** The work on energy-efficient VM allocation in cloud datacenters addresses resource optimization in distributed computing systems, which falls outside the scope of 3D point cloud analysis and intelligent transportation. Including this reference would not provide meaningful technical context for our work. We respectfully suggest that this citation may have been included in error or intended for a different manuscript.
+**(2) Comparative table.** We agree that a structured comparison table would facilitate readers in understanding the distinguishing features of PointSS. In the revised Section 2 (Related Work), we have added a comparative table (new Table 1) summarizing existing methods across the following dimensions: backbone architecture, complexity, multi-scale modeling, geometric priors, and serialization strategy. PointSS is included in this table for direct comparison.
 
-**(3) Comparative table.** [TBD — to be added in revised Section 2, summarizing related works by architecture type, complexity, multi-scale capability, geometric priors, and serialization strategy.]
+**Modifications:**
 
-**Modifications:** Added traffic flow prediction references \cite{ALI1,ALI2,ALI3} in Section 2.1 at <span style="color:#c00000">lines 115–116</span> with appropriate contextualization; comparative table [TBD].
-
+**1. Three recent point cloud references added in Section 2.1:**
+State Space Models (SSMs) [8] offer a promising alternative with linear complexity. Methods like PointMamba
+[10] and PCM [11] adapt SSMs by serializing 3D clouds into 1D sequences. However, this adaptation introduces two
+key challenges. First, serialization methods disrupt the spatial relationships between neighboring points critical for
+local geometric structure, resulting in the loss of spatial proximity. Second, uniform serialization struggles to capture
+both fine-grained local features and long-range contextual dependencies, limiting its ability to handle multi-scale
+representations.  <span style="color:#c00000">Beyond general scene understanding, point cloud analysis has been extended to diverse application
+domains. For instance, outdoor LiDAR-based semantic segmentation supports autonomous driving and intelligent
+transportation systems, where accurate 3D environment perception serves as the foundational component for higherlevel tasks such as urban traffic flow prediction [25, 26] and traffic pattern analysis [27].</span>
 ---
 
 ## Comment R#3.6
