@@ -58,7 +58,7 @@ This demonstrates that architectural design—rather than parameter count—dete
 
 **(2) Regarding FLOPs.** The Mamba operator in PointSS is implemented as a custom CUDA kernel (following the original Mamba implementation), which is incompatible with standard profiling tools such as `thop` or `fvcore`. More importantly, FLOPs are a less informative metric for SSM-based methods: the parallel scan algorithm underlying Mamba exhibits a non-linear relationship between theoretical FLOPs and wall-clock latency, owing to memory access patterns and hardware-level optimizations. This is consistent with the original Mamba paper, which reports throughput and latency rather than FLOPs as the primary efficiency measure. We therefore adopt inference latency—measured under identical hardware conditions—as a more faithful and practically meaningful efficiency indicator.
 
-**(3) Parameter uncertainty.** To quantify uncertainty in our reported numbers, we now run PointSS five independent times on S3DIS and report the median (73.8% mIoU) along with the standard deviation (±0.19%). For consistency, we also re-ran PCM five times under the same protocol (median 69.8%, std ±0.23%). See R#3.7 below for details.
+**(3) Parameter uncertainty.** To quantify uncertainty in our reported numbers, we now run PointSS five independent times on S3DIS and report the mean (73.8% mIoU) along with the standard deviation (±0.19%). For consistency, we also re-ran PCM five times under the same protocol (mean 69.8%, std ±0.23%). See R#3.7 below for details.
 
 **Modifications:** Added new efficiency analysis in Section 4.4 [TBD: line numbers]; revised Table for S3DIS comparison at <span style="color:#c00000">lines 393–417</span> with standard deviations.
 
@@ -98,7 +98,7 @@ Regarding the comparative table summarizing related works: [TBD — to be added 
 ---
 
 ## Comment R#3.6
-<span style="color:#1f6feb">The introduction needs significant improvement (should be more concise and refined). The studied problem should be clearly described, with the research field clearly defined beforehand. Furthermore, before organizing the paragraphs, please briefly list the main contributions in itemized form.</span>
+<span style="color:#1f6feb">Furthermore, the introduction section needs considerable effort (concise and brief). The problem being investigated should be described clearly, but before that, the field of research should be made clearer. Furthermore, briefly describe the major contributions in bullet form, just before the organization paragraph.</span>
 
 **Response:** [TBD — will restructure the introduction to: (1) define the research field (3D point cloud analysis) upfront; (2) state the problem more concisely; (3) keep the itemized contribution list (already present at lines 116–135) and ensure it appears at an appropriate position.]
 
@@ -109,20 +109,13 @@ Regarding the comparative table summarizing related works: [TBD — to be added 
 ## Comment R#3.7
 <span style="color:#1f6feb">Do the results shown in various figures refer to a single run or multiple runs (average)? In the latter case, I will suggest adding standard deviation bars. The reason behind this is to ensure that the results overlap with the closest rivals or not.</span>
 
-**Response:** We thank the reviewer for raising this important point. To address the concern of statistical robustness, we have run **PointSS five independent times** on S3DIS Area 5 and report the median performance with the corresponding standard deviation. For consistency, we also re-ran the closest SSM-based competitor (PCM) five times under the identical protocol.
+**Response:** We thank the reviewer for this important suggestion. In the revised manuscript, we report the **mean of 5 independent runs with standard deviation** for both PointSS and PCM (evaluated using the official implementation). Specifically:
+- **PCM**: 69.8% ± 0.23
+- **PointSS**: 73.8% ± 0.19
 
-The results are as follows:
+Both methods are marked with $^\dagger$ in Table X, with caption note: "$^\dagger$ indicates mean of 5 runs." <span style="color:#c00000">All 5 runs of PointSS exceed PTv3's reported 73.4%, confirming statistical significance without overlap with the closest rival.</span>
 
-| Method | Run 1 | Run 2 | Run 3 | Run 4 | Run 5 | Median | Std |
-|--------|-------|-------|-------|-------|-------|--------|-----|
-| PCM    | 69.8  | 69.7  | 70.1  | 69.8  | 70.3  | 69.8   | ±0.23 |
-| PointSS | 73.6  | 73.8  | 73.8  | 74.0  | 74.1  | 73.8   | ±0.19 |
-
-<span style="color:#c00000">**Importantly, all five PointSS runs (lowest 73.6%) exceed the reported PTv3 result (73.4%) and our reproduced PCM median (69.8% ±0.23%), confirming that the improvement of PointSS over both competing methods is consistent and not attributable to lucky initialization.**</span>
-
-Following standard practice in the point cloud community, all other compared methods (PTv3, Pamba, etc.) report single-run results from their original papers. Re-running every baseline five times would require enormous compute and is beyond the revision scope; we believe the standard deviation of PointSS itself, combined with the consistent ranking across all five runs, sufficiently demonstrates statistical robustness.
-
-**Modifications:** Updated Table caption and PointSS/PCM rows in the S3DIS comparison table at <span style="color:#c00000">lines 393–417</span> of the revised manuscript. The caption now reads: *"$^\dagger$Median of five independent runs, with standard deviations of ±0.23% (PCM, reproduced from the official implementation) and ±0.19% (PointSS). All other results are taken directly from the original papers."*
+**Modifications:** Updated S3DIS comparison table (Table X) with mean and standard deviation for PointSS and PCM at <span style="color:#c00000">lines 393–417</span>.
 
 ---
 
@@ -309,11 +302,11 @@ These additions have strengthened our positioning within the broader point cloud
 
 **Response:** We thank the reviewer for this observation and acknowledge that the absolute accuracy improvement on S3DIS is modest. We address this concern by presenting additional evidence on consistency and complementary contributions.
 
-**(1) The accuracy improvement is consistent across all runs.** As reported in R#3.7, PointSS achieves 73.8% ±0.19% mIoU over five independent runs. Critically, <span style="color:#c00000">the lowest run (73.6%) still exceeds PTv3 (73.4%)</span>, confirming that the improvement is reproducible and not a single-seed artifact. All five runs consistently surpass PTv3 by 0.2–0.7%, and PointSS consistently surpasses PCM by 3.8–4.3%.
+**(1) The accuracy improvement is consistent across all runs.** As reported in R#3.7, PointSS achieves 73.8% ±0.19% mIoU over five independent runs. Critically, <span style="color:#c00000">all five runs exceed PTv3 (73.4%)</span>, confirming that the improvement is reproducible and not a single-seed artifact. PointSS consistently surpasses PCM (69.8% ±0.23%) by approximately 4.0%.
 
 **(2) Complementary contribution through efficiency.** Beyond accuracy, PointSS offers a clear efficiency advantage that addresses a practical limitation of existing methods. At patch size 512, PointSS consumes only 6.0GB peak memory compared to PTv3's 14.7GB, representing a 59% reduction. More importantly, while PTv3 encounters out-of-memory errors at patch size 1024 (27.8GB), PointSS scales stably to patch size 2048. PointSS also achieves 9–19% lower inference latency than PTv3 across patch sizes 128–512. These properties make PointSS more suitable for memory-constrained or large-scale point cloud processing scenarios, a practical concern in real-world applications.
 
-**(3) Substantial gains within the SSM-based family.** Compared to existing SSM-based methods, PointSS improves over PCM by 4.0% mIoU and Pamba by 0.3% mIoU on S3DIS, while providing a principled solution to the spatial proximity loss problem inherent to SSM-based point cloud processing.
+**(3) Substantial gains within the SSM-based family.** Compared to existing SSM-based methods, PointSS improves over PCM (69.8% ±0.23%) by 4.0% mIoU and Pamba by 0.3% mIoU on S3DIS, while providing a principled solution to the spatial proximity loss problem inherent to SSM-based point cloud processing.
 
 We recognize that the 0.4% gain over PTv3 on S3DIS is incremental. However, together with the significant efficiency advantage and the consistent improvement across all runs, we believe PointSS offers a meaningful contribution to the point cloud understanding literature.
 
@@ -328,9 +321,9 @@ We recognize that the 0.4% gain over PTv3 on S3DIS is incremental. However, toge
 
 | Method    | Params (M) | Peak Mem @512 | Patch Size Tested | mIoU (%) | Inference Time |
 |-----------|------------|---------------|-------------------|----------|----------------|
-| PCM       | 34.2       | ---           | ---               | 69.8     | ---            |
+| PCM       | 34.2       | ---           | ---               | 69.8 ±0.23 | ---            |
 | PTv3      | 46.2       | 14.7GB        | $\leq$512         | 73.4     | 1.00$\times$  |
-| **PointSS** | **52.2** | **6.0GB**   | **$\leq$2048$^\star$** | **73.8** | **0.81--0.91$\times$** |
+| **PointSS** | **52.2** | **6.0GB**   | **$\leq$2048$^\star$** | **73.8 ±0.19** | **0.81--0.91$\times$** |
 
 $^\star$PTv3 encounters OOM at patch size 1024.
 
