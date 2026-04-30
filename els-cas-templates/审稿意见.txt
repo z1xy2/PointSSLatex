@@ -1,0 +1,124 @@
+主题: Decision on INS-D-26-4426
+
+
+Re: INS-D-26-4426
+
+
+Dear Profressor Wang,
+
+We have received the decision on your paper entitled "PointSS: Geometry-Aware Multi-Scale State Space Feature Learning for Point Clouds".
+
+The Editor's and the reviewers' comments are as follows:
+************************************************************
+
+
+Reviewer #3: 1. The abstract is not coherent. It would be good if authors can write a sentence describing numerical results and improvement over other methods.
+2. The complexity of the proposed model and the model parameter uncertainty are not enough mentioned.
+3. Discussions" section should be added in a more highlighting, argumentative way. The author should analysis the reason why the tested results is achieved.
+4. Authors should pattern the motivation behind using this method to explain in the introduction.
+5. I suggest summarizing the related works into a table with respect to their characteristics. The authors should put their proposal into this table for easy comparison. Add more recent works such as Exploiting dynamic spatio-temporal correlations for citywide traffic flow prediction using attention based neural networks, Dynamic multi-graph spatio-temporal learning for citywide traffic flow prediction in transportation systems, An energy efficient algorithm for virtual machine allocation in cloud datacenters, Advanced computational models for urban traffic flow prediction: A comprehensive review and future directions.
+6. Furthermore, the introduction section needs considerable effort (concise and brief). The problem being investigated should be described clearly, but before that, the field of research should be made clearer. Furthermore, briefly describe the major contributions in bullet form, just before the organization paragraph.
+7. Do the results shown in various figures refer to a single run or multiple runs (average)? In the latter case, I will suggest adding standard deviation bars. The reason behind this is to ensure that the results overlap with the closest rivals or not.
+8. Add further details on how simulations were conducted. Perhaps add a flowchart that clearly identifies how the entire system works.
+9. The conclusion section also needs significant revisions. It should briefly describe the findings of the study and some more directions for further research.
+
+
+
+Reviewer #6: This paper proposes a geometry-aware multi-scale state space framework (PointSS) to address spatial proximity loss in SSM-based point cloud processing. The idea of combining explicit geometric priors (GGAM) with adaptive scale-decoupled SSM (ASD-SSM) is meaningful and timely. The method is technically sound, and experimental results show consistent improvements over strong baselines.
+However, several aspects require clarification and strengthening before publication.
+* Proposes a geometry-aware multi-scale SSM framework (PointSS) to address spatial proximity loss in serialized point clouds, which is a relevant and well-motivated problem
+* Combines explicit geometric priors (normals, curvature, angular relations) with adaptive state-space modeling, showing a reasonable level of technical integration
+* Introduces GGAM and ASD-SSM, which together form a coherent architecture for handling local geometry and global context add relevant references,
+* free automatic instance segmentation of girder bridge point cloud via large model fusion with reverse entity modelling verification
+* MFINet: a multi-scale feature interaction network for point cloud registration.
+* No-Reference Point Cloud Quality Assessment Through Structure Sampling and Clustering Based on Graph
+* Experimental results demonstrate consistent improvements over strong baselines (e.g., PTv3, Pamba) on S3DIS and ModelNet40
+* Ablation studies are relatively thorough and support the effectiveness of individual components
+* Novelty is somewhat incremental; similar ideas of geometric feature enhancement and multi-scale modeling exist in prior work, and the paper should better clarify its unique contribution
+* Evaluation is limited to indoor and synthetic datasets; lack of experiments on outdoor LiDAR datasets reduces generalizability
+* Additional computational cost from GGAM (dual serialization, graph construction) is not sufficiently analyzed in terms of memory and runtime trade-offs
+* Key hyperparameters (e.g., scale constraint factors) are manually designed and appear sensitive, with no robustness or automatic tuning analysis
+* Method section, especially GGAM, is dense and could be clearer; notation is heavy and may hinder readability
+* Some figures and explanations could be simplified for better accessibility
+* Minor language and writing issues remain
+* Recommend strengthening novelty positioning, adding broader experiments, and improving clarity before publication
+* Overall assessment: technically solid with meaningful improvements, but requires moderate revision
+
+
+
+Reviewer #8: 1. Limited Novelty
+The method is largely a combination of existing techniques:
+- Mamba / SSM
+- Multi-scale learning
+- Feature fusion
+* The contribution is incremental rather than conceptual
+
+2. Over-Complex Architecture
+The framework introduces multiple modules:
+- GGAM
+- ASD-SSM
+- Dual serialization
+This raises concerns about:
+Reproducibility
+Practical usability
+
+3. Weak Experimental Validation
+Evaluation limited to:
+- S3DIS
+- ModelNet40
+Missing:
+Large-scale datasets (ScanNet, SemanticKITTI)
+Cross-dataset validation
+
+4. Marginal Performance Gains
+Improvements over SOTA are:
+Small (~0.5-1%)
+Not consistently significant
+
+5. Missing Efficiency Metrics
+No:
+FLOPs
+Parameter count
+Memory usage
+
+6. Limited Qualitative Analysis
+Visual results:
+Show minor differences
+Lack detailed comparison
+
+************************************************************
+
+In view of these comments the Editor-in-Chief has decided that the paper can be reconsidered for publication after major revisions.
+
+When you log-in to your Main Menu, you will see a menu item called 'Submission Needing Revision'. You will find your submission record there. Also, the reviewer(s) may have uploaded a file with detailed comments on your manuscript. Click on "View Reviewer Attachments" to access any detailed comments from the reviewer(s) that may have been included.
+
+When submitting your revised manuscript, please ensure that you upload the source files (e.g. Word or .TeX with other files in a .zip file which the system will automatically unzip). Uploading a PDF file at this stage will create delays should your manuscript be finally accepted for publication. If your revised submission does not include the source files, we will contact you to request them.
+
+Please note that this journal offers a new, free service called AudioSlides: brief, webcast-style presentations that are shown next to published articles on ScienceDirect (see also http://www.elsevier.com/audioslides). If your paper is accepted for publication, you will automatically receive an invitation to create an AudioSlides presentation.
+
+The revised version of your submission is due by 14 May 2026.
+
+Research Elements (optional)
+This journal encourages you to share research objects - including your raw data, methods, protocols, software, hardware and more – which support your original research article in a Research Elements journal. Research Elements are open access, multidisciplinary, peer-reviewed journals which make the objects associated with your research more discoverable, trustworthy and promote replicability and reproducibility. As open access journals, there may be an Article Publishing Charge if your paper is accepted for publication. Find out more about the Research Elements journals at https://www.elsevier.com/authors/tools-and-resources/research-elements-journals?dgcid=ec_em_research_elements_email.
+
+
+We look forward to receiving the revised version of your paper together with a reply to the reports and a summary of the revisions made.
+
+Include interactive data visualizations in your publication and let your readers interact and engage more closely with your research. Follow the instructions here: : https://www.elsevier.com/researcher/author/tools-and-resources/data-visualization to find out about available data visualization options and how to include them with your article.
+
+Kind regards,
+
+Zheng Yan, PhD
+Editor-in-Chief
+Information Sciences
+
+
+At Elsevier, we want to help all our authors to stay safe when publishing. Please be aware of fraudulent messages requesting money in return for the publication of your paper. If you are publishing open access with Elsevier, bear in mind that we will never request payment before the paper has been accepted. We have prepared some guidelines (https://www.elsevier.com/connect/authors-update/seven-top-tips-on-stopping-apc-scams ) that you may find helpful, including a short video on Identifying fake acceptance letters (https://www.youtube.com/watch?v=o5l8thD9XtE ). Please remember that you can contact Elsevier s Researcher Support team (https://service.elsevier.com/app/home/supporthub/publishing/) at any time if you have questions about your manuscript, and you can log into Editorial Manager to check the status of your manuscript (https://service.elsevier.com/app/answers/detail/a_id/29155/c/10530/supporthub/publishing/kw/status/).
+
+#AU_INS#
+
+To ensure this email reaches the intended recipient, please do not delete the above code
+
+
+
+In compliance with data protection regulations, you may request that we remove your personal registration details at any time. (Remove my information/details). Please contact the publication office if you have any questions.
