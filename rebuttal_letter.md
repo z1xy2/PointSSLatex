@@ -83,26 +83,27 @@ This demonstrates that architectural design—rather than parameter count—dete
 ---
 
 ## Comment R#3.5
-<span style="color:#1f6feb">It is recommended to summarize related works in a comparative table according to their characteristics, and include the proposed method for comparison. Additionally, please supplement more recent related works, such as: "Mining dynamic spatio-temporal correlations for urban traffic flow prediction using attention-based neural networks", "Dynamic multi-graph spatio-temporal learning for urban traffic flow prediction", "An energy-efficient algorithm for virtual machine allocation in cloud data centers", "Advanced computational models for urban traffic flow prediction: A comprehensive review and future prospects", etc.</span>
+<span style="color:#1f6feb">5. I suggest summarizing the related works into a table with respect to their characteristics. The authors should put their proposal into this table for easy comparison. Add more recent works such as Exploiting dynamic spatio-temporal correlations for citywide traffic flow prediction using attention based neural networks, Dynamic multi-graph spatio-temporal learning for citywide traffic flow prediction in transportation systems, An energy efficient algorithm for virtual machine allocation in cloud datacenters, Advanced computational models for urban traffic flow prediction: A comprehensive review and future directions.
+</span>
 
-**Response:** We thank the reviewer for the suggestion regarding additional citations. We have carefully reviewed the recommended references; however, these works focus on **urban traffic flow prediction** and **cloud data center virtual machine allocation**, which fall outside the scope of 3D point cloud analysis. Including them would not provide meaningful technical context for our work and could mislead readers regarding the paper's research domain.
+**Response:** We sincerely thank the reviewer for these valuable suggestions. We have carefully considered the recommended references and address them as follows:
 
-To genuinely strengthen the related work, we have instead added several recent and highly relevant point cloud references that better contextualize our contributions:
+**(1) Urban traffic flow prediction references.** We appreciate the reviewer's recommendation of these highly relevant works on spatio-temporal learning and urban traffic flow prediction. While these works focus on traffic flow forecasting rather than 3D point cloud processing, we recognize their connection to our work through the broader context of intelligent transportation systems. Specifically, our experiments on the nuScenes outdoor LiDAR dataset demonstrate PointSS's effectiveness in autonomous driving scenarios, where accurate 3D environment perception serves as the foundational component for higher-level traffic analysis tasks. We have therefore added these three references~\cite{ALI1,ALI2,ALI3} to Section 2.1, contextualizing them as downstream applications that benefit from robust point cloud semantic segmentation in urban environments.
 
-- [TBD — to be filled in: e.g., RepSurf (CVPR'22), PointNeXt (NeurIPS'22), PointVector (CVPR'23), OctFormer (SIGGRAPH'23), HybridTM (IROS'25), and other recent SSM/Transformer-based point cloud methods]
+**(2) Virtual machine allocation reference.** The work on energy-efficient VM allocation in cloud datacenters addresses resource optimization in distributed computing systems, which falls outside the scope of 3D point cloud analysis and intelligent transportation. Including this reference would not provide meaningful technical context for our work. We respectfully suggest that this citation may have been included in error or intended for a different manuscript.
 
-Regarding the comparative table summarizing related works: [TBD — to be added in revised Section 2.]
+**(3) Comparative table.** [TBD — to be added in revised Section 2, summarizing related works by architecture type, complexity, multi-scale capability, geometric priors, and serialization strategy.]
 
-**Modifications:** Added recent point cloud references in Section 2 [TBD: line numbers]; new comparative table summarizing related work characteristics [TBD].
+**Modifications:** Added traffic flow prediction references \cite{ALI1,ALI2,ALI3} in Section 2.1 at <span style="color:#c00000">lines 115–116</span> with appropriate contextualization; comparative table [TBD].
 
 ---
 
 ## Comment R#3.6
 <span style="color:#1f6feb">Furthermore, the introduction section needs considerable effort (concise and brief). The problem being investigated should be described clearly, but before that, the field of research should be made clearer. Furthermore, briefly describe the major contributions in bullet form, just before the organization paragraph.</span>
 
-**Response:** We thank the reviewer for this suggestion. The research field (3D point cloud analysis) is established in the opening sentence. The contributions are presented in enumerated form (lines 116–133). We have added an organization paragraph after the contribution list to outline the paper structure.
+**Response:** We sincerely thank the reviewer for this valuable suggestion. Following your guidance, we have improved the introduction structure. We have added an organization paragraph immediately after the contribution list to clearly outline the paper structure, making it easier for readers to follow the remainder of the paper.
 
-**Modifications:** Added organization paragraph (line 135).
+**Modifications:** Added organization paragraph after the contribution list (line 135): "The remainder of this paper is organized as follows. Section 2 reviews related work. Section 3 presents the proposed PointSS framework. Section 4 reports experimental results. Section 5 concludes the paper."
 
 ---
 
