@@ -194,6 +194,26 @@ with the same transition dynamics—preventing adaptation to local geometric
 variations. Furthermore, allocating independent parameters for each scale
 incurs parameter growth and memory overhead.
 
+To provide a clearer comparison of the key characteristics of existing methods, \Cref{tab:related_comp} summarizes representative approaches across four dimensions: backbone architecture, multi-scale modeling capability, geometric prior incorporation, and serialization strategy.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Comparison of representative point cloud processing methods. ``Multi-Scale'' indicates whether the method explicitly performs hierarchical or multi-granularity feature modeling. ``Geometric Priors'' indicates whether explicit geometric attributes (e.g., normals, curvature) are incorporated. ``Serialization Strategy'' highlights the specific point ordering scheme used for sequence modeling. SFC denotes Space-Filling Curve.}
+	\label{tab:related_comp}
+	\begin{tabular}{llccl}
+		\hline
+		\textbf{Method} & \textbf{Backbone} & \textbf{Multi-Scale} & \textbf{Geometric Priors} & \textbf{Serialization Strategy} \\
+		\hline
+		PointNet++ \cite{PointNet++} & MLP-based       & \checkmark & --   & --                        \\
+		DGCNN \cite{DGCNN}           & Graph-based     & --         & --   & --                        \\
+		KPConv \cite{KPConv}         & CNN-based       & \checkmark & --   & --                        \\
+		PTv3 \cite{ptv3}             & Transformer-based & \checkmark & --  & Sequential SFC            \\
+		PointMamba \cite{PointMamba} & SSM-based       & --         & --   & Sequential SFC            \\
+		PCM \cite{pcm}               & SSM-based       & \checkmark & --   & Sequential SFC            \\
+		\textbf{PointSS (Ours)}      & \textbf{SSM-based} & \textbf{\checkmark} & \textbf{GGAM} & \textbf{Dual-stream Parallel SFC} \\
+		\hline
+	\end{tabular}
+\end{table}
 
 \section{Method}\label{sec:method}
 
