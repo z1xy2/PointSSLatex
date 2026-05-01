@@ -451,13 +451,16 @@ To evaluate the generalization capability of PointSS on outdoor LiDAR data, we c
 Method & Params & Peak Mem & Patch Size & mIoU & Inference \\
        & (M)    & @512     & Tested     & (\%)  & Time \\
 \midrule
+PCM    & 34.2   & 5.2GB    & $\leq$2048      & 70.1  & 0.75--0.84$\times$ \\
 PTv3   & 46.2   & 14.7GB   & $\leq$512       & 73.4  & 1.00$\times$ \\
 \textbf{PointSS} & \textbf{52.2} & \textbf{6.0GB} & \textbf{$\leq$2048} & \textbf{73.8} & \textbf{0.81--0.91}$\times$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-As shown in \cref{tab:efficiency}, PointSS introduces additional parameters compared to PTv3 (52.2M vs. 46.2M, +13\%), primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower GPU memory footprint: at patch size 512, PointSS consumes only 6.0GB compared to PTv3's 14.7GB, representing a 59\% reduction. More critically, while PTv3 encounters out-of-memory errors at patch size 1024 due to quadratic attention complexity, PointSS scales stably to patch size 2048, demonstrating that architectural design—rather than parameter count—determines practical scalability. Note that PCM~\cite{pcm} is not included in this comparison because it adopts a fundamentally different hierarchical architecture with separate parameters per scale, making direct efficiency comparison less meaningful; moreover, its 70.1\% mIoU is 3.7\% lower than PointSS, indicating a distinct accuracy-efficiency trade-off.
+As shown in \cref{tab:efficiency}, PointSS introduces additional parameters compared to PTv3 (52.2M vs. 46.2M, +13\%), primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower GPU memory footprint: at patch size 512, PointSS consumes only 6.0GB compared to PTv3's 14.7GB, representing a 59\% reduction. More critically, while PTv3 encounters out-of-memory errors at patch size 1024 due to quadratic attention complexity, PointSS scales stably to patch size 2048, demonstrating that architectural design—rather than parameter count—determines practical scalability.
+
+Compared to PCM, another SSM-based method, PointSS achieves 3.7\% higher mIoU (73.8\% vs. 70.1\%) with only a modest increase in memory footprint (6.0GB vs. 5.2GB at patch size 512) and comparable inference speed (0.81--0.91$\times$ vs. 0.75--0.84$\times$ relative to PTv3). Both methods demonstrate stable scaling to patch size 2048, confirming the scalability advantage of SSM-based architectures. However, PointSS achieves substantially better accuracy while maintaining competitive efficiency.
 
 \begin{figure}
 	\centering
