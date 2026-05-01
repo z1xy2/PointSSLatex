@@ -23,11 +23,11 @@ IEEE-Transactions-LaTeX2e-templates-and-instructions/ref.bib是论文引用
 ## 待补充的效率对比数据（用于新增表格）
 
 ### 最终效率对比表数据
-| 方法 | 参数量 | 峰值显存@512 | 可扩展性 | mIoU (S3DIS Area5) | 推理时间 |
-|------|--------|-------------|---------|---------------------|----------|
-| PCM | 34.2M | - | - | 69.8% | - |
-| PTv3 | 46.2M | 14.7GB | OOM@1024 | 73.4% | 基准 |
-| PointSS | 66.2M | 6.0GB | 稳定至2048 | 73.8% | 快9-19% |
+| 方法 | 参数量 | 峰值显存@512 | 可扩展性 | mIoU (S3DIS Area5) | 推理时间        |
+|------|--------|----------|---------|--------------------|-------------|
+| PCM | 34.2M | 5.2GB    | 稳定至2048 | 70.1%              | 相较基准快16-25% |
+| PTv3 | 46.2M | 14.7GB   | OOM@1024 | 73.4%              | 基准          |
+| PointSS | 66.2M | 6.0GB    | 稳定至2048 | 73.8%              | 快9-19%      |
 
 ### 叙事策略
 PointSS introduces additional parameters (+43% over PTv3) primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower memory footprint: at patch size 512, PointSS consumes 6.0GB compared to PTv3's 14.7GB, while PTv3 encounters out-of-memory errors at patch size 1024 (27.8GB) whereas PointSS scales stably to 2048. This demonstrates that architectural design—rather than parameter count—determines practical scalability.
