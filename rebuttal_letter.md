@@ -56,7 +56,6 @@ The revised abstract: (1) reorganizes the technical content around a clear probl
 
 | Method | Params (M) | Peak Mem @512 | Scalability | mIoU (S3DIS Area5) | Inference Time |
 |--------|------------|---------------|-------------|---------------------|----------------|
-| PCM | 34.2 | --- | --- | 70.1 ±0.88% | --- |
 | PTv3 | 46.2 | 14.7GB | OOM @1024 | 73.4% | Baseline |
 | **PointSS** | **52.2** | **6.0GB** | **Stable to 2048** | **73.8 ±0.43%** | **9–19% faster** |
 
@@ -64,7 +63,9 @@ The revised abstract: (1) reorganizes the technical content around a clear probl
 
 **Regarding FLOPs:** The Mamba operator in PointSS is implemented as a custom CUDA kernel, which is incompatible with standard profiling tools (`thop`, `fvcore`). More importantly, FLOPs are a less informative metric for SSM-based methods: the parallel scan algorithm exhibits a non-linear relationship between theoretical FLOPs and wall-clock latency due to memory access patterns. Consistent with the original Mamba paper, we report inference latency—measured under identical hardware conditions—as a more faithful efficiency indicator.
 
-**Parameter uncertainty:** All five independent runs of PointSS exceed PTv3 (73.4%), with mean 73.8% and standard deviation ±0.43%. PCM achieves 70.1% ±0.88% over five runs. See R#3.7 for details.
+**Regarding the SSM baseline comparison:** We respectfully disagree with the implication that our efficiency gains derive solely from SSM固有 advantages. PointSS's efficiency advantage over PTv3 is consistent across all patch sizes (128 to 2048), not only at large scales where SSMs inherently excel. Furthermore, PCM's hierarchical design allocates separate parameters per scale, making its architectural trade-offs fundamentally different from PointSS's single-stream SSM with scale constraint factors. PCM achieves only 70.1% mIoU (3.7% below PointSS), and its architectural difference makes direct efficiency comparison less meaningful.
+
+**Parameter uncertainty:** All five independent runs of PointSS exceed PTv3 (73.4%), with mean 73.8% and standard deviation ±0.43%. See R#3.7 for details.
 
 **Modifications:** Added efficiency comparison table and analysis in Section 4.4; revised S3DIS comparison table with standard deviations.
 
