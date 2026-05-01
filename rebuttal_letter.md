@@ -322,13 +322,13 @@ These additions have strengthened our positioning within the broader point cloud
 ## Comment R#8.4 — Marginal Performance Improvement
 <span style="color:#1f6feb">Improvements over state-of-the-art are small (~0.5–1%), and not consistently significant.</span>
 
-**Response:** <span style="color:#c00000">PointSS achieves 73.8% ±0.43% over five independent runs, with 4 out of 5 runs exceeding PTv3 (73.4%).</span> PointSS reduces peak memory by 59% at patch size 512 (6.0GB vs. 14.7GB) and achieves 9–19% faster inference. We have added this analysis in Section 4.4.
+**Response:** 
 
-<span style="color:#c00000">**Efficiency advantage:** At patch size 512, PointSS consumes only 6.0GB peak memory compared to PTv3's 14.7GB (59% reduction). While PTv3 encounters out-of-memory errors at patch size 1024 (27.8GB), PointSS scales stably to patch size 2048. These properties make PointSS more suitable for memory-constrained or large-scale point cloud processing scenarios.</span>
+PointSS achieves 73.8% ±0.43% over five independent runs, with four runs exceeding PTv3 (73.4%). The improvement approaches statistical significance (p ≈ 0.06, single-sample t-test). More importantly, PointSS delivers substantial efficiency advantages: 59% GPU memory reduction at patch size 512 (6.0GB vs. 14.7GB), 9–19% faster inference, and stable scaling to patch size 2048 where PTv3 encounters OOM at 1024.
 
-<span style="color:#c00000">**SSM-based comparison:** Compared to existing SSM-based methods, PointSS improves over PCM (70.1% ±0.88%) by 3.7% mIoU and Pamba (73.5%) by 0.3% mIoU on S3DIS, while providing a principled solution to the spatial proximity loss problem inherent to SSM-based point cloud processing.</span>
+Compared to SSM-based methods, PointSS improves over PCM (70.1% ±0.88%) by 3.7% and Pamba (73.5%) by 0.3%. On nuScenes outdoor LiDAR, PointSS achieves 80.9% mIoU, exceeding PTv3 (80.4%) and Pamba (80.4%), demonstrating effective generalization across domains.
 
-**Modifications:** Added efficiency analysis in Section 4.4; updated S3DIS table with standard deviations.
+**Modifications:** Added efficiency comparison table in Section 4.4; updated S3DIS table with standard deviations in Section 4.3.1.
 
 ---
 
