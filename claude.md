@@ -6,6 +6,7 @@
 论文的回复信为[rebuttal_letter.md](rebuttal_letter.md)
 [pointss.tex](els-cas-templates/pointss.tex)是正在改的论文
 [pointss-old.tex](els-cas-templates/pointss-old.tex)是提交给审稿人看的版本，也就是大修前的版本
+[diff.tex](diff.tex)是使用latexdiff --encoding=utf8 pointss-old.tex pointss.tex > diff.tex得到的文件，记录了我大修具体修改了哪里
 [参考rebuttal_letter](els-cas-templates/%E5%8F%82%E8%80%83rebuttal_letter)我师兄之前论文的rebuttal_letter，拿不准的东西参考这个
 [审稿注意点](els-cas-templates/%E5%AE%A1%E7%A8%BF%E6%B3%A8%E6%84%8F%E7%82%B9)是和我师兄的比较发现我的不足，你如果要改[rebuttal_letter.md](rebuttal_letter.md)，必须先读这个
 IEEE-Transactions-LaTeX2e-templates-and-instructions/ref.bib是论文引用
@@ -210,7 +211,15 @@ R#6.1 和 R#8.4 这两条，你不应该完全接受，必须要辩护。
 
 
 
-## 重要提示
+## 写作提示
+对于回复开头，开头最好thanks一下
+
+对于改动，你最好用一个和正文的衔接句子， 类似The corresponding revisions are shown as follows.
+
+对于分隔符“---”只能在一个问题开始时和结束时用，一个问题和相应回复之间不要用这个符号打断
+
+我建议使用引用框（>）来标注修改内容，原因如下：更清晰的视觉层次：引用框能明确区分"你的回复文字"和"论文原文引用"，符合师兄的风格：看师兄的 rebuttal letter，他也是用引用框来展示修改后的原文
+
 
 ❯ 我师兄会直接把修改后的文段或图标直接搬进来，而不是像目前这样给一个行号让他自己去找
 改动要附上原文，具体改动位置（原文）标红，此外可以不写行号，标注是在哪个章节进行修改就行，最好是最细章节，比如对章节2.1的改动，写2.1比2强
@@ -252,4 +261,12 @@ R#6.1 和 R#8.4 这两条，你不应该完全接受，必须要辩护。
 可以删，但要区分两类内容：
 ✅ 可以删掉/大幅压缩的：那些用来"描述修改内容"的解释性段落。比如 R#6.3 里你花了大段话描述 GGAM 的 overhead 如何如何，如果直接引用新增的 Section 4.4 原文，这些解释就可以缩成一两句引导语。
 ❌ 不能删的：回应审稿人质疑的逻辑论证部分。比如你解释为什么不报 FLOPs、为什么拒绝那些引用，这些是说服审稿人的内容，不是描述修改的内容，引原文替代不了。
+
+## skill
+如何复制文中的内容到回复信：
+  1. 从 pointss.tex 复制章节内容（保留表格结构、公式）
+  2. 用 extract_pdf.py 提取 pointss.pdf 对应章节
+  3. 对比两者，将 PDF 中的引用编号 [1], [2] 填入 .tex 内容
+  4. 核对表格数据、数字是否一致
+  5. 粘贴到 rebuttal_letter.md，用引用框包裹
 

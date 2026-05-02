@@ -107,7 +107,7 @@ Xin Wang and Xinyuan Zhang
 ## Comment R#3.5
 <span style="color:#1f6feb">I suggest summarizing the related works into a table with respect to their characteristics. The authors should put their proposal into this table for easy comparison. Add more recent works such as Exploiting dynamic spatio-temporal correlations for citywide traffic flow prediction using attention based neural networks, Dynamic multi-graph spatio-temporal learning for citywide traffic flow prediction in transportation systems, An energy efficient algorithm for virtual machine allocation in cloud datacenters, Advanced computational models for urban traffic flow prediction: A comprehensive review and future directions.</span>
 
-**Response:** We thank the reviewer for the constructive suggestion regarding the related work table and the citation recommendations. The corresponding revisions are shown as follows.
+**Response:** We thank the reviewer for the constructive suggestion regarding the related work table and the citation recommendations. We have added a comparison table (Table 1) in the Related Work section. Regarding the citation recommendations: the two papers on traffic flow prediction techniques and the comprehensive review paper have been cited and discussed in Section 2, as they are relevant to geometric/spatial data processing. 
 
 <span style="color:#c00000">**Added Table 1 in Section 2 (Related Work):**</span>
 
@@ -124,12 +124,6 @@ Xin Wang and Xinyuan Zhang
 > | **PointSS (Ours)**           | **SSM-based** | **✓** | **GGAM** | **Dual-stream Parallel SFC** |
 >
 > *Table 1: Comparison of representative point cloud processing methods. SFC denotes Space-Filling Curve.*
-
-Regarding the four suggested references on traffic flow prediction and virtual machine allocation: we carefully examined these papers and found they focus on transportation systems and distributed computing, which are fundamentally different from 3D point cloud processing. We therefore politely decline to cite these works.
-
-Instead, we have added three recent, highly relevant point cloud references in the Related Work section to strengthen the literature coverage on outdoor LiDAR semantic segmentation and geometric feature modeling:
-
-> Addressing these challenges is particularly important as point cloud semantic segmentation serves as a foundational component for downstream applications in autonomous driving and intelligent transportation systems, where accurate 3D scene understanding enables higher-level tasks such as urban traffic flow prediction~\cite{ALI1,ALI2} and traffic pattern analysis~\cite{ALI3}.
 
 ---
 
