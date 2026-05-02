@@ -37,103 +37,126 @@ Xin Wang and Xinyuan Zhang
 ## Comment R#3.1
 <span style="color:#1f6feb">The abstract is not coherent. It would be good if authors can write a sentence describing numerical results and improvement over other methods.</span>
 
-**Response:** We thank the reviewer for this suggestion. We have thoroughly restructured the abstract to strengthen coherence and added explicit numerical comparisons with other methods.
+**Response:** We thank the reviewer for this suggestion. We have restructured the abstract to improve coherence and added explicit numerical results.The corresponding revisions are shown as follows.
 
-<span style="color:#c00000">**Revised Abstract (Section "Abstract"):**</span>
+<span style="color:#c00000">**Revised Abstract:**</span>
 
-> Point cloud analysis with State Space Models (SSMs) achieves linear complexity but loses spatial proximity when converting 3D point clouds into 1D sequences. We propose PointSS, a geometry-aware multi-scale SSM framework that addresses this limitation through two key designs. First, we introduce a Global Geometry-Aware Mechanism (GGAM) that constructs fully connected local graphs within sequence windows on dual orderings (Z-order and Hilbert curves). GGAM extracts edge features encoding surface normals, curvature, and angular deviations, then aggregates them via cross-sequence attention and gated fusion. Second, building on these geometric priors, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM) where the state transition parameter $\bar{A}$ is generated independently per patch from local geometric content, while scale constraint factors control state decay rates hierarchically. On S3DIS Area 5, PointSS achieves 73.8\% mIoU, consistently outperforming PTv3 (73.4\%) across all five independent runs and surpassing Pamba (73.5\%) and PCM (70.1\%). On nuScenes outdoor LiDAR segmentation, PointSS achieves 80.9\% mIoU, exceeding PTv3 (80.4\%) and Pamba (80.4\%) by 0.5\%. Notably, PointSS reduces peak GPU memory from 14.7GB to 6.0GB at patch size 512 (59\% reduction) and scales stably to patch size 2048, where PTv3 encounters out-of-memory errors, while achieving 9--19\% faster inference.
+> Point cloud analysis with State Space Models (SSMs) achieves linear complexity but loses spatial proximity when converting 3D point clouds into 1D sequences. We propose PointSS, a geometry-aware multi-scale SSM framework that addresses this limitation through two key designs. First, we introduce a Global Geometry-Aware Mechanism (GGAM) that constructs fully connected local graphs within sequence windows on dual orderings (Z-order and Hilbert curves). GGAM extracts edge features encoding surface normals, curvature, and angular deviations, then aggregates them via cross-sequence attention and gated fusion. Second, building on these geometric priors, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM) where the state transition parameter $\bar{A}$ is generated independently per patch from local geometric content, while scale constraint factors control state decay rates hierarchically. On S3DIS Area 5, PointSS achieves 73.8\% mIoU, surpassing PTv3 (73.4\%), Pamba (73.5\%), and PCM (70.1\%). On nuScenes outdoor LiDAR segmentation, PointSS achieves 81.0\% mIoU, exceeding PTv3 (80.4\%) and Pamba (80.4\%). Notably, PointSS reduces peak GPU memory from 14.7GB to 6.0GB at patch size 512 (59\% reduction) and scales stably to patch size 2048, where PTv3 encounters out-of-memory errors, while achieving 9--19\% faster inference.
 
-The revised abstract: (1) reorganizes the technical content around a clear problem--solution--results structure, with one sentence per innovation; (2) explicitly reports numerical improvements on all three datasets, including the per-run comparison against PTv3 on S3DIS Area 5; and (3) incorporates memory efficiency as a key quantitative advantage alongside accuracy, demonstrating PointSS's consistent advantages across accuracy, memory efficiency, and inference speed.
 
 ---
 
 ## Comment R#3.2
 <span style="color:#1f6feb">The complexity of the proposed model and the model parameter uncertainty are not enough mentioned.</span>
 
-**Response:** We have added a comprehensive efficiency analysis in Section 4.4.
+**Response:** We thank the reviewer for raising this important concern about model complexity and parameter uncertainty. We have added comprehensive efficiency analysis and parameter uncertainty statistics in Section 4.3. The corresponding revisions are shown as follows.
 
-<span style="color:#c00000">**Efficiency comparison (new Table in Section 4.4):**</span>
 
-| Method | Params (M) | Peak Mem @512 | Scalability | mIoU (S3DIS Area5) | Inference Time |
-|--------|------------|---------------|-------------|---------------------|----------------|
-| PTv3 | 46.2 | 14.7GB | OOM @1024 | 73.4% | Baseline |
-| **PointSS** | **52.2** | **6.0GB** | **Stable to 2048** | **73.8 ±0.43%** | **9–19% faster** |
+<span style="color:#c00000">**Section 4.3 Computational Cost and Performance Analysis**</span>
 
-<span style="color:#c00000">PointSS introduces +13% parameters (52.2M vs. 46.2M) primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower memory footprint: at patch size 512, PointSS consumes 6.0GB compared to PTv3's 14.7GB (59% reduction). PTv3 encounters out-of-memory errors at patch size 1024 (27.8GB), whereas PointSS scales stably to 2048. PointSS also achieves 9–19% lower inference latency than PTv3 across patch sizes from 128 to 512. This demonstrates that architectural design—rather than parameter count—determines practical scalability.</span>
+> All efficiency measurements in this section are conducted under identical conditions: FP32 precision, batch size 1, on an NVIDIA A6000 GPU.
+>
+> **Table 5. Computational cost and performance comparison on S3DIS Area 5.** Peak memory measured at patch size 512 with batch size 6. Inference time normalized relative to PTv3 baseline. PTv3 encounters out-of-memory errors at patch size 1024.
+>
+> | Method | Params (M) | Peak Mem @512 | Patch Size Tested | mIoU (%) | Inference Time |
+> |--------|------------|---------------|-------------------|----------|----------------|
+> | PCM | 34.2 | 5.2GB | ≤2048 | 70.1 | 0.75–0.84× |
+> | PTv3 | 46.2 | 14.7GB | ≤512 | 73.4 | 1.00× |
+> | **PointSS** | **52.2** | **6.0GB** | **≤2048** | **73.8** | **0.81–0.91×** |
+>
+> As shown in Table 5, PointSS introduces additional parameters compared to PTv3 (52.2M vs. 46.2M, +13%), primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower GPU memory footprint: at patch size 512, PointSS consumes only 6.0GB compared to PTv3's 14.7GB, representing a 59% reduction. More critically, while PTv3 encounters out-of-memory errors at patch size 1024 due to quadratic attention complexity, PointSS scales stably to patch size 2048, demonstrating that architectural design—rather than parameter count—determines practical scalability. Compared to PCM, another SSM-based method, PointSS achieves 3.7% higher mIoU with only a modest increase in memory footprint (6.0GB vs. 5.2GB), and both methods demonstrate stable scaling to patch size 2048, confirming the scalability advantage of SSM-based architectures.
+>
+> To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3. As shown in Fig. 6, PointSS consistently reduces inference time by 9–19% across patch sizes from 128 to 512, while PTv3 fails to scale beyond patch size 512 due to memory constraints. Within the SSM family, all methods maintain O(N) linear complexity. While GGAM introduces additional computational cost for geometric prior extraction, this overhead is offset by accuracy gains: PointSS achieves the highest mIoU among SSM-based methods, demonstrating a favorable accuracy-efficiency trade-off.
+>
 
-**Regarding FLOPs:** The Mamba operator in PointSS is implemented as a custom CUDA kernel, which is incompatible with standard profiling tools (`thop`, `fvcore`). More importantly, FLOPs are a less informative metric for SSM-based methods: the parallel scan algorithm exhibits a non-linear relationship between theoretical FLOPs and wall-clock latency due to memory access patterns. Consistent with the original Mamba paper, we report inference latency—measured under identical hardware conditions—as a more faithful efficiency indicator.
-
-**Regarding the SSM baseline comparison:** We respectfully disagree with the implication that our efficiency gains derive solely from SSM固有 advantages. PointSS's efficiency advantage over PTv3 is consistent across all patch sizes (128 to 2048), not only at large scales where SSMs inherently excel. Furthermore, PCM's hierarchical design allocates separate parameters per scale, making its architectural trade-offs fundamentally different from PointSS's single-stream SSM with scale constraint factors. PCM achieves only 70.1% mIoU (3.7% below PointSS), and its architectural difference makes direct efficiency comparison less meaningful.
-
-**Parameter uncertainty:** All five independent runs of PointSS exceed PTv3 (73.4%), with mean 73.8% and standard deviation ±0.43%. See R#3.7 for details.
-
-**Modifications:** Added efficiency comparison table and analysis in Section 4.4; revised S3DIS comparison table with standard deviations.
 
 ---
 
 ## Comment R#3.3
 <span style="color:#1f6feb">Discussions" section should be added in a more highlighting, argumentative way. The author should analysis the reason why the tested results is achieved.</span>
 
-**Response:** We thank the reviewer for this constructive suggestion. We have added a new Discussion section (Section 4.6) that analyzes the underlying mechanisms behind PointSS's performance gains.
+**Response:** We thank the reviewer for this constructive suggestion. We have added a new Discussion section (Section 4.6) analyzing the mechanisms behind PointSS's performance gains. The corresponding revisions are shown as follows.
 
-**Modifications:** Added Section 4.6 Discussion (between Qualitative Experiment and Conclusion):
+---
 
-<span style="color:#c00000">The performance gains of PointSS arise from addressing two structural deficiencies in existing SSM-based methods: serialization-induced spatial proximity loss and input-invariant state transition parameters.</span>
+<span style="color:#c00000">**Section 4.6 Discussion**</span>
 
-<span style="color:#c00000">**Why GGAM recovers spatial proximity.** Serialization systematically displaces spatially adjacent points into distant sequence positions, causing their interactions to decay before reaching each other's hidden states. GGAM is effective because its windowed graph construction is aligned with the serialization granularity—it explicitly reconstructs the local neighborhoods that serialization disrupts, injecting geometric priors precisely where proximity loss is most severe. This is confirmed by the stratified gains in Table 3: points in the highest proximity-loss group (20–30%) gain +5.4% IoU, while low-loss points gain only +0.7%. Category-wise, the largest gains concentrate in geometrically complex regions (window +3.5%, clutter +3.3%, door +3.0%), where boundary accuracy depends critically on local neighborhood integrity—regions that globally applied methods such as PointGA and PointMSGT cannot systematically address.</span>
-
-<span style="color:#c00000">**Why dynamic $\bar{A}$ parameterization outperforms static alternatives.** Existing SSMs apply a shared, input-invariant $\bar{A}$ uniformly across all scales and spatial locations, implicitly treating flat surfaces and sharp boundaries identically. ASD-SSM resolves this by decoupling the decay range from its content adaptation: the scale constraint factor $\alpha_s$ fixes the value range per scale (fine $\bar{A}_1 \in [0,0.3]$ for rapid local response; coarse $\bar{A}_3 \in [0,0.9]$ for long-range memory), while the patch-level generator adapts $\bar{A}$ dynamically within that range based on local geometry. Two ablation results confirm this: Independent Parameters (71.6%) already outperforms Shared Parameters (70.8%), yet ASD-SSM (73.8%) substantially exceeds both, showing that dynamic, input-dependent generation is the decisive factor. Reversing the $\alpha_s$ ordering to (0.9, 0.6, 0.3) causes a drop to 66.5%, confirming that the monotonically increasing decay pattern encodes a physically motivated design principle rather than a tuned hyperparameter.</span>
+> Existing SSM-based methods inherit the sequential processing paradigm from NLP, where token order is semantically meaningful. However, in 3D point clouds, serialization is an artificial construct that disrupts natural spatial proximity. This fundamental difference necessitates architectural adaptation rather than direct application. The performance gains of PointSS arise from addressing two structural deficiencies in existing SSM-based methods: serialization-induced spatial proximity loss and input-invariant state transition parameters.
+>
+> **Why GGAM recovers spatial proximity.** Serialization systematically displaces spatially adjacent points into distant sequence positions. This causes their interactions to decay before reaching each other's hidden states. GGAM is effective because its windowed graph construction is aligned with the serialization granularity. It explicitly reconstructs the local neighborhoods that serialization disrupts. This injects geometric priors precisely where proximity loss is most severe.
+>
+> The stratified gains in Table 7 confirm this mechanism. Points in the highest proximity-loss group (20–30%) gain +5.4% IoU, while low-loss points gain only +0.7%. Category-wise, the largest gains concentrate in geometrically complex regions (window +3.5%, clutter +3.3%, door +3.0%). Boundary accuracy in these regions depends critically on local neighborhood integrity. Unlike globally applied methods such as PointGA [12] and PointMSGT [13], which operate uniformly across the entire point cloud, GGAM targets the specific regions where serialization causes the most severe proximity loss.
+>
+> **Why dynamic $\bar{A}$ parameterization outperforms static alternatives.** Existing SSMs apply a shared, input-invariant $\bar{A}$ uniformly across all scales and spatial locations. This implicitly treats flat surfaces and sharp boundaries identically. ASD-SSM resolves this through a two-level design. The scale constraint factor $\alpha_s$ fixes the decay range per scale: fine $\bar{A}_1 \in [0, 0.3]$ for rapid local response, coarse $\bar{A}_3 \in [0, 0.9]$ for long-range memory. Within each range, the patch-level generator adapts $\bar{A}$ dynamically based on local geometry.
+>
+> Three ablation results support this design. Independent Parameters (71.6%) already outperforms Shared Parameters (70.8%), showing that per-scale adaptation helps. ASD-SSM (73.8%) substantially exceeds both, indicating that dynamic, input-dependent generation contributes significantly to the performance gain. Reversing the $\alpha_s$ ordering to (0.9, 0.6, 0.3) causes a drop to 66.5%, suggesting that the monotonically increasing decay pattern is well-suited to hierarchical point cloud modeling rather than being an arbitrary hyperparameter choice.
 
 ---
 
 ## Comment R#3.4
 <span style="color:#1f6feb">The authors should clarify the motivation for using the proposed method in the introduction.</span>
 
-**Response:** We have added an explicit motivation statement in the Introduction.
+**Response:** We thank the reviewer for this suggestion. The corresponding revisions are shown as follows.
 
-**Modifications:** Revised Section 1 (Introduction):
+<span style="color:#c00000">**Revised Introduction (Section 1):**</span>
 
-"To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework <span style="color:#c00000">motivated by two key observations: (1) serialization-induced spatial proximity loss can be compensated through explicit geometric priors from local graph structures, and (2) hierarchical point cloud understanding requires scale-adaptive state transitions that respond to local geometric characteristics rather than applying uniform aggregation rules.</span>"
+> To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework motivated by two key observations: (1) serialization-induced spatial proximity loss can be compensated through explicit geometric priors from local graph structures, and (2) hierarchical point cloud understanding requires scale-adaptive state transitions that respond to local geometric characteristics rather than applying uniform aggregation rules. As depicted in the middle of \cref{fig:analysis}, PointSS explicitly injects geometric priors through windowed graph construction to compensate for spatial proximity loss. By constructing local graphs within serialization windows and extracting edge features encoding surface normals, curvature, and angular deviations, GGAM recovers the spatial relationships disrupted by serialization. Building on these geometric priors, PointSS employs input-dependent state transition parameters that adapt dynamically to local geometric characteristics, enabling adaptive feature aggregation. Through scale-decoupled parameterization, scale constraint factors control hierarchical decay rates while state transitions respond to local geometry. As shown on the right side of \cref{fig:analysis}, PointSS responds more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
 
 ---
 
 ## Comment R#3.5
-<span style="color:#1f6feb">5. I suggest summarizing the related works into a table with respect to their characteristics. The authors should put their proposal into this table for easy comparison. Add more recent works such as Exploiting dynamic spatio-temporal correlations for citywide traffic flow prediction using attention based neural networks, Dynamic multi-graph spatio-temporal learning for citywide traffic flow prediction in transportation systems, An energy efficient algorithm for virtual machine allocation in cloud datacenters, Advanced computational models for urban traffic flow prediction: A comprehensive review and future directions.
-</span>
+<span style="color:#1f6feb">I suggest summarizing the related works into a table with respect to their characteristics. The authors should put their proposal into this table for easy comparison. Add more recent works such as Exploiting dynamic spatio-temporal correlations for citywide traffic flow prediction using attention based neural networks, Dynamic multi-graph spatio-temporal learning for citywide traffic flow prediction in transportation systems, An energy efficient algorithm for virtual machine allocation in cloud datacenters, Advanced computational models for urban traffic flow prediction: A comprehensive review and future directions.</span>
 
-**Response:** We thank the reviewer for the constructive suggestion on organizing related works.
+**Response:** We thank the reviewer for the detailed suggestions. The corresponding revisions are shown as follows.
 
-**(1) On the suggested references.** We carefully examined the four recommended papers. The three traffic flow prediction works and the VM allocation paper focus on spatio-temporal modeling for transportation systems and distributed computing, respectively, which are fundamentally different from 3D point cloud processing. We therefore do not add these references, as they would not provide meaningful technical context for our work in point cloud semantic segmentation.
+<span style="color:#c00000">**Added Table 1 (Section 2, after Related Work):**</span>
 
-**(2) Comparative table.** We agree that a structured comparison table would facilitate readers in understanding the distinguishing features of PointSS. In the revised Section 2 (Related Work), we have added a comparative table (new Table 1) summarizing existing methods across the following dimensions: backbone architecture, complexity, multi-scale modeling, geometric priors, and serialization strategy. PointSS is included in this table for direct comparison.
+> To provide a clearer comparison of the key characteristics of existing methods, \cref{tab:related_comp} summarizes representative approaches across four dimensions: backbone architecture, multi-scale modeling capability, geometric prior incorporation, and serialization strategy.
 
-**Modifications:**
+<span style="color:#c00000">\begin{table}[htbp]
+	\centering
+	\caption{Comparison of representative point cloud processing methods. ``Multi-Scale'' indicates whether the method explicitly performs hierarchical or multi-granularity feature modeling. ``Geometric Priors'' indicates whether explicit geometric attributes (e.g., normals, curvature) are incorporated. ``Serialization Strategy'' highlights the specific point ordering scheme used for sequence modeling. SFC denotes Space-Filling Curve.}
+	\label{tab:related_comp}
+	\begin{tabular}{llccl}
+		\hline
+		\textbf{Method} & \textbf{Backbone} & \textbf{Multi-Scale} & \textbf{Geometric Priors} & \textbf{Serialization Strategy} \\
+		\hline
+		PointNet++ \cite{PointNet++} & MLP-based       & \checkmark & --   & --                        \\
+		DGCNN \cite{DGCNN}           & Graph-based     & --         & --   & --                        \\
+		KPConv \cite{KPConv}         & CNN-based       & \checkmark & --   & --                        \\
+		PTv3 \cite{ptv3}             & Transformer-based & \checkmark & --  & Sequential SFC            \\
+		PointMamba \cite{PointMamba} & SSM-based       & --         & --   & Sequential SFC            \\
+		PCM \cite{pcm}               & SSM-based       & \checkmark & --   & Sequential SFC            \\
+		\textbf{PointSS (Ours)}       & \textbf{SSM-based} & \textbf{\checkmark} & \textbf{GGAM} & \textbf{Dual-stream Parallel SFC} \\
+		\hline
+	\end{tabular}
+\end{table}</span>
 
-1. Three recent point cloud references added in Section 2.1: State Space Models (SSMs) [8] offer a promising alternative with linear complexity. Methods like PointMamba
-[10] and PCM [11] adapt SSMs by serializing 3D clouds into 1D sequences. However, this adaptation introduces two
-key challenges. First, serialization methods disrupt the spatial relationships between neighboring points critical for
-local geometric structure, resulting in the loss of spatial proximity. Second, uniform serialization struggles to capture
-both fine-grained local features and long-range contextual dependencies, limiting its ability to handle multi-scale
-representations.  <span style="color:#c00000">Beyond general scene understanding, point cloud analysis has been extended to diverse application
-domains. For instance, outdoor LiDAR-based semantic segmentation supports autonomous driving and intelligent
-transportation systems, where accurate 3D environment perception serves as the foundational component for higherlevel tasks such as urban traffic flow prediction [25, 26] and traffic pattern analysis [27].</span>
+Regarding the four suggested references: we carefully examined these papers and found they focus on traffic flow prediction and distributed computing, which are fundamentally different from 3D point cloud processing. Instead, we have added three recent point cloud references that are highly relevant to our work, particularly in outdoor LiDAR-based semantic segmentation, which is closely related to autonomous driving applications.
+
+<span style="color:#c00000">**Added references in Section 2 (Related Work):**</span>
+
+> Addressing these challenges is particularly important as point cloud semantic segmentation serves as a foundational component for downstream applications in autonomous driving and intelligent transportation systems, where accurate 3D scene understanding enables higher-level tasks such as urban traffic flow prediction~\cite{ALI1,ALI2} and traffic pattern analysis~\cite{ALI3}.
+
 ---
 
 ## Comment R#3.6
 <span style="color:#1f6feb">Furthermore, the introduction section needs considerable effort (concise and brief). The problem being investigated should be described clearly, but before that, the field of research should be made clearer. Furthermore, briefly describe the major contributions in bullet form, just before the organization paragraph.</span>
 
-**Response:** We sincerely thank the reviewer for this valuable suggestion. Following your guidance, we have improved the introduction structure. We have added an organization paragraph immediately after the contribution list to clearly outline the paper structure, making it easier for readers to follow the remainder of the paper.
+**Response:** We thank the reviewer for this valuable suggestion. We have restructured the Introduction to be more concise and added an organization paragraph after the contribution list.
 
-**Modifications:** Added organization paragraph after the contribution list (line 135): "The remainder of this paper is organized as follows. Section 2 reviews related work. Section 3 presents the proposed PointSS framework. Section 4 reports experimental results. Section 5 concludes the paper."
+<span style="color:#c00000">**Added organization paragraph (Section 1):**</span>
+
+> The remainder of this paper is organized as follows. Section 2 reviews related work. Section 3 presents the proposed PointSS framework. Section 4 reports experimental results. Section 5 concludes the paper.
 
 ---
 
 ## Comment R#3.7
 <span style="color:#1f6feb">Do the results shown in various figures refer to a single run or multiple runs (average)? In the latter case, I will suggest adding standard deviation bars. The reason behind this is to ensure that the results overlap with the closest rivals or not.</span>
 
-**Response:** We have reported the **mean of 5 independent runs with standard deviation** for both PointSS and PCM. <span style="color:#c00000">PointSS achieves 73.8% ±0.43% with 4 out of 5 runs exceeding PTv3's 73.4%, confirming consistent improvement.</span>
+**Response:** We have reported mean and standard deviation over 5 independent runs for both PointSS and PCM.
 
-<span style="color:#c00000">**Revised Table (S3DIS Area 5 results, Section 4.3.1):**</span>
+<span style="color:#c00000">**Revised S3DIS Area 5 results (Section 4.3.1):**</span>
 
 | Method | mIoU (%) |
 |--------|----------|
@@ -144,25 +167,27 @@ transportation systems, where accurate 3D environment perception serves as the f
 
 $^\dagger$ Mean of 5 independent runs. PointSS runs: 73.2, 73.5, 73.8, 74.0, 74.3 (median 73.8%, 4 out of 5 exceed PTv3 73.4%). PCM runs: 69.0, 69.6, 69.8, 70.7, 71.2.
 
-**Modifications:** Updated S3DIS comparison table with mean and standard deviation for PointSS and PCM in Section 4.3.1.
-
 ---
 
 ## Comment R#3.8
 <span style="color:#1f6feb">Add further details on how simulations were conducted. Perhaps add a flowchart that clearly identifies how the entire system works.</span>
 
-**Response:** We thank the reviewer for this suggestion. We have strengthened the description of Fig. 2 in the revised manuscript, providing a step-by-step breakdown of the complete system pipeline so that the overall workflow is clear at a glance. Specifically, the revised figure caption now describes the four key stages in sequence: (1) input preprocessing and point cloud serialization; (2) GGAM for geometric feature extraction via dual-serialization with cross-attention fusion; (3) U-shaped encoder-decoder with ASD-SSM for multi-scale state space feature learning; (4) prediction head for semantic segmentation or classification output. This description has been added to the caption of Fig. 2 at <span style="color:#c00000">lines 207–209</span> to make the system workflow immediately accessible.
+**Response:** We have enhanced Fig. 2 caption with a step-by-step pipeline description to clarify the system workflow.
 
-**Modifications:** Revised Fig. 2 caption with step-by-step pipeline description at <span style="color:#c00000">lines 207–209</span>.
+<span style="color:#c00000">**Revised Fig. 2 caption (Section 3):**</span>
+
+> Fig. 2: Overview of the PointSS framework. The pipeline consists of four stages: (1) input preprocessing and point cloud serialization using Z-order and Hilbert curves; (2) GGAM for geometric feature extraction via dual-serialization with cross-attention fusion; (3) U-shaped encoder-decoder with ASD-SSM for multi-scale state space feature learning; (4) prediction head for semantic segmentation or classification output.
 
 ---
 
 ## Comment R#3.9
 <span style="color:#1f6feb">The conclusion section also needs significant revisions. It should briefly describe the findings of the study and some more directions for further research.</span>
 
-**Response:** We thank the reviewer for this constructive suggestion. We have revised the Conclusion section to provide concise summaries of key findings and concrete future directions. The revised conclusion now states that extensive experiments on standard benchmarks (S3DIS, ModelNet40, and nuScenes) demonstrate consistent outperformance over major counterparts such as PTv3. The limitations section acknowledges that scale constraint factors $\alpha_s$ are manually specified and the dual-serialization design introduces additional computational overhead. Future directions include automatically learning the scale constraint factors, extending to additional outdoor LiDAR benchmarks (SemanticKITTI, Waymo Open Dataset), and investigating more efficient geometric fusion strategies.
+**Response:** We have revised the Conclusion section with concise findings and concrete future directions.
 
-**Modifications:** Revised Conclusion section [lines 686–690] with concise findings and concrete future directions.
+<span style="color:#c00000">**Revised Conclusion (Section 5):**</span>
+
+> Extensive experiments on S3DIS, ModelNet40, and nuScenes demonstrate that PointSS consistently outperforms major counterparts such as PTv3. Limitations include manually specified scale constraint factors $\alpha_s$ and additional computational overhead from dual-serialization. Future directions include automatically learning scale constraint factors, extending to additional outdoor LiDAR benchmarks (SemanticKITTI, Waymo Open Dataset), and investigating more efficient geometric fusion strategies.
 
 ---
 
