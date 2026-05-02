@@ -357,13 +357,11 @@ We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic 
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} summarizes the semantic segmentation performance on S3DIS Area 5. Without pre-training, PointSS achieves 73.8\% mean Intersection over Union (mIoU), achieving competitive performance among compared methods. Specifically, it achieves statistically significant improvements over Point Transformer V3 (+0.4\%, p=0.012) and Pamba (+0.3\%, p=0.035). Furthermore, PointSS retains the linear time complexity of SSMs.
-
-\textbf{Statistical Validation.} To assess the reliability of our results, we conduct eight independent training runs with different random seeds, yielding 73.2\%, 73.4\%, 73.6\%, 73.8\%, 73.8\%, 74.0\%, 74.1\%, and 74.3\% (mean=$73.78\%\pm0.37\%$). One-sample t-tests comparing the PointSS mean against baselines yield: $t(7)=2.90$, $p=0.012$ vs. PTv3 (73.4\%); $t(7)=2.14$, $p=0.035$ vs. Pamba (73.5\%). While the margins are modest (+0.38\% over PTv3, +0.28\% over Pamba), PointSS delivers this competitive performance with substantially lower computational cost (Section~4.4).
+\cref{tab:s3dis} summarizes the semantic segmentation performance on S3DIS Area 5. Without pre-training, PointSS achieves 73.8$\pm$0.4\% mean Intersection over Union (mIoU), achieving competitive performance among compared methods. To assess the reliability of our results, we conduct eight independent training runs with different random seeds. One-sample t-tests comparing the PointSS mean against baselines yield: $t(7)=2.90$, $p=0.012$ vs. PTv3 (73.4\%); $t(7)=2.14$, $p=0.035$ vs. Pamba (73.5\%). While the margins are modest (+0.4\% over PTv3, +0.3\% over Pamba), PointSS delivers this competitive performance with substantially lower computational cost (Section~4.4) while retaining the linear time complexity of SSMs.
 
 \begin{table*}
 	\centering
-	\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Mean of eight independent runs. One-sample t-tests: $t(7)=2.90$, $p=0.012$ vs. PTv3 (73.4\%); $t(7)=2.14$, $p=0.035$ vs. Pamba (73.5\%). PCM reproduced from official implementation. All other results from original papers.}
+	\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Mean $\pm$ std of eight independent runs. One-sample t-tests: $t(7)=2.90$, $p=0.012$ vs. PTv3 (73.4\%); $t(7)=2.14$, $p=0.035$ vs. Pamba (73.5\%). PCM reproduced from official implementation. All other results from original papers.}
 	\label{tab:s3dis}
 	\begin{tabular}{@{}lll@{}}
 		\toprule
@@ -383,7 +381,7 @@ We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic 
 		PCM$^\dagger$\cite{pcm} & AAAI'25 & 70.1 \\
 		Pamba\cite{pamba} & AAAI'25 & 73.5 \\
 		HybridTM\cite{hybridtm} & IROS'25 & 72.1 \\
-		PointSS$^\dagger$ (Ours) & -- & \textbf{73.8} \\ \bottomrule
+		PointSS$^\dagger$ (Ours) & -- & \textbf{73.8$\pm$0.4} \\ \bottomrule
 	\end{tabular}
 \end{table*}
 
