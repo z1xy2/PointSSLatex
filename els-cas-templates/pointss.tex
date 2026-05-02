@@ -699,36 +699,17 @@ These qualitative results are consistent with the trends observed in the quantit
 
 \subsection{Discussion}
 
-The performance gains of PointSS arise from addressing two structural deficiencies
-in existing SSM-based methods: serialization-induced spatial proximity loss and
-input-invariant state transition parameters.
+Existing SSM-based methods inherit the sequential processing paradigm from NLP, where token order is semantically meaningful. However, in 3D point clouds, serialization is an artificial construct that disrupts natural spatial proximity. This fundamental difference necessitates architectural adaptation rather than direct application. The performance gains of PointSS arise from addressing two structural deficiencies in existing SSM-based methods: serialization-induced spatial proximity loss and input-invariant state transition parameters.
 
 \textbf{Why GGAM recovers spatial proximity.}
-Serialization systematically displaces spatially adjacent points into distant sequence
-positions, causing their interactions to decay before reaching each other's hidden states.
-GGAM is effective because its windowed graph construction is \emph{aligned} with the
-serialization granularity---it explicitly reconstructs the local neighborhoods that
-serialization disrupts, injecting geometric priors precisely where proximity loss is most
-severe. This is confirmed by the stratified gains in \cref{tab:ggam_fragmentation}: points
-in the highest proximity-loss group (20--30\%) gain +5.4\% IoU, while low-loss points gain
-only +0.7\%. Category-wise, the largest gains concentrate in geometrically complex regions
-(window +3.5\%, clutter +3.3\%, door +3.0\%), where boundary accuracy depends critically
-on local neighborhood integrity---regions that globally applied methods such as
-PointGA~\cite{pointga} and PointMSGT~\cite{pointmsgt} cannot systematically address.
+Serialization systematically displaces spatially adjacent points into distant sequence positions. This causes their interactions to decay before reaching each other's hidden states. GGAM is effective because its windowed graph construction is \emph{aligned} with the serialization granularity. It explicitly reconstructs the local neighborhoods that serialization disrupts. This injects geometric priors precisely where proximity loss is most severe.
+
+The stratified gains in \cref{tab:ggam_fragmentation} confirm this mechanism. Points in the highest proximity-loss group (20--30\%) gain +5.4\% IoU, while low-loss points gain only +0.7\%. Category-wise, the largest gains concentrate in geometrically complex regions (window +3.5\%, clutter +3.3\%, door +3.0\%). Boundary accuracy in these regions depends critically on local neighborhood integrity. Unlike globally applied methods such as PointGA~\cite{pointga} and PointMSGT~\cite{pointmsgt}, which operate uniformly across the entire point cloud, GGAM targets the specific regions where serialization causes the most severe proximity loss.
 
 \textbf{Why dynamic $\bar{A}$ parameterization outperforms static alternatives.}
-Existing SSMs apply a shared, input-invariant $\bar{A}$ uniformly across all scales and
-spatial locations, implicitly treating flat surfaces and sharp boundaries identically.
-ASD-SSM resolves this by decoupling the decay \emph{range} from its \emph{content
-	adaptation}: the scale constraint factor $\alpha_s$ fixes the value range per scale (fine
-$\bar{A}_1 \in [0,0.3]$ for rapid local response; coarse $\bar{A}_3 \in [0,0.9]$ for
-long-range memory), while the patch-level generator adapts $\bar{A}$ dynamically within
-that range based on local geometry. Two ablation results confirm this: Independent
-Parameters (71.6\%) already outperforms Shared Parameters (70.8\%), yet ASD-SSM (73.8\%)
-substantially exceeds both, showing that \emph{dynamic, input-dependent} generation is the
-decisive factor. Reversing the $\alpha_s$ ordering to (0.9, 0.6, 0.3) causes a drop to
-66.5\%, confirming that the monotonically increasing decay pattern encodes a physically
-motivated design principle rather than a tuned hyperparameter.
+Existing SSMs apply a shared, input-invariant $\bar{A}$ uniformly across all scales and spatial locations. This implicitly treats flat surfaces and sharp boundaries identically. ASD-SSM resolves this through a two-level design. The scale constraint factor $\alpha_s$ fixes the decay \emph{range} per scale: fine $\bar{A}_1 \in [0,0.3]$ for rapid local response, coarse $\bar{A}_3 \in [0,0.9]$ for long-range memory. Within each range, the patch-level generator adapts $\bar{A}$ dynamically based on local geometry.
+
+Three ablation results support this design. Independent Parameters (71.6\%) already outperforms Shared Parameters (70.8\%), showing that per-scale adaptation helps. ASD-SSM (73.8\%) substantially exceeds both, indicating that \emph{dynamic, input-dependent} generation contributes significantly to the performance gain. Reversing the $\alpha_s$ ordering to (0.9, 0.6, 0.3) causes a drop to 66.5\%, suggesting that the monotonically increasing decay pattern is well-suited to hierarchical point cloud modeling rather than being an arbitrary hyperparameter choice.
 
 \section{Conclusion}\label{sec:conclusion}
 
