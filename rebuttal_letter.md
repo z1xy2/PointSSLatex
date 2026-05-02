@@ -107,34 +107,27 @@ Xin Wang and Xinyuan Zhang
 ## Comment R#3.5
 <span style="color:#1f6feb">I suggest summarizing the related works into a table with respect to their characteristics. The authors should put their proposal into this table for easy comparison. Add more recent works such as Exploiting dynamic spatio-temporal correlations for citywide traffic flow prediction using attention based neural networks, Dynamic multi-graph spatio-temporal learning for citywide traffic flow prediction in transportation systems, An energy efficient algorithm for virtual machine allocation in cloud datacenters, Advanced computational models for urban traffic flow prediction: A comprehensive review and future directions.</span>
 
-**Response:** We thank the reviewer for the detailed suggestions. The corresponding revisions are shown as follows.
+**Response:** We thank the reviewer for the constructive suggestion regarding the related work table and the citation recommendations. The corresponding revisions are shown as follows.
 
-<span style="color:#c00000">**Added Table 1 (Section 2, after Related Work):**</span>
+<span style="color:#c00000">**Added Table 1 in Section 2 (Related Work):**</span>
 
 > To provide a clearer comparison of the key characteristics of existing methods, \cref{tab:related_comp} summarizes representative approaches across four dimensions: backbone architecture, multi-scale modeling capability, geometric prior incorporation, and serialization strategy.
+> 
+> | Method                       | Backbone | Multi-Scale | Geometric Priors | Serialization Strategy |
+> |------------------------------|----------|:-----------:|:----------------:|------------------------|
+> | PointNet++                   | MLP-based | ✓ | -- | -- |
+> | DGCNN                        | Graph-based | -- | -- | -- |
+> | KPConv                       | CNN-based | ✓ | -- | -- |
+> | PTv3              | Transformer-based | ✓ | -- | Sequential SFC |
+> | PointMamba  | SSM-based | -- | -- | Sequential SFC |
+> | PCM              | SSM-based | ✓ | -- | Sequential SFC |
+> | **PointSS (Ours)**           | **SSM-based** | **✓** | **GGAM** | **Dual-stream Parallel SFC** |
+>
+> *Table 1: Comparison of representative point cloud processing methods. SFC denotes Space-Filling Curve.*
 
-<span style="color:#c00000">\begin{table}[htbp]
-	\centering
-	\caption{Comparison of representative point cloud processing methods. ``Multi-Scale'' indicates whether the method explicitly performs hierarchical or multi-granularity feature modeling. ``Geometric Priors'' indicates whether explicit geometric attributes (e.g., normals, curvature) are incorporated. ``Serialization Strategy'' highlights the specific point ordering scheme used for sequence modeling. SFC denotes Space-Filling Curve.}
-	\label{tab:related_comp}
-	\begin{tabular}{llccl}
-		\hline
-		\textbf{Method} & \textbf{Backbone} & \textbf{Multi-Scale} & \textbf{Geometric Priors} & \textbf{Serialization Strategy} \\
-		\hline
-		PointNet++ \cite{PointNet++} & MLP-based       & \checkmark & --   & --                        \\
-		DGCNN \cite{DGCNN}           & Graph-based     & --         & --   & --                        \\
-		KPConv \cite{KPConv}         & CNN-based       & \checkmark & --   & --                        \\
-		PTv3 \cite{ptv3}             & Transformer-based & \checkmark & --  & Sequential SFC            \\
-		PointMamba \cite{PointMamba} & SSM-based       & --         & --   & Sequential SFC            \\
-		PCM \cite{pcm}               & SSM-based       & \checkmark & --   & Sequential SFC            \\
-		\textbf{PointSS (Ours)}       & \textbf{SSM-based} & \textbf{\checkmark} & \textbf{GGAM} & \textbf{Dual-stream Parallel SFC} \\
-		\hline
-	\end{tabular}
-\end{table}</span>
+Regarding the four suggested references on traffic flow prediction and virtual machine allocation: we carefully examined these papers and found they focus on transportation systems and distributed computing, which are fundamentally different from 3D point cloud processing. We therefore politely decline to cite these works.
 
-Regarding the four suggested references: we carefully examined these papers and found they focus on traffic flow prediction and distributed computing, which are fundamentally different from 3D point cloud processing. Instead, we have added three recent point cloud references that are highly relevant to our work, particularly in outdoor LiDAR-based semantic segmentation, which is closely related to autonomous driving applications.
-
-<span style="color:#c00000">**Added references in Section 2 (Related Work):**</span>
+Instead, we have added three recent, highly relevant point cloud references in the Related Work section to strengthen the literature coverage on outdoor LiDAR semantic segmentation and geometric feature modeling:
 
 > Addressing these challenges is particularly important as point cloud semantic segmentation serves as a foundational component for downstream applications in autonomous driving and intelligent transportation systems, where accurate 3D scene understanding enables higher-level tasks such as urban traffic flow prediction~\cite{ALI1,ALI2} and traffic pattern analysis~\cite{ALI3}.
 
