@@ -130,11 +130,21 @@ Xin Wang and Xinyuan Zhang
 ## Comment R#3.6
 <span style="color:#1f6feb">Furthermore, the introduction section needs considerable effort (concise and brief). The problem being investigated should be described clearly, but before that, the field of research should be made clearer. Furthermore, briefly describe the major contributions in bullet form, just before the organization paragraph.</span>
 
-**Response:** We thank the reviewer for this valuable suggestion. We have restructured the Introduction to be more concise and added an organization paragraph after the contribution list.
+**Response:** We thank the reviewer for this valuable suggestion. We have restructured the Introduction (Section 1) to improve clarity and conciseness. The corresponding revisions are shown as follows.
 
-<span style="color:#c00000">**Added organization paragraph (Section 1):**</span>
+<span style="color:#c00000">**Revised Introduction structure (Section 1):**</span>
 
-> The remainder of this paper is organized as follows. Section 2 reviews related work. Section 3 presents the proposed PointSS framework. Section 4 reports experimental results. Section 5 concludes the paper.
+We have reorganized the Introduction into four clear components: (1) research field overview establishing the context of point cloud analysis and the evolution from PointNet to Transformers to SSMs; (2) problem statement identifying the spatial proximity loss and input-invariant parameterization limitations in existing SSM-based methods; (3) proposed solution describing PointSS's geometry-aware multi-scale design; and (4) contributions in bullet form followed by the organization paragraph.
+
+> **The main contributions of this work are as follows:**
+>
+> 1. We propose a Global Geometry-Aware Mechanism (GGAM) that injects explicit geometric priors through windowed neighborhoods and dual-serialization fusion, effectively mitigating the loss of spatial proximity and providing reliable geometric guidance for scale-adaptive learning.
+>
+> 2. We design an Adaptive Scale-Decoupled State Space Model (ASD-SSM) featuring a dynamic parameter generation mechanism. By adapting state transition parameters $\bar{A}$ to local geometric characteristics, ASD-SSM enables fine scales to capture geometric details while coarse scales model semantic context, achieving effective hierarchical representations.
+>
+> 3. Extensive experiments demonstrate that PointSS achieves 73.8% mIoU on S3DIS semantic segmentation and 81.0% mIoU on nuScenes outdoor LiDAR segmentation, outperforming major SSM-based counterparts while maintaining linear complexity. Comprehensive ablation studies further validate the effectiveness of our geometry-aware multi-scale design.
+>
+> **Organization:** The remainder of this paper is organized as follows. Section 2 reviews related work. Section 3 presents the proposed PointSS framework. Section 4 reports experimental results. Section 5 concludes the paper.
 
 ---
 
