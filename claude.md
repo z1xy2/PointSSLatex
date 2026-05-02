@@ -42,12 +42,14 @@ PointSS introduces additional parameters (+43% over PTv3) primarily from the GGA
 
 标准差统计：
 pointss在s3dis数据集八次运行mIoU：73.2 73.4 73.6 73.8 73.8 74.0 74.1 74.3
-均值73.76% 标准差±0.38% T检验0.031
-关键统计特征：5次运行中0次低于PTv3基线(73.4%)，4次严格高于，1次等于
+均值73.76% 标准差±0.38% T检验0.011相较于ptv3，相较于pamba 0.035
+此外我发现，我复现3次ptv3，结果都小于73.4%,可以提一嘴，在rebuttal letter里，也就是说选73.4%甚至是对我们不利的，你可以委婉说一下
 
 pcm在s3dis数据集五次运行mIoU：73.4, 73.5, 73.8, 73.8, 74.3
 均值70.1% 标准差±0.88%
 
+nuScenes五次 80.3 80.9 81 81.3 81.3
+均值80.96 标准差±0.41 T检验0.0189 对照数据为80.4 
 
 ======================================================================
   [Mode] Patch Size Sweep — 原生 PTv3 Baseline
@@ -92,18 +94,6 @@ pamba做了Scannet，nuScenes，nuScenes
 >
 > As shown in the revised Table X, PointSS introduces additional parameters (+43% over PTv3, 66.2M vs. 46.2M), attributable primarily to the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower memory footprint: at patch size 512, PointSS consumes 6.0GB compared to PTv3's 14.7GB. PTv3 encounters out-of-memory errors at patch size 1024 (27.8GB) due to quadratic attention complexity, whereas PointSS scales stably to 2048. This demonstrates that architectural design—rather than parameter count—determines practical scalability. PointSS also achieves 9--19\% lower inference latency than PTv3 across patch sizes from 128 to 512.
 
-### R#3.5：关于无关引用的回复（待补充）
-拒绝添加交通流/虚拟机相关引用，礼貌说明与点云领域不相关，另补充真正相关的近期点云文献。
-
-## 审稿主要修改项
-- [ ] 参数量/FLOPs/内存对比表（R#3.2, R#8.5）
-- [x] 主表S3DIS添加标准差（R#3.7）：PCM复现5次结果69.8/69.7/70.1/69.8/70.3，中位数69.8，标准差±0.23；PointSS 5次结果73.6/73.8/73.8/74.0/74.1，中位数73.8，标准差±0.19。两者均用$^\dagger$标注，caption统一说明为5次中位数。其余方法引用原论文数字。PointSS所有5次均高于PTv3(73.4)。
-- [ ] 新增Discussion小节（R#3.3）
-- [ ] 结论补充量化发现（R#3.9）
-- [ ] GGAM计算开销量化（R#6）
-- [ ] R#3第5条无关引用：礼貌拒绝，说明与点云领域不相关，另补充真正相关的近期文献
-
-[PointSS-翻译.pdf](PointSS-%E7%BF%BB%E8%AF%91.pdf)翻译后的[elsarticle-template-num.tex](elsarticle-template-num.tex)
 [bishe.tex](bishe.tex)是我的毕业论文，我有关毕设的都在这里
 
 [picture](IEEE-Transactions-LaTeX2e-templates-and-instructions/picture) 存储了所有论文图片
@@ -217,20 +207,7 @@ R#6.1 和 R#8.4 这两条，你不应该完全接受，必须要辩护。
 
   ▎ "ASD-SSM generates $\bar{A}$ independently for each patch based on its local geometric content, while the scale constraint factor $\alpha_s$ explicitly controls the state decay range at each scale."
 
-  ---
-  六、Summary表的问题
 
-  你末尾的Summary表里，Line numbers列混合了具体行号和 [TBD]，这会让人觉得很多工作没完成。审稿人第一眼看到一堆 [TBD] 会有不好的印象。建议：要么填上具体行号，要么删掉这个表，在信中直接说明"All major revisions are reflected in the revised
-  manuscript, available for review."
-
-  ---
-  ---
-  总结：核心改进方向
-
-  1. 语气再谦逊一点——少解释"我们为什么没问题"，多展示"我们具体改了什么"
-  3. R#3.5处理方式要改——不要解释为什么不接受，直接说"我们加了更相关的引用"
-  4. 回复压缩——每条意见的回复控制在3段以内
-  5. Line numbers要准确——如果不确定，宁可写 "throughout Section X" 也不要写不确定的行号
 
 
 ## 重要提示

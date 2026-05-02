@@ -345,9 +345,11 @@ Through these mechanisms, ASD-SSM achieves scale-decoupled state-space modeling:
 
 \subsection{Implementation Details}
 
-We conduct experiments for point cloud analysis on the indoor semantic segmentation dataset S3DIS and the 3D object classification dataset ModelNet40. All experiments were performed on an Nvidia A6000 GPU. For network training, we employed the AdamW optimizer and the OneCycleLR learning rate scheduler, with an initial maximum learning rate of $6 \times 10^{-3}$. The scheduling mechanism included a linear warm-up phase followed by a cosine annealing cycle. The model was trained for 300 epochs with a batch size of 6, utilizing Automatic Mixed Precision (AMP) to enhance training efficiency.
+All experiments were performed on an Nvidia A6000 GPU. For network training, we employed the AdamW optimizer and the OneCycleLR learning rate scheduler, with an initial maximum learning rate of $6 \times 10^{-3}$. The scheduling mechanism included a linear warm-up phase followed by a cosine annealing cycle. The model was trained for 300 epochs with a batch size of 6, utilizing Automatic Mixed Precision (AMP) to enhance training efficiency.
 
 In the encoder, the channel dimensions were set to (32, 64, 128, 256, 512), while the decoder channel dimensions were set to (64, 64, 128, 256). The patch size was uniformly set to 128. We employ cross-entropy as the loss function, which is widely used for classification and segmentation tasks.
+
+For nuScenes outdoor LiDAR segmentation, we follow the same architectural configuration with 16 output classes. The model was trained for 50 epochs with a combined loss of cross-entropy and Lovasz loss, using the same optimizer and scheduler settings as S3DIS.
 
 PointSS is trained from scratch without pre-training, so that performance gains can be attributed to architectural design rather than pre-training strategies.
 
@@ -410,7 +412,7 @@ We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic 
 
 \subsubsection{Experiment Results on the nuScenes Dataset}
 
-To evaluate the generalization capability of PointSS on outdoor LiDAR data, we conduct experiments on the nuScenes validation set. As shown in \cref{tab:nuscenes}, PointSS achieves 81.0$\pm$0.4\% mIoU, outperforming both Transformer-based methods (PTv3: 80.4\%, SphereFormer: 79.5\%) and SSM-based methods (Pamba: 80.4\%, PCM: not reported). Statistical analysis over 5 independent runs confirms that PointSS significantly outperforms PTv3 ($p=0.019$, paired $t$-test), demonstrating that the geometry-aware multi-scale design of PointSS generalizes effectively from indoor scenes to outdoor autonomous driving scenarios, where point clouds exhibit different characteristics such as larger spatial extent and sparser density.
+To evaluate the generalization capability of PointSS on outdoor LiDAR data, we conduct experiments on the nuScenes validation set. As shown in \cref{tab:nuscenes}, PointSS achieves 81.0$\pm$0.4\% mIoU, outperforming both Transformer-based methods (PTv3: 80.4\%, SphereFormer: 79.5\%) and SSM-based methods (Pamba: 80.4\%). Statistical analysis over 5 independent runs confirms that PointSS significantly outperforms PTv3 ($p=0.019$, paired $t$-test), demonstrating that the geometry-aware multi-scale design of PointSS generalizes effectively from indoor scenes to outdoor autonomous driving scenarios, where point clouds exhibit different characteristics such as larger spatial extent and sparser density.
 
 \begin{table*}
 	\centering
