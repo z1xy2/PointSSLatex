@@ -363,7 +363,7 @@ We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic 
 
 \begin{table*}
 	\centering
-	\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Mean of eight independent runs. PointSS: 73.2\%, 73.4\%, 73.6\%, 73.8\%, 73.8\%, 74.0\%, 74.1\%, 74.3\%. One-sample t-tests: $t(7)=2.90$, $p=0.012$ vs. PTv3 (73.4\%); $t(7)=2.14$, $p=0.035$ vs. Pamba (73.5\%). PCM reproduced from official implementation. All other results from original papers.}
+	\caption{Performance Comparison of Semantic Segmentation on S3DIS. $^\dagger$Mean of eight independent runs. One-sample t-tests: $t(7)=2.90$, $p=0.012$ vs. PTv3 (73.4\%); $t(7)=2.14$, $p=0.035$ vs. Pamba (73.5\%). PCM reproduced from official implementation. All other results from original papers.}
 	\label{tab:s3dis}
 	\begin{tabular}{@{}lll@{}}
 		\toprule
@@ -380,7 +380,7 @@ We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic 
 		PointMSGT\cite{pointmsgt} & Mathematics'24 & 68.6 \\
 		PointGA\cite{pointga} & Sci. Rep.'25 & 66.2 \\ \midrule
 		\multicolumn{3}{l}{\textit{w/ Mamba}} \\
-		PCM$^\dagger$\cite{pcm} & AAAI'25 & 70.1$^\dagger$ \\
+		PCM$^\dagger$\cite{pcm} & AAAI'25 & 70.1 \\
 		Pamba\cite{pamba} & AAAI'25 & 73.5 \\
 		HybridTM\cite{hybridtm} & IROS'25 & 72.1 \\
 		PointSS$^\dagger$ (Ours) & -- & \textbf{73.8} \\ \bottomrule
