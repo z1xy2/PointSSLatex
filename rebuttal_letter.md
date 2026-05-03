@@ -100,7 +100,7 @@ Xin Wang and Xinyuan Zhang
 
 <span style="color:#c00000">**Revised Introduction (Section 1):**</span>
 
-> To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework motivated by two key observations: (1) serialization-induced spatial proximity loss can be compensated through explicit geometric priors from local graph structures, and (2) hierarchical point cloud understanding requires scale-adaptive state transitions that respond to local geometric characteristics rather than applying uniform aggregation rules. As depicted in the middle of \cref{fig:analysis}, PointSS explicitly injects geometric priors through windowed graph construction to compensate for spatial proximity loss. By constructing local graphs within serialization windows and extracting edge features encoding surface normals, curvature, and angular deviations, GGAM recovers the spatial relationships disrupted by serialization. Building on these geometric priors, PointSS employs input-dependent state transition parameters that adapt dynamically to local geometric characteristics, enabling adaptive feature aggregation. Through scale-decoupled parameterization, scale constraint factors control hierarchical decay rates while state transitions respond to local geometry. As shown on the right side of \cref{fig:analysis}, PointSS responds more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
+> To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework motivated by two key observations: (1) serialization-induced spatial proximity loss can be compensated through explicit geometric priors from local graph structures, and (2) hierarchical point cloud understanding requires scale-adaptive state transitions that respond to local geometric characteristics rather than applying uniform aggregation rules. As depicted in the middle of , PointSS explicitly injects geometric priors through windowed graph construction to compensate for spatial proximity loss. By constructing local graphs within serialization windows and extracting edge features encoding surface normals, curvature, and angular deviations, GGAM recovers the spatial relationships disrupted by serialization. Building on these geometric priors, PointSS employs input-dependent state transition parameters that adapt dynamically to local geometric characteristics, enabling adaptive feature aggregation. Through scale-decoupled parameterization, scale constraint factors control hierarchical decay rates while state transitions respond to local geometry. As shown on the right side of , PointSS responds more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
 
 ---
 
@@ -111,19 +111,7 @@ Xin Wang and Xinyuan Zhang
 
 <span style="color:#c00000">**Added Table 1 in Section 2 (Related Work):**</span>
 
-> To provide a clearer comparison of the key characteristics of existing methods, \cref{tab:related_comp} summarizes representative approaches across four dimensions: backbone architecture, multi-scale modeling capability, geometric prior incorporation, and serialization strategy.
-> 
-> | Method                       | Backbone | Multi-Scale | Geometric Priors | Serialization Strategy |
-> |------------------------------|----------|:-----------:|:----------------:|------------------------|
-> | PointNet++                   | MLP-based | ✓ | -- | -- |
-> | DGCNN                        | Graph-based | -- | -- | -- |
-> | KPConv                       | CNN-based | ✓ | -- | -- |
-> | PTv3              | Transformer-based | ✓ | -- | Sequential SFC |
-> | PointMamba  | SSM-based | -- | -- | Sequential SFC |
-> | PCM              | SSM-based | ✓ | -- | Sequential SFC |
-> | **PointSS (Ours)**           | **SSM-based** | **✓** | **GGAM** | **Dual-stream Parallel SFC** |
->
-> *Table 1: Comparison of representative point cloud processing methods. SFC denotes Space-Filling Curve.*
+> ![image-20260502161007894](C:\Users\zxy\AppData\Roaming\Typora\typora-user-images\image-20260502161007894.png)
 
 ---
 
@@ -151,40 +139,37 @@ We have reorganized the Introduction into four clear components: (1) research fi
 ## Comment R#3.7
 <span style="color:#1f6feb">Do the results shown in various figures refer to a single run or multiple runs (average)? In the latter case, I will suggest adding standard deviation bars. The reason behind this is to ensure that the results overlap with the closest rivals or not.</span>
 
-**Response:** We have reported mean and standard deviation over 5 independent runs for both PointSS and PCM.
+**Response:** We thank the reviewer for this valuable suggestion. We have reported mean and standard deviation over multiple independent runs, and added statistical significance analysis via paired t-tests.
 
-<span style="color:#c00000">**Revised S3DIS Area 5 results (Section 4.3.1):**</span>
+<span style="color:#c00000">**Revised S3DIS Area 5 results (Section 4.3.1, Table 2):**</span>
 
-| Method | mIoU (%) |
-|--------|----------|
-| PCM | 70.1 ±0.88$^\dagger$ |
-| PTv3 | 73.4 |
-| Pamba | 73.5 |
-| **PointSS** | **73.8 ±0.43$^\dagger$** |
+> ![image-20260502155804265](C:\Users\zxy\AppData\Roaming\Typora\typora-user-images\image-20260502155804265.png)
 
-$^\dagger$ Mean of 5 independent runs. PointSS runs: 73.2, 73.5, 73.8, 74.0, 74.3 (median 73.8%, 4 out of 5 exceed PTv3 73.4%). PCM runs: 69.0, 69.6, 69.8, 70.7, 71.2.
+
 
 ---
 
 ## Comment R#3.8
 <span style="color:#1f6feb">Add further details on how simulations were conducted. Perhaps add a flowchart that clearly identifies how the entire system works.</span>
 
-**Response:** We have enhanced Fig. 2 caption with a step-by-step pipeline description to clarify the system workflow.
+**Response:** We sincerely thank the reviewer for this suggestion. Clear system visualization is essential for reproducibility. We have enhanced Fig. 2 caption with a step-by-step pipeline description to clarify the system workflow, covering all four stages from input preprocessing to prediction output.
 
-<span style="color:#c00000">**Revised Fig. 2 caption (Section 3):**</span>
+<span style="color:#c00000">**Revised Fig. 4 caption (Section 3.1):**</span>
 
-> Fig. 2: Overview of the PointSS framework. The pipeline consists of four stages: (1) input preprocessing and point cloud serialization using Z-order and Hilbert curves; (2) GGAM for geometric feature extraction via dual-serialization with cross-attention fusion; (3) U-shaped encoder-decoder with ASD-SSM for multi-scale state space feature learning; (4) prediction head for semantic segmentation or classification output.
+> ![image-20260502160425306](C:\Users\zxy\AppData\Roaming\Typora\typora-user-images\image-20260502160425306.png)
 
 ---
 
 ## Comment R#3.9
 <span style="color:#1f6feb">The conclusion section also needs significant revisions. It should briefly describe the findings of the study and some more directions for further research.</span>
 
-**Response:** We have revised the Conclusion section with concise findings and concrete future directions.
+**Response:** We thank the reviewer for pointing out the need for a more informative Conclusion. A well-structured conclusion should summarize key findings and outline meaningful research directions. We have revised the Conclusion section accordingly.
 
 <span style="color:#c00000">**Revised Conclusion (Section 5):**</span>
 
-> Extensive experiments on S3DIS, ModelNet40, and nuScenes demonstrate that PointSS consistently outperforms major counterparts such as PTv3. Limitations include manually specified scale constraint factors $\alpha_s$ and additional computational overhead from dual-serialization. Future directions include automatically learning scale constraint factors, extending to additional outdoor LiDAR benchmarks (SemanticKITTI, Waymo Open Dataset), and investigating more efficient geometric fusion strategies.
+> This paper presents PointSS, a geometry-aware multi-scale framework for point cloud analysis built upon State Space Models. GGAM and ASD-SSM address the serialization-induced spatial proximity loss and input-invariant state transition parameters of existing SSM-based methods, respectively. Extensive experiments on standard benchmarks (S3DIS, ModelNet40, and nuScenes) demonstrate the effectiveness of the proposed approach, consistently outperforming major counterparts such as PTv3.
+>
+> Despite these contributions, PointSS has several limitations. The scale constraint factors α_s are manually specified as fixed hyperparameters, and the dual-serialization design in GGAM introduces additional computational overhead compared to single-stream methods. Future work will explore automatically learning the scale constraint factors, extending to additional outdoor LiDAR benchmarks such as SemanticKITTI and Waymo Open Dataset, and investigating more efficient geometric fusion strategies to reduce GGAM's computational overhead.
 
 ---
 
