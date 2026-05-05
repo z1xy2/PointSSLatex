@@ -105,15 +105,15 @@ To address this, GGAM directly encodes neighborhood spatial context into feature
 \end{figure*}
 Existing SSM-based methods struggle to establish effective hierarchical representations. Single-scale models (e.g., PointMamba) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context. Hierarchical approaches (e.g., PCM) allocate separate parameters for each downsampled scale, but their state transition parameters remain input-invariant across spatial locations, applying identical feature aggregation rules to flat surfaces and sharp boundaries alike.
 
-To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework motivated by two key observations: (1) serialization-induced spatial proximity loss can be compensated through explicit geometric priors from local graph structures, and (2) hierarchical point cloud understanding requires scale-adaptive state transitions that respond to local geometric characteristics rather than applying uniform aggregation rules. As depicted in the middle of \cref{fig:analysis}, PointSS explicitly injects geometric priors through windowed graph construction to compensate for spatial proximity loss. By constructing local graphs within serialization windows and extracting edge features encoding surface normals, curvature, and angular deviations, GGAM recovers the spatial relationships disrupted by serialization. Building on these geometric priors, PointSS employs input-dependent state transition parameters that adapt dynamically to local geometric characteristics, enabling adaptive feature aggregation. Through scale-decoupled parameterization, scale constraint factors control hierarchical decay rates while state transitions respond to local geometry. As shown on the right side of \cref{fig:analysis}, PointSS responds more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
-
+To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework. As depicted in the middle of \cref{fig:analysis}, PointSS directly encodes neighborhood spatial context into features within serialization windows via GGAM. GGAM addresses this by pre-computing and injecting the spatial structure that serialization destroys, rather than relying on the SSM to learn spatial relationships from geometric features. Leveraging these geometry-aware features, we introduce an adaptive multi-scale learning mechanism with scale-decoupled parameterization (ASD-SSM): fine scales maintain small state transition parameters for rapid decay to capture local geometric detail, while coarse scales maintain large values for slow decay to model long-range context. As shown on the right side of \cref{fig:analysis}, this design enables PointSS to respond more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
 The main contributions of this work are as follows:
 
 \begin{enumerate}
-	\item We propose a Global Geometry-Aware Mechanism (GGAM) that injects
-	explicit geometric priors through windowed neighborhoods and dual-
-	serialization fusion, effectively mitigating the loss of spatial proximity
-	and providing reliable geometric guidance for scale-adaptive learning.
+	\item We propose a Global Geometry-Aware Mechanism (GGAM) that directly
+	encodes neighborhood spatial context into features through windowed
+	graph construction and dual-serialization fusion, effectively mitigating
+	the loss of spatial proximity and providing reliable geometric guidance
+	for scale-adaptive learning.
 	
 	\item We design an Adaptive Scale-Decoupled State Space Model (ASD-SSM)
 	featuring a dynamic parameter generation mechanism. By adapting state
