@@ -457,42 +457,7 @@ As shown in \cref{tab:efficiency}, PointSS introduces additional parameters comp
 
 \begin{figure}
 	\centering
-	\begin{tikzpicture}
-		\begin{axis}[
-			width=0.92\linewidth,
-			height=5.2cm,
-			xlabel={Patch Size},
-			ylabel={Inference Time (ms)},
-			xtick={128,256,512,1024},
-			xticklabels={128,256,512,1024},
-			xmin=64, xmax=1150,
-			ymin=0.6, ymax=1.55,
-			legend pos=south east,
-			legend style={font=\small},
-			grid=major,
-			grid style={dashed,gray!30},
-			]
-
-			\addplot[color=blue, mark=square*, thick, solid] coordinates {
-				(128, 1.089)
-				(256, 1.147)
-				(512, 1.274)
-			};
-			\addlegendentry{PTv3}
-
-			\addplot[color=orange, mark=*, thick, solid] coordinates {
-				(128,  0.850)
-				(256,  0.938)
-				(512,  0.932)
-				(1024, 1.208)
-			};
-			\addlegendentry{PointSS (Ours)}
-
-			\draw[color=blue, dashed, thick] (axis cs:512,1.274) -- (axis cs:1024,1.274);
-			\node[color=blue, font=\small\bfseries, anchor=south] at (axis cs:1024,1.274) {OOM};
-
-		\end{axis}
-	\end{tikzpicture}
+	\includegraphics[width=0.8\textwidth]{picture/efficiency.JPG}
 	\caption{Inference time vs.\ patch size for PTv3 and PointSS.}
 	\label{fig:efficiency}
 \end{figure}
