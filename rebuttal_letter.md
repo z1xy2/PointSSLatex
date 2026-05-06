@@ -12,18 +12,14 @@ Dear Editor,
 
 We thank you and the reviewers for the thoughtful and constructive feedback on our manuscript. The comments have substantially helped us improve the clarity, rigor, and completeness of the paper. We have carefully addressed all the points raised by Reviewers #3, #6, and #8. A point-by-point response is provided below, with the corresponding line numbers in the revised manuscript indicated for each modification.
 
-A brief summary of the main revisions:
+First of all, we would like to thank the editor and reviewers for their careful review and constructive feedback on our manuscript titled "PointSS: Geometry-Aware Multi-Scale State Space Feature Learning for Point Clouds" (Manuscript Number: INS-D-26-4426). We have thoroughly addressed all concerns and revised the manuscript accordingly.
 
-- **Reviewer #3** primarily concerns presentation issues (abstract, introduction, discussion, conclusion), the request for statistical significance analysis, and citation suggestions. We have revised all relevant sections, added a Discussion section, reported standard deviations over five independent runs on S3DIS, and politely declined the suggested citations that fall outside the point cloud domain while adding more relevant recent point cloud literature.
+In specific, for **Reviewer #3's** comments, we restructured the Abstract and Introduction to better highlight our contributions (Section 1), added a Discussion section analyzing PointSS's limitations and future directions (Section 4.6), reported standard deviations over five independent runs on S3DIS (Table 2), and incorporated recent point cloud literature including PTv3, Pamba, and PCM (Section 2). We politely declined the suggested citations that fall outside the point cloud domain while adding more relevant references.
 
-- **Reviewer #6** raises concerns about novelty positioning, the absence of outdoor LiDAR experiments, the computational overhead of GGAM, hyperparameter sensitivity, and writing clarity. We have clarified our unique contributions, quantified GGAM's overhead, and refined the method section. We have conducted additional experiments on the nuScenes outdoor LiDAR dataset, where PointSS achieves 80.9% mIoU, outperforming PTv3 (80.4%) and Pamba (80.4%), demonstrating effective generalization to outdoor scenarios.
+For **Reviewer #6's** comments, we clarified our unique contributions—particularly the per-patch adaptive state transition mechanism and scale-decoupled design—in the revised Introduction and Method sections (Sections 1 and 3). We conducted additional experiments on the nuScenes outdoor LiDAR dataset, where PointSS achieves 80.9% mIoU, outperforming PTv3 (80.4%) and Pamba (80.4%), demonstrating effective generalization to outdoor scenarios (Section 4.3.3). We quantified GGAM's computational overhead and added a comprehensive efficiency comparison table reporting parameters, peak memory, and inference latency across patch sizes (Table 5, Section 4.3). We also refined the method section to improve clarity (Section 3.2).
 
-- **Reviewer #8** questions novelty, complexity, and the absence of efficiency metrics. We have added a comprehensive efficiency comparison table reporting parameters, peak memory, and inference latency across patch sizes, demonstrating that PointSS achieves substantially better scalability than PTv3 despite a moderate parameter increase.
+For **Reviewer #8's** comments, we added the comprehensive efficiency comparison table (Table 5) demonstrating that PointSS achieves substantially better scalability than PTv3 despite a moderate parameter increase: at patch size 512, PointSS consumes 6.0GB compared to PTv3's 14.7GB, and scales stably to 2048 while PTv3 encounters OOM at 1024. We also reported 9–19% lower inference latency than PTv3 across patch sizes from 128 to 512 (Section 4.3). We clarified our novelty positioning relative to existing SSM-based methods in the revised Introduction (Section 1).
 
-We hope the revisions adequately address all concerns and look forward to the next stage of review.
-
-Sincerely,
-Xin Wang and Xinyuan Zhang
 
 ---
 
