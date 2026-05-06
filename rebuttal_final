@@ -1,320 +1,175 @@
-Dear Editor and Reviewers
-First of all, we would like to thank the editor and reviewers for their very careful review, valuable comments and suggestions on our manuscript titled “SSPNet: Scale and Spatial Priors Guided Generalizable and Interpretable Pedestrian Attribute Recognition” (Manuscript Number: PR-D-23-01628). We have worked our best to address all concerns and revise the manuscript according to the comments from reviewers.
+Response to Reviewers
+Manuscript ID: INS-D-26-4426
+Title: PointSS: Geometry-Aware Multi-Scale State Space Feature Learning for Point Clouds
+Authors: Xin Wang, Xinyuan Zhang
 
-In specific, for R1’s comments, we fixed the formatting problem in the revised manuscript. We modified the figure of the AFSS module (Fig. 3). We added 6 papers in ''Related Work'' and ''Comparison with State-of-the-arts'' (Section 2 and 4.3). We provided more experiments on the PETA dataset (Section 4.3). We indicated the methods we test and the visualization method used for Fig. 1, cited articles according to the reviewer's advice (Section 1).
+Dear Editor,
+First of all, we would like to thank the editor and reviewers for their careful review and constructive feedback on our manuscript titled "PointSS: Geometry-Aware Multi-Scale State Space Feature Learning for Point Clouds" (Manuscript Number: INS-D-26-4426). We have thoroughly addressed all concerns and revised the manuscript accordingly.
+In specific, for Reviewer #3's comments, we restructured the Abstract and Introduction to better highlight our contributions (Section 1), added a Discussion section analyzing PointSS's limitations and future directions (Section 4.6), reported standard deviations over five independent runs on S3DIS (Table 2).
+For Reviewer #6's comments, we clarified our unique contributions (Sections 1 and 2). We conducted additional experiments on the nuScenes outdoor LiDAR dataset, demonstrating effective generalization to outdoor scenarios (Section 4.2.3). We quantified GGAM's computational overhead and added a comprehensive efficiency comparison table reporting parameters, peak memory, and inference latency across patch sizes (Table 5, Section 4.2.4). We also refined the method section to improve clarity (Section 3.2).
+For Reviewer #8's comments, we added the comprehensive efficiency comparison table (Table 5) demonstrating that PointSS achieves substantially better scalability than PTv3 despite a moderate parameter increase (Section 4.3). We clarified our novelty positioning relative to existing SSM-based methods in the revised Introduction (Section 1).
+Response to Reviewer #3
+3.1: The abstract is not coherent. It would be good if authors can write a sentence describing numerical results and improvement over other methods.
+Response: We thank the reviewer for this suggestion. We have restructured the abstract to improve coherence and added explicit numerical results. The corresponding revisions are shown as follows.
+Point cloud analysis with State Space Models (SSMs) achieves linear complexity but loses spatial proximity when serializing 3D point clouds into 1D sequences. We propose PointSS, a geometry-aware multi-scale SSM framework that addresses this limitation through two key designs. First, we introduce a Global Geometry-Aware Mechanism (GGAM) that constructs fully connected local graphs within sequence windows on dual orderings (Z-order and Hilbert curves). GGAM extracts edge features encoding surface normals, curvature, and angular deviations, then aggregates them via cross-sequence attention and gated fusion. Second, building on these geometric priors, we design an Adaptive Scale-Decoupled State Space Model (ASD-SSM) where the state transition parameter A ‾ is generated independently per patch from local geometric content, while scale constraint factors control state decay rates hierarchically. On S3DIS Area 5, PointSS achieves 73.8% mIoU, surpassing PTv3 (73.4%), Pamba (73.5%), and PCM (70.1%). On nuScenes outdoor LiDAR segmentation, PointSS achieves 81.0% mIoU, exceeding PTv3 (80.4%) and Pamba (80.4%). Notably, PointSS reduces peak GPU memory from 14.7GB to 6.0GB at patch size 512 (59% reduction) and scales stably to patch size 2048, where PTv3 encounters out-of-memory errors, while achieving 9–19% faster inference.
+3.2: The complexity of the proposed model and the model parameter uncertainty are not enough mentioned.
+Response: We thank the reviewer for raising this important concern about model complexity and parameter uncertainty. We have added comprehensive efficiency analysis and parameter statistics in Section 4.2.4. The corresponding revisions are shown as follows.
+Section 4.2.4 Computational Cost and Performance Analysis
+All efficiency measurements in this section are conducted under identical conditions: FP32 precision, batch size 1, on an NVIDIA A6000 GPU.
+As shown in Table 5, PointSS introduces additional parameters compared to PTv3 (52.2M vs. 46.2M, +13%), primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower GPU memory footprint: at patch size 512, PointSS consumes only 6.0GB compared to PTv3’s 14.7GB, representing a 59% reduction. More critically, while PTv3 encounters out-of-memory errors at patch size 1024 due to quadratic attention complexity, PointSS scales stably to patch size 2048, demonstrating that architectural design—rather than parameter count—determines practical scalability. Compared to PCM, another SSM-based method, PointSS achieves 3.7% higher mIoU with only a modest increase in memory footprint (6.0GB vs. 5.2GB), and both methods demonstrate stable scaling to patch size 2048, confirming the scalability advantage of SSM-based architectures.
+To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3. As shown in Fig. 6, PointSS consistently reduces inference time by 9–19% across patch sizes from 128 to 512, while PTv3 fails to scale beyond patch size 512 due to memory constraints. Within the SSM family, all methods maintain O(N) linear complexity. While GGAM introduces additional computational cost for geometric prior extraction, this overhead is offset by accuracy gains: PointSS achieves the highest mIoU among SSM-based methods, demonstrating a favorable accuracy-efficiency trade-off.
 
-For R2’s comments, we included efficiency comparisons in the ablation experiments (Tab. 3). We clarified the benefits of the AFSS module over hard-coded methods and their interrelation. We conducted additional experiments using PLE-S without AFSS (Tab. 2), and we improved the clarity of Fig. 5.
 
-For R3’s comments, we explained the "imbalanced learning difficulty" that confused readers in our paper, modified the expression to make it more comprehensible (Section 1), and gave a paper to support our viewpoint. We added experiments on computational cost (Tab. 3) and gave the results of the paper's experiments on cross-domain adaptation (Tab. 4, 7, 8 and 9). We tested the occlusion and scale deformation samples you mentioned and added difficulty case studies (Fig. 7 and Appendix B). We explained the innovations of the AFSS module compared to the feature pyramid. We explained the different effects of the three PLE modules on the results and illustrated the innovation of this paper. We presented the paper used for visualization in Fig. 1(Section 1). We explained the idea that the imbalance problem gives rise to incorrect location of the response of the heat map. We checked the whole manuscript carefully for grammatical errors and typos.
+3.3: Discussions" section should be added in a more highlighting, argumentative way. The author should analysis the reason why the tested results is achieved.
+Response: We thank the reviewer for this constructive suggestion. We have added a new Discussion section (Section 4.5) analyzing the mechanisms behind PointSS's performance gains. The corresponding revisions are shown as follows.
+Section 4.5 Discussion
+Existing SSM-based methods inherit the sequential processing paradigm from NLP, where token order is semantically meaningful. However, in 3D point clouds, serialization is an artificial construct that disrupts natural spatial proximity. This fundamental difference necessitates architectural adaptation rather than direct application. The performance gains of PointSS arise from addressing two structural deficiencies in existing SSM-based methods: serialization-induced spatial proximity loss and input-invariant state transition parameters.
+Why GGAM recovers spatial proximity. Serialization systematically displaces spatially adjacent points into distant sequence positions. This causes their interactions to decay before reaching each other’s hidden states. GGAM is effective because its windowed graph construction is aligned with the serialization granularity. It explicitly reconstructs the local neighborhoods that serialization disrupts. This injects geometric priors precisely where proximity loss is most severe.
+The stratified gains in Table 7 confirm this mechanism. Points in the highest proximity-loss group (20–30%) gain +5.4% IoU, while low-loss points gain only +0.7%. Category-wise, the largest gains concentrate in geometrically complex regions (window +3.5%, clutter +3.3%, door +3.0%). Boundary accuracy in these regions depends critically on local neighborhood integrity. Unlike globally applied methods such as PointGA  and PointMSGT , which operate uniformly across the entire point cloud, GGAM targets the specific regions where serialization causes the most severe proximity loss.
+Why dynamic A ‾ parameterization outperforms static alternatives. Existing SSMs apply a shared, input-invariant A ‾ uniformly across all scales and spatial locations. This implicitly treats flat surfaces and sharp boundaries identically. ASD-SSM resolves this through a two-level design. The scale constraint factor α_s fixes the decay range per scale: fine A ‾_1∈[0,0.3] for rapid local response, coarse A ‾_3∈[0,0.9] for long-range memory. Within each range, the patch-level generator adapts A ‾ dynamically based on local geometry.
+Three ablation results support this design. Independent Parameters (71.6%) already outperforms Shared Parameters (70.8%), showing that per-scale adaptation helps. ASD-SSM (73.8%) substantially exceeds both, indicating that dynamic, input-dependent generation contributes significantly to the performance gain. Reversing the α_s ordering to (0.9, 0.6, 0.3) causes a drop to 66.5%, suggesting that the monotonically increasing decay pattern is well-suited to hierarchical point cloud modeling rather than being an arbitrary hyperparameter choice.
+3.4: The authors should clarify the motivation for using the proposed method in the introduction.
+We thank the reviewer for this suggestion. The corresponding revisions are shown as follows.
+Revised Introduction (Section 1):
+To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework motivated by two key observations: (1) serialization-induced spatial proximity loss can be compensated through explicit geometric priors from local graph structures, and (2) hierarchical point cloud understanding requires scale-adaptive state transitions that respond to local geometric characteristics rather than applying uniform aggregation rules. As depicted in the middle of Fig. 1, PointSS explicitly injects geometric priors through windowed graph construction to compensate for spatial proximity loss. By constructing local graphs within serialization windows and extracting edge features encoding surface normals, curvature, and angular deviations, GGAM recovers the spatial relationships disrupted by serialization. Building on these geometric priors, PointSS employs input-dependent state transition parameters that adapt dynamically to local geometric characteristics, enabling adaptive feature aggregation. Through scale-decoupled parameterization, scale constraint factors control hierarchical decay rates while state transitions respond to local geometry. As shown on the right side of Fig. 1, PointSS responds more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
+3.5: I suggest summarizing the related works into a table with respect to their characteristics. The authors should put their proposal into this table for easy comparison. Add more recent works such as Exploiting dynamic spatio-temporal correlations for citywide traffic flow prediction using attention based neural networks, Dynamic multi-graph spatio-temporal learning for citywide traffic flow prediction in transportation systems, An energy efficient algorithm for virtual machine allocation in cloud datacenters, Advanced computational models for urban traffic flow prediction: A comprehensive review and future directions.
+Response: We thank the reviewer for the constructive suggestion regarding the related work table and the citation recommendations. We have added a comparison table (Table 1) in the Related Work section. Regarding the citation recommendations: the two papers on traffic flow prediction techniques and the comprehensive review paper have been cited and discussed in Section 2, as they are relevant to geometric/spatial data processing. The corresponding revisions are shown as follows.
+Added Table 1 in Section 2.3:
+To provide a clearer comparison of the key characteristics of existing methods, Table1 summarizes representative approaches across four dimensions: backbone architecture, multi-scale modeling capability, geometric prior incorporation, and serialization strategy.
 
-In addition, to improve readability, we have transformed Tab. 2 from the original manuscript into Fig. 6 in the revised manuscript. Our revisions have been highlighted in red within the revised manuscript.
-
-Thank you with best regards,
-All authors.
-Response to Reviewer 1
-
-Reviewer #1:
-The authors propose a SSPNet for pedestrian attribute recognition. To be specific, several modules including AFSS, PLE and Weakly Supervised Attribute Localization. The authors conduct the experiments on multiple datasets like PA-100K, RAP v1, UPAR and so on. Table 5 and Table 6 show the proposed method achieves the promising performance for pedestrian attribute recognition.
-Response: Thanks.
-
-Main Concerns
-1. The authors should carefully check the format of the article. For example, whether the initial is capitalized or not needs to be consistent (line 103 'Scale Knowledge' vs. line 115 'Spatial prior', line 94 '2.1. Pedestrian Attribute Recognition' vs. line 126 '2.2. Weakly supervised attribute localization').
-Response: Thanks for your nice advice. We have fixed several formatting problems in the revised manuscript.
-"
-in the title, 'SSPNet: Scale and Spatial Priors Guided Generalizable and Interpretable Pedestrian Attribute Recognition' --> 'SSPNet: Scale and spatial priors guided generalizable and interpretable pedestrian attribute recognition'
-in line 100, ' 2.1. Pedestrian Attribute Recognition ' --> ' 2.1. Pedestrian attribute recognition '
-in line 110, 'Scale Knowledge' --->'Scale knowledge'
-in line 157, '3.1 Problem Definition' --> '3.1 Problem definition '
-in line 177, '3.2 Proposed Method' --> '3.2 Proposed method'
-in line 247, 'Human Keypoints-based PLE'--->'Human keypoints-based PLE'
-in line 267, 'Sparse Sampling Points-based PLE'--->'Sparse sampling points-based PLE'
-in line 288, 'Hierarchical Attribute Recognition'--->' Hierarchical attribute recognition'
-in line 298, ' Hierarchical Loss--->' Hierarchical loss'
-in line 353, ' PA100k Dataset'--->' PA100k dataset'
-in line 358, 'RAP Dataset'--->'RAP dataset'
-in line 369, 'UPAR Dataset'--->'UPAR dataset'
-in line 388, '4.2. Ablation Study'--->'4.2. Ablation study'
-…"
-
-2. Fig. 3 is presented in a mess. Fig. 3 is an illustration of the proposed AFSS module. However, a PLE module is included and some operations also seem to be related with the PLE module. The authors should improve this.
-Response: Thanks for your nice advice. The AFSS module dynamically determines which feature maps to supply to the PLE module during training by considering the mean accuracy of attribute recognition. During the inference phase, the AFSS module selects suitable feature map for the PLE module directly based on the training results. The modified AFSS module is shown in Figure. 3 of the revised manuscript.
-
-Fig. 3: Schematic workflow of the AFSS module. (This module selects the feature map that maximizes the mA during the model training.)
-
-3. Some related works are missing in the related works and comparisons. I just list a few of them:
-[a] Relation-Aware Pedestrian Attribute Recognition with Graph Convolutional Networks, AAAI 2020.
-[b] Cascaded Split-and-Aggregate Learning with Feature Recombination for Pedestrian Attribute Recognition, IJCV 2021.
-[c] Learning disentangled attribute representations for robust pedestrian attribute recognition, AAAI 2022.
-[d] Orientation-Aware Pedestrian Attribute Recognition based on Graph Convolution Network, TMM 2023.
-[e] PARFormer: Transformer-based Multi-Task Network for Pedestrian Attribute Recognition, TCSVT 2023.
-[f] Exploring attribute localization and correlation for pedestrian attribute recognition, Neurocomputing 2023.
-
-Response: Thanks. We have cited these papers in section 2 and section 4. The corresponding revisions are shown in the following.
-"…
-2. Related work
-2.1. Pedestrian attribute recognition
+Added three references in Section 2.3:
+Addressing these challenges is particularly important as point cloud semantic segmentation serves as a foundational component for downstream applications in autonomous driving and intelligent transportation systems, where accurate 3D scene understanding enables higher-level tasks such as urban traffic flow prediction[25,26] and traffic pattern analysis[27].
+3.6: Furthermore, the introduction section needs considerable effort (concise and brief). The problem being investigated should be described clearly, but before that, the field of research should be made clearer. Furthermore, briefly describe the major contributions in bullet form, just before the organization paragraph.
+Response: We thank the reviewer for this valuable suggestion. We have restructured the Introduction (Section 1) to improve clarity and conciseness.
+We have reorganized the Introduction into four clear components: (1) research field overview establishing the context of point cloud analysis and the evolution from PointNet to Transformers to SSMs; (2) problem statement identifying the spatial proximity loss and input-invariant parameterization limitations in existing SSM-based methods; (3) proposed solution describing PointSS's geometry-aware multi-scale design; and (4) contributions in bullet form followed by the organization paragraph.
+The corresponding revisions are shown as follows.
+Section 1
 …
-Furthermore, Wang et al. and Tang et al. [16] employ the internal relationships between attributes as a way to guide model learning.
-…
-Yang et al. [18] use multi-scale features for cascade and split learning in pedestrian attribute recognition.
-…
-Lu et al. [21] and Fan et al. [22] employ the human orientation as an aid in recognizing pedestrian attributes.
-…
-4. Experiments
-4.3. Comparison with state-of-the-arts
-To validate the effectiveness of the proposed method, we use two public datasets and five evaluation metrics for comparative evaluation with SOTA PAR methods (HPNet, PGDM, VRKD, VSGR, JLPLS-PAA, SSC, CAS-SAL-FR [18], PARFormer-L [22], EALC [26], DAFL [42]) on the PA100k, RAP v1, and PETA datasets.
-…
-References
-…
-[16] Z. Tan, Y. Yang, J. Wan, G. Guo, S. Z. Li, Relation-aware pedestrian attribute recognition with graph convolutional networks, in: Proceedings of the AAAI conference on artificial intelligence, Vol. 34, 2020, pp. 12055–12062.
-[18] Y. Yang, Z. Tan, P. Tiwari, H. M. Pandey, J. Wan, Z. Lei, G. Guo, S. Z. Li, Cascaded split-and-aggregate learning with feature recombination for pedestrian attribute recognition, International Journal of Computer Vision 129 (2021) 2731–2744.
-[21] W.-Q. Lu, H.-M. Hu, J. Yu, Y. Zhou, H. Wang, B. Li, Orientation-aware pedestrian attribute recognition based on graph convolution network, IEEE Transactions on Multimedia.
-[22] X. Fan, Y. Zhang, Y. Lu, H. Wang, Parformer: Transformer-based multi-task network for pedestrian attribute recognition, IEEE Transactions on Circuits and Systems for Video Technology.
-[26] D. Weng, Z. Tan, L. Fang, G. Guo, Exploring attribute localization and correlation for pedestrian attribute recognition, Neurocomputing 531 (2023) 140–150.
-[42] J. Jia, N. Gao, F. He, X. Chen, K. Huang, Learning disentangled attribute representations for robust pedestrian attribute recognition, in: Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 36, 2022, pp. 1069–755 1077. 35
-"
-4. The authors overlooked a classic and popular dataset in pedestrian attribute recognition, namely PETA. It is a widely used dataset for pedestrian attribute recognition. The authors should add some experiments and comparisons on this dataset to further verify their performance.
-Response: Thanks for your nice advice. We provided experiments on the PETA dataset in Tab. 6 of the revised manuscript. The corresponding revisions are shown as follows.
-" …
+To address these limitations, we propose PointSS, a geometry-aware multi-scale state space framework motivated by two key observations: (1) serialization-induced spatial proximity loss can be compensated through explicit geometric priors from local graph structures, and (2) hierarchical point cloud understanding requires scale-adaptive state transitions that respond to local geometric characteristics rather than applying uniform aggregation rules. As depicted in the middle of Fig. 1, PointSS explicitly injects geometric priors through windowed graph construction to compensate for spatial proximity loss. By constructing local graphs within serialization windows and extracting edge features encoding surface normal, curvature, and angular deviations, GGAM recovers the spatial relationships disrupted by serialization. Building on these geometric priors, PointSS employs input-dependent state transition parameters that adapt dynamically to local geometric characteristics, enabling adaptive feature aggregation. Through scale-decoupled parameterization, scale constraint factors control hierarchical decay rates while state transitions respond to local geometry. As shown on the right side of Fig. 1, PointSS responds more effectively to local geometric variations, producing sharper, more accurate boundaries compared to other SSM methods.
+The main contributions of this work are as follows:
+We propose a Global Geometry-Aware Mechanism (GGAM) that injects explicit geometric priors through windowed neighborhoods and dual- serialization fusion, effectively mitigating the loss of spatial proximity and providing reliable geometric guidance for scale-adaptive learning.
+We design an Adaptive Scale-Decoupled State Space Model (ASD-SSM) featuring a dynamic parameter generation mechanism. By adapting state transition parameters A ‾ to local geometric characteristics, ASD-SSM enables fine scales to capture geometric details while coarse scales model semantic context, achieving effective hierarchical representations.
+Extensive experiments demonstrate that PointSS achieves 73.8% mIoU on S3DIS semantic segmentation and 81.0% mIoU on nuScenes outdoor LiDAR segmentation, outperforming major SSM-based counterparts while maintaining linear complexity. Comprehensive ablation studies further validate the effectiveness of our geometry-aware multi-scale design.
+The remainder of this paper is organized as follows. Section 2 reviews related work. Section 3 presents the proposed PointSS framework. Section 4 reports experimental results. Section 5 concludes the paper.
+3.7: Do the results shown in various figures refer to a single run or multiple runs (average)? In the latter case, I will suggest adding standard deviation bars. The reason behind this is to ensure that the results overlap with the closest rivals or not.
+Response: We thank the reviewer for this valuable suggestion. We have reported mean and standard deviation over multiple independent runs, and added statistical significance analysis via one-sample t-test. The corresponding revisions are shown as follows.
+4.2.1 Experiment Results on the S3DIS Dataset
+Table 2 summarizes the semantic segmentation performance on S3DIS Area 5. Without pre-training, PointSS achieves 73.8±0.4% mean Intersection over Union (mIoU), achieving competitive performance among compared methods. To assess the reliability of our results, we conduct eight independent training runs with different random seeds. One-sample t-tests comparing the PointSS mean against baselines yield: t(7)=2.90, p=0.012 vs. PTv3 (73.4%); t(7)=2.14, p=0.035 vs. Pamba (73.5%). While the margins are modest (+0.4% over PTv3, +0.3% over Pamba), PointSS delivers this competitive performance with substantially lower computational cost (Section 4.4) while retaining the linear time complexity of SSMs.
 
-4.3. Comparison with state-of-the-arts
-…
-Results on PETA: As shown in Table 6, SSPNet with both ResNet50 and Swin-S can achieve the SOTA results. SSPNet with Swin-S obtains the best performance in terms of mA, Accu, Recall, and F1. Compared to DAFL, it exhibits an improvement of 1.66% in mA. Additionally, when compared to EALC, SSPNet achieves an increase of 1.10% in F1. It is clear to observe that our approach consistly obtains the best result on the PETA dataset.
-"
+4.2.3 Experiment Results on the nuScenes Dataset
+To evaluate the generalization capability of PointSS on outdoor LiDAR data, we conduct experiments on the nuScenes validation set. As shown in Table 4, PointSS achieves 81.0±0.4% mIoU, outperforming both Transformer-based methods (PTv3: 80.4%, SphereFormer: 79.5%) and SSM-based methods (Pamba: 80.4%). Statistical analysis over 5 independent runs confirms that PointSS significantly outperforms PTv3 (p=0.019, paired t-test), demonstrating that the geometry-aware multi-scale design of PointSS generalizes effectively from indoor scenes to outdoor autonomous driving scenarios, where point clouds exhibit different characteristics such as larger spatial extent and sparser density.
 
-5. As shown in Fig. 1, some visualizations of one previous PAR model are given. However, there many previous methods and the authors should clarify which method they used for visualization.  Moreover, if the authors only test one previous method, it is hard to draw the conclusion that 'We argue that the absence of spatial prior guidance during the model's learning process is the primary cause of this phenomenon'. More analysis are needed to verify this.
-Response: Thanks for your nice advice. We give response to the questions point by point.
-5.1 As shown in Fig. 1, some visualizations of one previous PAR model are given. However, there many previous methods and the authors should clarify which method they used for visualization.
-(1) The Grad-CAM [8] method is used for visualization.
-5.2 Moreover, if the authors only test one previous method, it is hard to draw the conclusion that 'We argue that the absence of spatial prior guidance during the model's learning process is the primary cause of this phenomenon'. More analysis are needed to verify this.
-(1) We have selected three SOTA methods [6, 7, 8] as representative cases for their visualization results, which exhibit inaccuracies in attribute localization. These methods [6, 7, 8] have issues regarding visualization of response locations that are also discussed in papers [a] (Fig. 1(c)) listed below.
-" …
-1. Introduction
-…
-However, as illustrated in Fig. 1, several attributes response heatmap (visualized by Grad-CAM [5]) learned from these SOTA methods [6, 7, 8] are unreasonable and perplexing.
-…
-[5]	R. R. Selvaraju, M. Cogswell, A. Das, R. Vedantam, D. Parikh, D. Batra, Grad-cam: Visual explanations from deep networks via gradient-based localization, in: Proceedings of the IEEE international conference on com-635 puter vision, 2017, pp. 618–626.
-[6]	K. Yu, B. Leng, Z. Zhang, D. Li, K. Huang, Weakly-supervised learning of mid-level features for pedestrian attribute recognition and localization, arXiv preprint arXiv:1611.05603.
-[7]	X. Liu, H. Zhao, M. Tian, L. Sheng, J. Shao, S. Yi, J. Yan, X. Wang, Hydraplus-net: Attentive deep features for pedestrian analysis, in: Proceedings of the IEEE international conference on computer vision, 2017, pp. 350–359.
-[8]	N. Sarafianos, X. Xu, I. A. Kakadiaris, Deep imbalanced attribute classification using visual attention aggregation, in: Proceedings of the European Conference on Computer Vision (ECCV), 2018, pp. 680–697.
-"
-(2) Our conclusion about absence of spatial prior guidance draws inspiration from the papers [a, b]. We would like to express that in cases like Fig. 1 (d), Fig. 1 (e), and Fig. 1 (f) of our manuscript, during the visualization of attribute response locations, the phenomenon of not only locating in the correct area but also locating in irrelevant regions due to the lack of spatial priors' guidance. As in Fig. 1 (c) in paper [a], these methods lack the guidance of spatial priors, leading the attention mask to focus on areas outside the correct positions. In Fig. 1 (a) of paper [b], the authors use spatial consistency as spatial prior guidance. In situations where such guidance is absent, the attribute response locations are often less accurate.
+3.8: Add further details on how simulations were conducted. Perhaps add a flowchart that clearly identifies how the entire system works.
+Response: We sincerely thank the reviewer for this suggestion. Clear system visualization is essential for reproducibility. We have enhanced Fig. 2 caption with a step-by-step pipeline description to clarify the system workflow, covering all four stages from input preprocessing to prediction output. The corresponding revisions are shown as follows.
+Revised Fig. 2 caption (Section 3.1):
 
-[a] Tang C, Sheng L, Zhang Z, et al. Improving pedestrian attribute recognition with weakly-supervised multi-scale attribute-specific localization[C]//Proceedings of the IEEE/CVF International Conference on Computer Vision. 2019: 4997-5006.
-
-
-[b] Jia J, Chen X, Huang K. Spatial and semantic consistency regularizations for pedestrian attribute recognition[C]//Proceedings of the IEEE/CVF international conference on computer vision. 2021: 962-971.
-(3) We have improved the relevant expressions to make them more understandable. The corresponding revision in manuscript is shown as follows.
-"…
-1. Introduction
-…
-For instance, in the absence of spatial priors, the model is compelled to search for the discriminative features of a hat across the entire feature map, making it susceptible to the influence of irrelevant areas. However, with the aid of spatial priors, which provide partial features near the head, the task of locating discriminative features becomes notably more straightforward. Therefore, the lack of spatial prior guidance makes model more susceptible to dataset bias, resulting in poor generalization performance.
-…"
+3.9: The conclusion section also needs significant revisions. It should briefly describe the findings of the study and some more directions for further research.
+Response: We thank the reviewer for pointing out the need for a more informative Conclusion. A well-structured conclusion should summarize key findings and outline meaningful research directions. We have revised the Conclusion section accordingly. The corresponding revisions are shown as follows.
+Revised Conclusion (Section 5):
+This paper presents PointSS, a geometry-aware multi-scale framework for point cloud analysis built upon State Space Models. GGAM and ASD-SSM address the serialization-induced spatial proximity loss and input-invariant state transition parameters of existing SSM-based methods, respectively. Extensive experiments on standard benchmarks (S3DIS, ModelNet40, and nuScenes) demonstrate the effectiveness of the proposed approach, consistently outperforming major counterparts such as PTv3.
+Despite these contributions, PointSS has several limitations. The scale constraint factors α_s are manually specified as fixed hyperparameters, and the dual-serialization design in GGAM introduces additional computational overhead compared to single-stream methods. Future work will explore automatically learning the scale constraint factors, extending to additional outdoor LiDAR benchmarks such as SemanticKITTI and Waymo Open Dataset, and investigating more efficient geometric fusion strategies to reduce GGAM’s computational overhead.
  
-Response to Reviewer 2
-Reviewer #2:
-This paper proposes a novel pedestrian attribute recognition method named SSPNet, which consists of a AFSS module and a PLE module. AFSS selects the most appropriate feature maps for each attribute group, and PLE learns the most discriminative regional features. Experiments show
-that the proposed SSPNet achieves good results on PA100k and RAP dataset, and also demonstrates good generalization performance across datasets.
-Response: Thanks.
+Response to Reviewer #6
+6.1: Novelty is somewhat limited; similar ideas of geometric feature enhancement and multi-scale modeling exist in prior work. The paper should more clearly articulate its unique contributions.
+Response: We sincerely thank the reviewer for this critical feedback. We have added more descriptions of unique contributions of GGAM.
+Revised Related Work (Section 2.2):
+However, these methods are primarily designed for Transformer or convolution-based architectures, where spatial relationships are preserved through attention mechanisms or local receptive fields. Simply transferring them to SSM frameworks cannot fundamentally resolve the serialization-induced proximity loss.
+The core issue lies in the structural mismatch: existing geometric enhancement methods assume that spatial neighborhood relationships are intact. Their geometric priors refine existing neighborhoods rather than compensating for those already lost during serialization. When such modules are directly grafted onto SSM architectures, the geometric features extracted by KNN-based graph construction are injected into each point as enriched local descriptors, but the SSM’s recurrent state propagation still proceeds along the serialized sequence order. Geometric features tell the model "what the neighbors of this point look like," yet they do not enable neighbor information to actually circulate in the state propagation path. The problem originates from serialization-induced spatial proximity loss, and recovering spatial relationships disrupted by serialization requires injecting geometric priors within the serialization structure itself—not merely enriching point descriptors before or after the process.
+Additionally, KNN-based graph construction introduces O(NlogN) complexity overhead, which partially undermines the linear complexity advantage that SSM-based methods aim to achieve. In contrast, GGAM constructs fully connected graphs within serialization windows, naturally aligning with the serialized structure and preserving O(N) complexity throughout.
+Revised Introduction (Section 1):
+While PointGA and PointMSGT address geometric feature extraction through trigonometric encoding and triangular reconstruction respectively, they do not tackle the fundamental spatial proximity loss inherent in SSM-based serialization: these methods only enrich local point descriptors but cannot bridge the information propagation gap introduced by serialization. The problem originates from serialization-induced spatial proximity loss, and recovering spatial relationships disrupted by serialization requires injecting geometric priors within the serialization structure itself—not merely enriching point descriptors before or after the process.
+6.2: Evaluation is limited to indoor and synthetic datasets, lacking experiments on outdoor LiDAR datasets, which reduces generalizability.
+Response: We thank the reviewer for this valuable suggestion. In response to this concern, we have conducted additional experiments on the nuScenes outdoor LiDAR dataset to evaluate the generalization capability of PointSS beyond indoor scenes. The corresponding revisions are shown as follows.
+4.2.3 Experiment Results on the nuScenes Dataset
+To evaluate the generalization capability of PointSS on outdoor LiDAR data, we conduct experiments on the nuScenes validation set. As shown in Table 4, PointSS achieves 81.0±0.4% mIoU, outperforming both Transformer-based methods (PTv3: 80.4%, SphereFormer: 79.5%) and SSM-based methods (Pamba: 80.4%). Statistical analysis over 5 independent runs confirms that PointSS significantly outperforms PTv3 (p=0.019, One-sample t-test), demonstrating that the geometry-aware multi-scale design of PointSS generalizes effectively from indoor scenes to outdoor autonomous driving scenarios, where point clouds exhibit different characteristics such as larger spatial extent and sparser density.
 
-Some concerns and suggestions:
-1. It's necessary to include the efficiency comparison/analysis, e.g., in terms of parameters, GFLOPs, FPS, etc.
-Response: Thanks for your nice advice. We have added the efficiency comparison and analysis according to your advice in Tab. 3. The corresponding revisions are shown as follows.
-"…
-4.2. Ablation study
-
-…
-4.2. Ablation study
-…
-As shown in Tab. 3, compared to the baseline method, all SSPNet methods have few more parameters and a slightly decrease in FPS. Within the SSPNet family, SSPNet-R utilizes fewer parameters and computational resources in contrast to SSPNet-K and SSPNet-S, since it does not employ learnable offset points.
-…"
-
-2. In Tab.1, it seems that AFSS only achieves on-par performance compared to 'hard-coded'. What's the benefits of AFSS?
-Response: Thanks for your nice advice.
-(1) It is true that the performance of the hard-coded approach closely matches that of the AFSS module implementation. The hard-coded selections (bolded text listed in Tab. 1) represent the best results achieved after extensive experiments with all available feature maps, and these results serve as a benchmark for evaluating the AFSS module's performance.
-(2) The primary benefit of the AFSS module is is its dynamic selection of the optimal feature map for each pedestrian attribute group based on the model's performance feedback, seamlessly integrated into the training process. Hard-coded selection is not feasible until we manually ascertain the most suitable feature map scale for each attribute group. However, the AFSS module can explore the optimal options during the model training.
-(3) During the inference phase, the AFSS module selects suitable feature maps for attribute groups directly based on the training results directly. At this point, it works in the same way as hard coded, but it has the optimal feature map selection coding obtained from the training phase.
-(4) We have improved the relevant expressions to make them more understandable. The corresponding revision in manuscript is shown as follows.
-"…
-3.2.2. Adaptive feature scale selection (AFSS)
-…
-The primary advantage of the AFSS module is its dynamic selection of the optimal feature map based on the model's performance feedback, seamlessly integrated into the training process.
-…"
-3. It's better to include more ablations in Tab.3, for example, using PLE-S but without AFSS.
-Response: Thanks for your nice advice. We have added ablation using PLE-S and without AFSS (second row). The corresponding revision in manuscript is shown as follows. (Note: Because we transformed Tab. 2 from the original manuscript into Fig. 6 in the revised version, the serial numbers of the figure and table changed. Tab. 3 in the original manuscript is the revised version of Tab. 2.)
-The corresponding revision in manuscript is shown as follows.
-"…
-4.2. Ablation study
-…
-
-By comparing the first and third row, AFSS can bring 0.29% improvements. When we use PLE-S, it can bring 0.89% improvements from the third and sixth row. Similar results can also be obtained by comparing the first and second rows which shows that PLE-S can bring 0.74% improvements. Within PLE-S, there are two components: offset and prior. When using offset alone, the learned offset points can improve performance by 0.34% from the third and forth rows. When using prior alone, the spatial prior can provides a significant 0.43% improvement from the third and fifth rows. Finally, by comparing the first and sixth row, AFSS+PLE-S can bring 1.18% additional improvements, which indicate the complementarity between two modules.
-…
-4. I noticed that the provided GitHub repo is empty. Will the code be released?
-Response: Yes, we will upload our code to Github when the paper is accepted.
-5. It's better to use vectorgraph for Fig.5, for example, using matplotlib to draw this graph.
-Response: Thanks for your nice advice. We have modified the Fig. 5 and Fig. 6 (from Tab.2 in the original manuscript) as a vectorgraph in the revised manuscript. The corresponding revision in manuscript is shown as follows.
-  
-
-Response to Reviewer 3
-Reviewer #3:
-1) One challenge of PAR raised by author is "imbalanced learning difficulty", and the author argues that one solution is to extract discriminative features. However, mainstream methods mainly solve imbalanced learning problem using data sampling strategy or imbalanced cost function design. It's confusing to bridge between discriminative features extraction and imbalanced learning. Can it be proved by experiments or can author find grounded arguments that support this claim? Otherwise, it will make this paper less persuasive.
-Response: Thanks for your nice advice. We respond to the questions point by point.
-1.1) One challenge of PAR raised by author is "imbalanced learning difficulty", and the author argues that one solution is to extract discriminative features. However, mainstream methods mainly solve imbalanced learning problem using data sampling strategy or imbalanced cost function design.
-Sorry for the ambiguity use of term "imbalanced learning difficulty". This differs from the commonly mentioned imbalanced learning difficulty in machine learning. Our intention is to highlight the varying demand for feature map scales among attributes of different granularities. We believe that the solution lies in providing multi-scale feature maps to cater to imbalanced learning needs.
-
-1.2) It's confusing to bridge between discriminative features extraction and imbalanced learning. Can it be proved by experiments or can author find grounded arguments that support this claim? Otherwise, it will make this paper less persuasive.
-(1) For greater clarity, we have modified the sentence "imbalanced learning difficulty for attributes with different granularities" to "different learning needs of attributes with various granularities" and changed "one solution is to extract discriminative features" to "one solution is to provide multi-scale feature maps for attributes with varying granularity, facilitating the extraction of discriminative features". The specific revisions are as follows.
-"
-1. Introduction …
-How to deal with different learning needs of attributes with various granularities? One solution is to provide multi-scale feature maps for attributes with varying granularity, facilitating the extraction of discriminative features.
-"
-(2) The following paper [a] can support our claim in the revision manuscript.
-Similar phenomenon has also happened in the pedestrian analysis, such as the pattern "clothing stride" shown in Fig. 1(b) should be inferred from low-level features, while the attribute “gender” in Fig. 1(d) is judged by semantic understanding of the whole pedestrian image.
-…
-we try to tackle the general feature learning paradigm for pedestrian analysis by a multi-directional network, called HydraPlus-Net, which is proposed to better exploit the global and local contents with multi-level feature fusion of a single pedestrian image.
-
-[a] Liu X, Zhao H, Tian M, et al. Hydraplus-net: Attentive deep features for pedestrian analysis[C]//Proceedings of the IEEE international conference on computer vision. 2017: 350-359.
-2) It's desirable to adopt prior knowledge in other domains to improve PAR, however, additional computational cost and cross-domain adaptiveness should also be concerned and discussed.
-Response: Thanks for your nice advice. We have added more experiments about parameters, GFLOPs and analysis for computational cost in Tab. 3. We perform three cross-dataset tests for cross-domain adaptiveness in Tab. 7-9. The corresponding revision in manuscript is shown as follows.
-
-" …
-4.2. Ablation Study
-As shown in Tab. 3, compared to the baseline method, all SSPNet methods have few more parameters and a slightly decrease in FPS. Within the SSPNet family, SSPNet-R utilizes fewer parameters and computational resources in contrast to SSPNet-K and SSPNet-S, since it does not employ learnable offset points.
-…
-4.4. Generalizability
+6.3 Additional computational cost from GGAM (dual serialization, graph construction) is not sufficiently analyzed in terms of memory and runtime trade-offs
+Response: We thank the reviewer for this important concern. We have added a detailed quantitative analysis of GGAM's computational and memory overhead in Section 4.2.4. The corresponding revisions are shown as follows.
+4.2.4 Computational Cost and Performance Analysis
+All efficiency measurements in this section are conducted under identical conditions: FP32 precision, batch size 1, on an NVIDIA A6000 GPU.
+As shown in Table 5, PointSS introduces additional parameters compared to PTv3 (52.2M vs. 46.2M, +13%), primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower GPU memory footprint: at patch size 512, PointSS consumes only 6.0GB compared to PTv3’s 14.7GB, representing a 59% reduction. More critically, while PTv3 encounters out-of-memory errors at patch size 1024 due to quadratic attention complexity, PointSS scales stably to patch size 2048, demonstrating that architectural design—rather than parameter count—determines practical scalability. Compared to PCM, another SSM-based method, PointSS achieves 3.7% higher mIoU with only a modest increase in memory footprint (6.0GB vs. 5.2GB), and both methods demonstrate stable scaling to patch size 2048, confirming the scalability advantage of SSM-based architectures.
+To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3. As shown in Fig. 6, PointSS consistently reduces inference time by 9–19% across patch sizes from 128 to 512, while PTv3 fails to scale beyond patch size 512 due to memory constraints. Within the SSM family, all methods maintain O(N) linear complexity. While GGAM introduces additional computational cost for geometric prior extraction, this overhead is offset by accuracy gains: PointSS achieves the highest mIoU among SSM-based methods, demonstrating a favorable accuracy-efficiency trade-off.
 
 
-
-3) Occlusion and scale deformation are also very important problems in PAR, which could lead misaligned local feature extraction. Can the proposed method solve the above-mentioned hard case? If the scaled ratio is normal and no occlusion exists, any of the proposed strategy (PLE-R、PLE-K、PLE-S) may work well. Some hard case should be discussed.
-Response: Thanks for your nice advice. Our model performs well in addressing minor occlusion and scale deformation. However, severe occlusion remains a challenge for our model. We add some analyses of cases where pedestrian attributes are occlusion and scale deformation in Fig. 7 in section 4.5, Fig. B.10 and Fig. B.11 in Appendix B. The specific modifications are as follows.
-"
-4.5. Weakly Supervised Attribute Localization
-
-Figure 7: Qualitative analysis of weakly supervised attribute localization(From left to right for each set of figures indicate Baseline, SSPNet-R, SSPNet-K, and SSPNet-S respectively. The red rectangular boxes are the attributes bounding boxed obtained from our method)
-…
-Particularly, the model encounters a minor occlusion issue while attempting to localize "Trousers" in Fig. 7d. Compared to the baseline method, SSPNet is able to locate the attribute more accurately.
-…
-Appendix B.1. Discussion on Hard Cases
-
-Figure B.10: Hard cases. (The upper column presents the baseline results, while the lower column displays the results for SSPNet.)
-
-Fig. B.10 presents results on hard cases. In (a), (b), and (c), attributes suffer from occlusion. In (b), (e), and (f), scale deformation occurs under the same attribute due to varying distances. (d) and (e) demonstrate deformation caused by pedestrian movement, and (g) showcases a fine-grained attribute. SSPNet consistently outperforms the baseline method by accurately localizing attributes
-while avoiding irrelevant regions. Our model excels in attribute localization, addressing issues related to occlusion, deformation, and fine-grained details.
-Appendix B.2. Failure cases and Limitation
-
-Figure B.11: Fail cases. (These failed cases involve attribute labels that are predicted correctly, but the predicted locations significantly deviate from our expectations. Boots, Glasses, Hat, and Skirt visualization heatmaps are obtained from SSPNet-K, SSPNet-R, SSPNet-S, and SSPNet-R, respectively)
-…
-“Skirt” in Fig. B.11 demonstrates that the localization performance is not satisfactory when dealing with special samples where the attribute is heavily occluded.
-…
-"
-4) Feature pyramid representation policy is widely used, so what is the novelty of AFSS model?
-Response: Thanks. In PAR tasks, feature pyramid representations often provide the model with either the deepest feature maps or other fixed-sized feature maps for all attributes. In contrast, the AFSS module possesses the ability to dynamically choose the appropriate feature map for each attribute group based on the model's outcomes. All in all, the AFSS module's innovation lies in its ability to adapt feature map scale selection based on results feedback, resembling a single closed-loop control system.
-We have improved the relevant expressions to make them more understandable. The corresponding revision in manuscript is shown as follows.
-"…
-2. Related work
-…
-In this paper, compared to PAR methods that utilize feature pyramid network, our approach incorporates scale prior to select appropriate scale of feature map for each attribute group adaptively.
-…
-3.2.2. Adaptive feature scale selection (AFSS)
-…
-The primary advantage of the AFSS module is its dynamic selection of the optimal feature map based on the model's performance feedback, seamlessly integrated into the training process.
-…"
-
-5) As far as I can see, PLE-R、PLE-K、PLE-S are similar region extraction methods. Will different approaches have a differentiated impact on the results? Besides, key point-based method, region-based method even parsing based methods are not new in PAR. The author should clarify the novelty of this paper.
-Response: Thanks for your nice advice. We respond to the questions point by point.
-5.1) Will different approaches have a differentiated impact on the results?
-There are 3 methods in the SPPNet family mainly because of differences in the use of PLE modules. SSPNet-R use the PLE-R module. SSPNet-K use the PLE-K module. SSPNet-S use the PLE-S module.
-Differentiated impact on the results:
-Recognition: From Tab. 3, SSPNet-S > SSPNet-K > SSPNet-R.
-Speed: From Tab. 3, SSPNet-R > SSPNet-S > SSPNet-K.
-Generalizability: From Tab. 7, 8 and 9, SSPNet-S > SSPNet-K > SSPNet-R.
-Localization: From Fig. 7, 8 and Tab. 10, SSPNet-S ≈ SSPNet-K > SSPNet-R.
-	Recognition	Localization	Offset points
-PLE-R	Provide rough prior regions for attribute recognition to avoid the recognition results being interfered by irrelevant regions.	Constrain the localization of attributes to a coarse region.	✗
-PLE-K	Provide fine-grained human body keypoints for attribute recognition so that attribute recognition is centered around the human body.	Provide fine-grained human key point and offset point cues for attribute localization.	✓
-PLE-S	Provide sparse sampling points within the prior region so that attribute recognition is centered around significant areas in the prior region.	Give fine sparse sampling point and offset point hints in the rough prior regions.	✓
-All in all, the PLE modules differ by providing spatial priors at different levels of granularity and whether or not learnable offset points are used.
-We have improved the relevant expressions to make them more understandable. The corresponding revision in manuscript is shown as follows.
-"…
-3.2.3. Prior location extraction (PLE)
-…
-PLE-R does not learn additional information from spatial priors, such as learnable offset points, which can be considered as a baseline method. Additionally, PLE-R employs the coarsest spatial prior, which involves image blocks. PLE-K and PLE-S both require the use of learnable offset points.  PLE-K utilizes the finest spatial prior, but requires additional computations to obtain each pedestrian's keypoints. PLE-S adopts a balanced approach, which sparsely samples the image and leverages learnable offset points to capture more useful features.
-…
-4.2. Ablation study
-…
-When using the same backbone, SSPNet-S outperforms SSPNet-K, and SSPNet-K outperforms SSPNet-R. Moreover, when utilizing the same PLE module, SSPNet with Swin-S achieves superior performance compared to SSPNet with ResNet50.
-…"
-
-5.2) key point-based method, region-based method even parsing based methods are not new in PAR. The author should clarify the novelty of this paper.
-(1) Our innovation primarily centers on a novel approach that utilizes learnable offset points and attribute grouping to leverage spatial priors (region, human keypoints, and sparse sampling points). This approach addresses the challenges of extracting discriminative features and achieving precise attribute localization.
-(2) Our AFSS module dynamically selects the optimal feature map scale during model training based on model results.
-(3) We perform innovative analyses to assess the influence of spatial priors on weakly supervised pedestrian attribute localization, employing heatmap analysis (qualitative), IoU (quantitative), and correlation coefficients for both recognition and localization. For the first time, we conduct quantitative analysis of weakly supervised attribute localization using a clothing segmentation dataset.
-(4) We achieve superior performance in pedestrian attribute recognition compared to previous methods and conduct generalizability experiments.
-
-6) Line 14, "several attribute positions implicitly learned by such models are unreasonable and perplexing" In Fig1, the author should cite the model or paper utilized to visualize the attention map.
-Response: Thanks for your nice advice.
-We have indicated the models [6, 7, 8] utilized for visualizing the attention map in the revision manuscript. These models [6, 7, 8] have issues regarding visualization of response locations that are also discussed in papers [a] (Fig. 1(c)) listed below. The corresponding revision in manuscript is shown as follows.
-" …
-1. Introduction
-…
-However, as illustrated in Fig. 1, several attributes response heatmap (visualized by Grad-CAM) learned from these SOTA methods [6, 7, 8] are unreasonable and perplexing.
-…
-[6]	K. Yu, B. Leng, Z. Zhang, D. Li, K. Huang, Weakly-supervised learning of mid-level features for pedestrian attribute recognition and localization, arXiv preprint arXiv:1611.05603.
-[7]	X. Liu, H. Zhao, M. Tian, L. Sheng, J. Shao, S. Yi, J. Yan, X. Wang, Hydraplus-net: Attentive deep features for pedestrian analysis, in: Proceedings of the IEEE international conference on computer vision, 2017, pp. 350–359.
-[8]	N. Sarafianos, X. Xu, I. A. Kakadiaris, Deep imbalanced attribute classification using visual attention aggregation, in: Proceedings of the European630 Conference on Computer Vision (ECCV), 2018, pp. 680–697.
-"
-
-[a] Tang C, Sheng L, Zhang Z, et al. Improving pedestrian attribute recognition with weakly-supervised multi-scale attribute-specific localization[C]//Proceedings of the IEEE/CVF International Conference on Computer Vision. 2019: 4997-5006.
-7) Line 18, "uninterpretable and counter-intuition" are caused by imbalanced problem, are there any proofs or papers support this opinion? The motivation is confusing.
-Response: Thanks for your nice advice.
-(1) Sorry for the ambiguity use of term "imbalanced learning difficulty with different granularities" which is interpreted as an imbalance problem. It differs from the commonly mentioned imbalanced learning difficulty in machine learning, which means the varying demand for feature map scales among attributes of different granularities.
-(2) "Uninterpretable and counter-intuitive" means that the attribute response heatmap of “Hat,” “Boots” and “Backpack” attributes focus on the wrong position in Fig. 1(a), Fig. 1(b) and Fig. 1(c). It refers to the model's tendency to focus on incorrect regions and fail to identify discriminative features.
-As stated in paper [a], "clothing stride" should be inferred from low-level feature which is different from the feature map of attribute “gender” using. Therefore, we believe that the lack of meeting the diverse learning needs of attributes with varying granularity for feature maps makes it challenging to find discriminative features on unsuitable feature maps, thereby resulting in "uninterpretable and counter-intuitive" phenomena where heatmap responses are in incorrect positions.
-
-Similar phenomenon has also happened in the pedestrian analysis, such as the pattern "clothing stride" shown in Fig. 1(b) should be inferred from low-level features, while the attribute “gender” in Fig. 1(d) is judged by semantic understanding of the whole pedestrian image.
-[a] Liu X, Zhao H, Tian M, et al. Hydraplus-net: Attentive deep features for pedestrian analysis[C]//Proceedings of the IEEE international conference on computer vision. 2017: 350-359.
-(3) We have improved the relevant expressions to make them more understandable. The corresponding revision in manuscript is shown as follows.
-"…
-1. Introduction
-…
-We argue that one plausible explanation for this phenomenon is the different learning needs of attributes with various granularities. The failure to accommodate these diverse learning needs when using feature maps presents a challenge in identifying discriminative features on unsuitable maps. For instance, the model struggles to learn discriminative features from low-resolution feature maps when dealing with fine-grained attributes, while coarse-grained attributes may suffer from background noise introduced by high-resolution feature maps. Consequently, this mismatch in feature maps leads to heatmap responses being in incorrect positions.
-…"
-
-8) In Table 7, Table 8 and Table 9 only a small part of attributes is illustrated. The results of other attributes should also be shown. Besides, how to judge female\male is not easy. At least I don’t think only part or pose features play important roles in gender recognition., It’s more like a complicated analysis based on both local and global features.
-Response: Thanks for your nice advice. We respond to the questions point by point.
-8.1) In Table 7, Table 8 and Table 9 only a small part of attributes is illustrated. The results of other attributes should also be shown.
-Tables 7, 8, and 9 present cross-dataset generalization tests. We apologize that our model's cross-dataset testing is limited to attributes that exist in both datasets. The tables include all such shared attributes.
-8.2) Besides, how to judge female\male is not easy. At least I don’t think only part or pose features play important roles in gender recognition.
-You are correct and our considerations align closely with your advice.
-(1) Before model training, we conducted attribute grouping. For attributes like Gender and LongCoat, which rely on global features, we employed the entire feature map and all human keypoints instead of partial features in the PLE module. Detailed information on feature map usage can be found in Appendix A.
-(2) In our methods that utilize pose features and sparse point sampling features, our model also learns offset points based on these features. The features at the offset points along with the features at the original points provide the global features for the global attributes such as Gender and LongCoat.
-8.3) It’s more like a complicated analysis based on both local and global features.
-Our model uses both local and global features. Different attribute groups use either local features or global features depending on the grouping. Attributes like hat, boots use local features. Attributes like gender, body orientation, dresses use global features. Detailed information on attribute grouping can be found in Appendix A.
-
-9) Line 20, “Fine-grained attributes cannot learn discriminative features from low-resolution feature map,” Such expression is hard to understand. It’s the model to learn features not “attributes”. Line 4, the word “challenge” is either a verb or noun, it should be “challenging problem”.
-The author should carefully revise the paper to comply with English writing standards.
-Response: Thanks for your nice advice.
-We have completed the revisions, which is shown as follows. Besides, We have tried our best to polish the whole manuscript.
-"
-…
-Line 4: "challenge"---> "challenging"
-Line 20, "Fine-grained attributes cannot learn discriminative features from low-resolution feature map," in original manuscript has been modified to "The failure to accommodate these diverse learning needs when using feature maps presents a challenge in identifying discriminative features on unsuitable maps."
-…"
+6.4 Key hyperparameters (e.g., scale constraint factors) appear to be manually designed and seem sensitive, lacking robustness analysis or automatic tuning schemes.
+Response: We thank the reviewer for this insightful observation. We address both the robustness concern and the manual design issue.
+(1) Robustness analysis. As shown in the revised Table 10, we evaluate nine configurations of α across three scales. Performance remains highly stable when α follows a monotonically increasing pattern from fine to coarse scales: configurations (0.3,0.5,0.7), (0.3,0.6,0.9), and (0.3,0.7,0.9) yield 73.3%–73.8% mIoU, with variation below 0.5%. Varying α ∈ [0.2, 0.4] with other scales fixed produces 73.2%–73.3% mIoU, confirming that exact values within a reasonable range are not critical. Importantly, only physically inconsistent configurations degrade significantly: reversing the scale ordering (0.9,0.6,0.3) drops performance to 66.5%, which is consistent with the design principle that fine scales. require rapid state decay (small α) to capture local detail, while coarse scales require slow decay (large α) to preserve global context.
+(2) Automatic tuning. The current manual specification of α is acknowledged as a limitation. As stated in the revised Conclusion, we will explore learning α as a per-layer trainable parameter via standard backpropagation in future work.
+Revised Conclusion (Section 5):
+This paper presents PointSS, a geometry-aware multi-scale framework for point cloud analysis built upon State Space Models. GGAM and ASD-SSM address the serialization-induced spatial proximity loss and input-invariant state transition parameters of existing SSM-based methods, respectively. Extensive experiments on standard benchmarks (S3DIS, ModelNet40, and nuScenes) demonstrate the effectiveness of the proposed approach, consistently outperforming major counterparts such as PTv3.
+Despite these contributions, PointSS has several limitations. The scale constraint factors α_s are manually specified as fixed hyperparameters, and the dual-serialization design in GGAM introduces additional computational overhead compared to single-stream methods. Future work will explore automatically learning the scale constraint factors, extending to additional outdoor LiDAR benchmarks such as SemanticKITTI and Waymo Open Dataset, and investigating more efficient geometric fusion strategies to reduce GGAM’s computational overhead.
+6.5 The method section, especially GGAM, is dense in content; the description could be clearer, with many symbols and limited readability.
+Response: We sincerely thank the reviewer for this constructive feedback. To improve readability, we have restructured the GGAM section as follows:
+(1) Added hierarchical structure. Introduced two subsubsections—"Graph Construction and Geometric Feature Extraction" and "Geometric Feature Enhancement and Fusion"—to clearly delineate the two-stage pipeline.
+(2) Reduced equation and symbol density. Removed equations describing standard operations (e.g., serialization formalism, attention mechanisms, windowing) and replaced them with concise prose supplemented by references to Fig. 5. Equation count reduced from 15 to 7 (−53%); symbol count reduced from ~40 to ~20 (−52%)..
+(3) Enhanced figure-text coordination.
+(4) Improved prose clarity. Split long sentences, removed non-standard terminology (e.g., "normal consistency" → "dot product of surface normals"), and added bridging sentences between major blocks.
+We have revised the wording in Section 3.2. Since there are numerous changes, we would appreciate it if the reviewer could review the revised manuscript.
+6.6 Add relevant references: (1) free automatic instance segmentation of girder bridge point cloud via large model fusion with reverse entity modelling verification; (2) MFINet: a multi-scale feature interaction network for point cloud registration; (3) No-Reference Point Cloud Quality Assessment Through Structure Sampling and Clustering Based on Graph.
+Response: We sincerely thank the reviewer for recommending these highly relevant and timely references, which significantly enrich our literature review and provide valuable context for our work. These additions have strengthened our positioning within the broader point cloud analysis literature and helped clarify the connections between geometric modeling, multi-scale representation, and diverse application scenarios.
+Added reference (1) to Section 2.1
+The success of these deep learning methods has enabled their deployment across diverse application domains, ranging from infrastructure inspection[24] to autonomous driving scenarios, demonstrating the broad impact of advances in point cloud understanding.
+[24] J. Song, X. Zhou, C. Xu, S. Xu, J. Shu, Training-Free Automatic Instance Segmentation of Girder Bridge Point Cloud via Large Model Fusion with Reverse Entity Modelling Verification, Automation in Construction 179 (2025) 106484.
+Added reference (2) to Section 2.3
+MFINet[40] introduces hierarchical fusion strategies that enable effective multi-scale feature interaction across different granularities, demonstrating the benefits of cross-scale aggregation in point cloud processing tasks. These approaches demonstrate the importance of multi-scale modeling.
+[40] H. Cao, D. Chen, Y. Zhang, H. Zhou, D. Wen, C. Cao, MFINet: A Multi-Scale Feature Interaction Network for Point Cloud Registration, Visual Computer 41 (6) (2025) 4067 – 4079.
+Added reference (3) to Section 2.2 at.
+Recent work on point cloud quality assessment[35] has also demonstrated that graph-based structural modeling can effectively capture geometric properties, reinforcing the value of explicit geometric reasoning in point cloud analysis.
+[35] X. Wu, Z. He, G. Jiang, M. Yu, Y. Song, T. Luo, No-Reference Point Cloud Quality Assessment Through Structure Sampling and Clustering Based on Graph, IEEE Transactions on Broadcasting 71 (1) (2025) 307 – 322.
+6.7 Some figures and explanations could be simplified for better accessibility.
+Thanks for this suggestion. We have reviewed all figures and captions throughout the manuscript, and streamlined several explanations to improve clarity for readers outside the immediate domain.
+6.8 There are minor language and writing issues.
+Response: We thank the reviewer for pointing out the language issues. We have conducted a thorough proof-reading pass throughout the manuscript. Representative corrections include:
+(1) Abstract: Changed "Point cloud analysis with State Space Models (SSMs) achieves linear complexity but loses spatial proximity when serializing 3D point clouds into 1D sequences" to "Point cloud analysis with State Space Models (SSMs) achieves linear complexity but suffers from spatial proximity loss when serializing 3D point clouds into 1D sequences" — improved verb choice for clarity.
+(2) Section 3.2: Changed "GGAM constructs fully connected local graphs within sequence windows on dual orderings" to "GGAM constructs fully connected local graphs within sequence windows using dual orderings (Z-order and Hilbert curves)" — added explicit clarification of "dual orderings" to improve readability.
  
-Response to Editor
+Response to Reviewer #8
+8.1: The method is largely a combination of existing techniques (Mamba/SSM, multi-scale learning, feature fusion); contributions are incremental rather than conceptual.
+Response: We sincerely thank the reviewer for this critical feedback. We have added more descriptions of unique contributions.
+Revised Related Work (Section 2.2):
+However, these methods are primarily designed for Transformer or convolution-based architectures, where spatial relationships are preserved through attention mechanisms or local receptive fields. Simply transferring them to SSM frameworks cannot fundamentally resolve the serialization-induced proximity loss.
+The core issue lies in the structural mismatch: existing geometric enhancement methods assume that spatial neighborhood relationships are intact. Their geometric priors refine existing neighborhoods rather than compensating for those already lost during serialization. When such modules are directly grafted onto SSM architectures, the geometric features extracted by KNN-based graph construction are injected into each point as enriched local descriptors, but the SSM’s recurrent state propagation still proceeds along the serialized sequence order. Geometric features tell the model "what the neighbors of this point look like," yet they do not enable neighbor information to actually circulate in the state propagation path. The problem originates from serialization, and the solution must reside within the serialization structure itself.
+Additionally, KNN-based graph construction introduces O(NlogN) complexity overhead, which partially undermines the linear complexity advantage that SSM-based methods aim to achieve. In contrast, GGAM constructs fully connected graphs within serialization windows, naturally aligning with the serialized structure and preserving O(N) complexity throughout.
+Revised Introduction (Section 1):
+While PointGA and PointMSGT address geometric feature extraction through trigonometric encoding and triangular reconstruction respectively, they do not tackle the fundamental spatial proximity loss inherent in SSM-based serialization: these methods only enrich local point descriptors but cannot bridge the information propagation gap introduced by serialization. The problem originates from serialization, and the solution must reside within the serialization structure itself.
+8.2 The framework introduces multiple modules (GGAM, ASD-SSM, dual-serialization), raising concerns about reproducibility and practical usability.
+Response: We thank the reviewer for this important concern about practical usability. We address it from three perspectives:
 
-1. Make sure your title is succinct and grammatical. It should ideally not exceed 10-15 words.
-Response: Thanks. We have checked our paper according to your advice.
+(1) Modular validation for reproducibility. Each proposed module is independently validated through progressive ablation. GGAM alone improves baseline by +1.6%, and adding ASD-SSM yields an additional +1.9%, confirming that each module contributes meaningfully rather than introducing unnecessary complexity. Five independent runs on S3DIS yield 73.8% ±0.43% mIoU, demonstrating stable performance without careful seed tuning.
+(2) Simplified presentation and code release. To improve accessibility, we have restructured Section 3.2 (GGAM) to reduce equation count from 15 to 7 (−53%) and symbol count from ~40 to ~20 (−52%), focusing the text on design rationale.
+(3) The complete training and inference code will be released upon acceptance, with detailed documentation and pretrained checkpoints.
+Modifications: Restructured Section 3.2 .
+8.3 Evaluation limited to S3DIS and ModelNet40; missing large-scale datasets (ScanNet, SemanticKITTI), cross-dataset validation.
+Response: We thank the reviewer for this concern and have substantially expanded our experimental evaluation.
+New outdoor LiDAR experiments. We have added experiments on the nuScenes outdoor LiDAR dataset. We selected nuScenes over SemanticKITTI because it is the more widely adopted benchmark among the compared methods (PTv3, Pamba); evaluating on the same benchmark as competitors provides a fair and meaningful comparison. The corresponding revisions are shown as follows.
+4.2.3 Experiment Results on the nuScenes Dataset
+To evaluate the generalization capability of PointSS on outdoor LiDAR data, we conduct experiments on the nuScenes validation set. As shown in Table 4, PointSS achieves 81.0±0.4% mIoU, outperforming both Transformer-based methods (PTv3: 80.4%, SphereFormer: 79.5%) and SSM-based methods (Pamba: 80.4%). Statistical analysis over 5 independent runs confirms that PointSS significantly outperforms PTv3 (p=0.019, paired t-test), demonstrating that the geometry-aware multi-scale design of PointSS generalizes effectively from indoor scenes to outdoor autonomous driving scenarios, where point clouds exhibit different characteristics such as larger spatial extent and sparser density.
 
-2. Make sure your conclusions reflect on the strengths and weaknesses of your work, how others in the field can benefit from it and thoroughly discus future work. The conclusions should be different in content from the abstract and be rather longer too.
-Response: Thanks. We have checked our paper according to your advice.
+8.4 Marginal Performance Gains. Improvements over SOTA are: small (~0.5-1%), not consistently significant.
+Response: We thank the reviewer for this concern. We report statistical evidence below, followed by revised experimental results.
+On S3DIS Area 5, PointSS achieves 73.8% ±0.37% over 8 independent runs (73.2, 73.4, 73.6, 73.8, 73.8, 74.0, 74.1, 74.3). 6 out of 8 runs exceed PTv3's reported result (73.4%). We further reproduced PTv3 three times under identical settings; all three runs yielded results below 73.4%, suggesting the reported PTv3 figure may represent the upper bound of its variance. One-sample t-tests confirm statistical significance: t(7)=2.90, p=0.011 vs. PTv3 (73.4%); t(7)=2.14, p=0.035 vs. Pamba (73.5%).
+On nuScenes outdoor LiDAR, PointSS achieves 80.96% ±0.41% over 5 independent runs, also statistically significant vs. PTv3 (80.4%, p=0.019).
+Beyond accuracy, PointSS delivers concrete efficiency advantages unavailable to attention-based methods: 59% GPU memory reduction at patch size 512 (6.0GB vs. 14.7GB), 9–19% faster inference, and stable scaling to patch size 2048, where PTv3 encounters OOM at 1024. The corresponding revisions are shown as follows.
+4.2.1 Experiment Results on the S3DIS Dataset
+Table 2 summarizes the semantic segmentation performance on S3DIS Area 5. Without pre-training, PointSS achieves 73.8±0.4% mean Intersection over Union (mIoU), achieving competitive performance among compared methods. To assess the reliability of our results, we conduct eight independent training runs with different random seeds. One-sample t-tests comparing the PointSS mean against baselines yield: t(7)=2.90, p=0.012 vs. PTv3 (73.4%); t(7)=2.14, p=0.035 vs. Pamba (73.5%). While the margins are modest (+0.4% over PTv3, +0.3% over Pamba), PointSS delivers this competitive performance with substantially lower computational cost (Section 4.4) while retaining the linear time complexity of SSMs.
 
-3. Take a careful look at your bibliography and how you cite papers listed in it. Make sure it is current and cites recent work. Please cite a variety of different sources of literature. Please do not make excessive citation to arXiv papers, or papers from a single conference series. Do not cite large groups of papers without individually commenting on them. So we discourage " In prior work [1,2,3,4,5,6] …". Your bibliography should only exceptionally exceed about 40 items.
-Response: Thanks. We have checked our paper according to your advice.
+4.2.3 Experiment Results on the nuScenes Dataset
+To evaluate the generalization capability of PointSS on outdoor LiDAR data, we conduct experiments on the nuScenes validation set. As shown in Table 4, PointSS achieves 81.0±0.4% mIoU, outperforming both Transformer-based methods (PTv3: 80.4%, SphereFormer: 79.5%) and SSM-based methods (Pamba: 80.4%). Statistical analysis over 5 independent runs confirms that PointSS significantly outperforms PTv3 (p=0.019, paired t-test), demonstrating that the geometry-aware multi-scale design of PointSS generalizes effectively from indoor scenes to outdoor autonomous driving scenarios, where point clouds exhibit different characteristics such as larger spatial extent and sparser density.
 
-4. You may have originally written your paper with a different audience in mind. Please make sure the revised version is relevant to the readership of Pattern Recognition. To this end, please make sure you cite RECENT work from the field of pattern recognition that will be relevant to our readership.
-Response: Thanks. We have cited two recent work [31, 36] in journal of "Pattern Recognition" according to your advice.
+8.5 Missing Efficiency Metrics. No: FLOPs, Parameter count, Memory usage
+Response: We have added a comprehensive efficiency analysis in Section 4.2.4
+Regarding FLOPs: The Mamba operator in PointSS is implemented as a custom CUDA kernel, which is incompatible with standard profiling tools (`thop`, `fvcore`). FLOPs are also a less informative metric for SSM-based methods because the parallel scan algorithm exhibits non-linear FLOP-to-latency relationships due to memory access patterns. We therefore use measured inference latency under identical hardware as the primary efficiency indicator, consistent with the original Mamba paper. The corresponding revisions are shown as follows.
+4.2.4 Computational Cost and Performance Analysis
+All efficiency measurements in this section are conducted under identical conditions: FP32 precision, batch size 1, on an NVIDIA A6000 GPU.
+As shown in Table 5, PointSS introduces additional parameters compared to PTv3 (52.2M vs. 46.2M, +13%), primarily from the GGAM geometric feature extraction module. However, owing to the linear complexity of SSM-based state propagation, PointSS achieves substantially lower GPU memory footprint: at patch size 512, PointSS consumes only 6.0GB compared to PTv3’s 14.7GB, representing a 59% reduction. More critically, while PTv3 encounters out-of-memory errors at patch size 1024 due to quadratic attention complexity, PointSS scales stably to patch size 2048, demonstrating that architectural design—rather than parameter count—determines practical scalability. Compared to PCM, another SSM-based method, PointSS achieves 3.7% higher mIoU with only a modest increase in memory footprint (6.0GB vs. 5.2GB), and both methods demonstrate stable scaling to patch size 2048, confirming the scalability advantage of SSM-based architectures.
+To validate the computational advantage of linear SSM complexity, we compare the inference time of PointSS against PTv3. As shown in Fig. 6, PointSS consistently reduces inference time by 9–19% across patch sizes from 128 to 512, while PTv3 fails to scale beyond patch size 512 due to memory constraints. Within the SSM family, all methods maintain O(N) linear complexity. While GGAM introduces additional computational cost for geometric prior extraction, this overhead is offset by accuracy gains: PointSS achieves the highest mIoU among SSM-based methods, demonstrating a favorable accuracy-efficiency trade-off.
 
-5. Do not exceed the page limits or violate the format, i.e. double spaced SINGLE column with a maximum of 35 pages for a regular paper and 40 pages for a review.
-Response: Thanks. The page number of the revised manuscript is 35 now. we have resized some figures, adjusted the formula and table line spacing in order to meet the page limits.
 
+8.6 Limited Qualitative Analysis. Visualization results show minor differences and lack detailed comparison.
+Response: We thank the reviewer for this suggestion. In the revised manuscript, we have restructured the qualitative comparison. Fig. 7 caption now organizes the comparison into two clearly labeled categories with named example regions. Each category's advantage is explained via its corresponding model mechanism (ASD-SSM coarse/fine scales, GGAM geometric features). The corresponding revisions are shown as follows.
+4.4 Qualitative Experiment
+
+Fig. 7 presents qualitative comparisons on S3DIS Area-5, curated into two categories: (a) large flat surface regions (e.g., walls, windows, columns, whiteboards), where PointSS maintains consistent segmentation without fragmented predictions; (b) complex boundary regions (e.g., bookshelf-clutter junctions, small objects), where PointSS produces sharper boundaries and more accurate fine-grained predictions compared to PTv3 and PCM.
+For large flat surfaces, PTv3 and PCM occasionally produce fragmented or incomplete predictions on spatially extended surfaces. PointSS, in contrast, yields more complete and consistent segmentation regions with higher agreement with the ground truth. This improvement is attributed to ASD-SSM’s coarse-grained scales, which retain broader contextual information through slow state decay, enabling more coherent predictions over extended surfaces.
+For complex boundary regions, both PTv3 and PCM tend to produce blurred or misclassified predictions at category boundaries (e.g., bookshelf-clutter junctions) and tend to confuse small objects with surrounding furniture. PointSS leverages GGAM’s explicit geometric feature extraction to preserve sharp boundary contours, while ASD-SSM’s fine-grained scales with rapid state decay respond more effectively to local geometric variations, yielding sharper boundaries and more accurate fine-grained predictions.
+These qualitative results are consistent with the trends observed in the quantitative experiments, further validating the effectiveness of PointSS in both boundary refinement and global consistency across complex indoor scenes.
