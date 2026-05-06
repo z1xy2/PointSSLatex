@@ -82,7 +82,7 @@ Geometry-Aware Feature Learning \sep Multi-Scale Representation \sep Point Cloud
 
 
 
-\section{Introduction}
+\section{Introduction} \label{sec:intro}
 Point clouds serve as a primary representation for 3D scene understanding but present challenges for feature extraction owing to their sparse and unstructured nature. Pioneering works such as PointNet and PointNet++ \cite{pointnet,PointNet++} established efficient point-wise processing paradigms. Despite their efficiency, their limited ability to capture local structures often leads to sub-optimal prediction accuracy. To address this limitation, Transformers \cite{attention,pt,ptv2,ptv3} subsequently improved semantic representation via self-attention; however, their quadratic complexity $\mathcal{O}(N^2)$ creates scalability bottlenecks.
 
 Recently, State Space Models (SSMs) \cite{ssm,Mamba,VisionMamba}, exemplified by
@@ -244,7 +244,7 @@ Mamba-based point cloud analysis methods face difficulties in modeling local geo
 \end{equation}
 where $k$ denotes the position index in the serialized sequence, $x_k$ represents the state vector at position $k$, $u_k$ is the input feature vector, $y_k$ is the output feature vector, and $\bar{A}$, $\bar{B}$, $\bar{C}$, $\bar{D}$ are system matrices for state transition, input projection, output projection, and skip connection, respectively.
 
-In this recurrent mechanism, each state $x_k$ depends on the previous state $x_{k-1}$ and current input $u_k$, establishing sequential dependencies. As discussed in Section I, serialization inevitably sacrifices spatial proximity—spatially adjacent points often become distant in the sequence. This loss of proximity prevents the recurrent state update from effectively aggregating information across spatial neighbors, limiting the model's ability to capture local geometric structures such as surface normals and curvature.
+In this recurrent mechanism, each state $x_k$ depends on the previous state $x_{k-1}$ and current input $u_k$, establishing sequential dependencies. As discussed in \cref{sec:intro}, serialization inevitably sacrifices spatial proximity—spatially adjacent points often become distant in the sequence. This loss of proximity prevents the recurrent state update from effectively aggregating information across spatial neighbors, limiting the model's ability to capture local geometric structures such as surface normals and curvature.
 
 To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to explicitly inject geometric priors into the model. As illustrated in \cref{fig:ggam}, GGAM consists of two stages: (1) Graph Construction and Geometric Feature Extraction, and (2) Geometric Feature Enhancement and Fusion. The first stage constructs local graphs from the serialized point sequence and extracts geometric features. To capture complementary spatial structure, this process runs in parallel on two serialization streams—Z-order and Hilbert—yielding two independent feature sets $\mathbf{H}_z$ and $\mathbf{H}_h$. The second stage enhances and fuses these dual-stream features through cross-attention and adaptive gating.
 
@@ -363,7 +363,7 @@ We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic 
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} summarizes the semantic segmentation performance on S3DIS Area 5. Without pre-training, PointSS achieves 73.8$\pm$0.4\% mean Intersection over Union (mIoU), achieving competitive performance among compared methods. To assess the reliability of our results, we conduct eight independent training runs with different random seeds. One-sample t-tests comparing the PointSS mean against baselines yield: $t(7)=2.90$, $p=0.012$ vs. PTv3 (73.4\%); $t(7)=2.14$, $p=0.035$ vs. Pamba (73.5\%). While the margins are modest (+0.4\% over PTv3, +0.3\% over Pamba), PointSS delivers this competitive performance with substantially lower computational cost (Section~4.4) while retaining the linear time complexity of SSMs.
+\cref{tab:s3dis} summarizes the semantic segmentation performance on S3DIS Area 5. Without pre-training, PointSS achieves 73.8$\pm$0.4\% mean Intersection over Union (mIoU), achieving competitive performance among compared methods. To assess the reliability of our results, we conduct eight independent training runs with different random seeds. One-sample t-tests comparing the PointSS mean against baselines yield: $t(7)=2.90$, $p=0.012$ vs. PTv3 (73.4\%); $t(7)=2.14$, $p=0.035$ vs. Pamba (73.5\%). While the margins are modest (+0.4\% over PTv3, +0.3\% over Pamba).
 
 \begin{table*}
 	\centering
@@ -384,7 +384,7 @@ We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic 
 		PointMSGT\cite{pointmsgt} & Mathematics'24 & 68.6 \\
 		PointGA\cite{pointga} & Sci. Rep.'25 & 66.2 \\ \midrule
 		\multicolumn{3}{l}{\textit{w/ Mamba}} \\
-		PCM$^\dagger$\cite{pcm} & AAAI'25 & 70.1 \\
+		PCM$^\dagger$\cite{pcm} & AAAI'25 & 70.1$\pm$0.88 \\
 		Pamba\cite{pamba} & AAAI'25 & 73.5 \\
 		HybridTM\cite{hybridtm} & IROS'25 & 72.1 \\
 		PointSS$^\dagger$ (Ours) & -- & \textbf{73.8$\pm$0.4} \\ \bottomrule
