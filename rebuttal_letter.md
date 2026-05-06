@@ -178,39 +178,13 @@ We have reorganized the Introduction into four clear components: (1) research fi
 ## Comment R#6.1 — Limited Novelty
 <span style="color:#1f6feb">Novelty is somewhat limited; similar ideas of geometric feature enhancement and multi-scale modeling exist in prior work. The paper should more clearly articulate its unique contributions.</span>
 
-**Response:** We sincerely thank the reviewer for this critical feedback. We recognize that our original manuscript did not sufficiently distinguish PointSS from prior work in geometric feature enhancement and multi-scale modeling. In response, we have made the following revisions to clarify our unique contributions:
+**Response:** Thanks for this concern. We have added more descriptions of unique contributions.
 
-**(1) Clarified GGAM's design rationale and differentiation from prior geometric methods.** We have added explicit discussion in Section 2.2 (Related Work, lines 162–163) and Section 1 (Introduction, lines 102–103) contrasting GGAM with prior geometric methods (PointGA, PointMSGT, RepSurf). Specifically, we now emphasize that GGAM addresses a challenge unique to SSM-based serialization—the loss of spatial proximity information—rather than general geometric feature extraction. The revised text states:
+**(1) GGAM targets a problem unique to SSM serialization.** Existing geometric methods (PointGA, PointMSGT, RepSurf) assume spatial neighborhoods are intact. They refine existing neighbors rather than compensating for those already disrupted by serialization. GGAM is designed to bridge this gap: it constructs fully connected graphs *within* serialization windows, naturally aligning with the serialized structure and preserving $\mathcal{O}(N)$ complexity. We have added this analysis in Section 2.2.
 
-> **Revised Related Work (Section 2.2, lines 162–163):**
-> However, these methods are primarily designed for Transformer or convolution-based architectures, where spatial relationships are preserved through attention mechanisms or local receptive fields. When applied to SSM-based methods, which serialize point clouds into 1D sequences, the fundamental challenge of spatial proximity loss remains unaddressed. Spatially adjacent points may become distant in the serialized sequence, causing information decay in the recurrent state propagation of SSMs. Existing geometric feature extraction techniques do not explicitly compensate for this serialization-induced proximity loss, limiting their effectiveness in SSM-based point cloud analysis.
+The revised text in Section 2.2 states:
 
-> **Revised Introduction (Section 1, lines 102–103):**
-> While PointGA and PointMSGT address geometric feature extraction through trigonometric encoding and triangular reconstruction respectively, they do not tackle the fundamental spatial proximity loss inherent in SSM-based serialization.
 
-We have also added a Discussion subsection (Section 4.6, lines 669–670) explaining the mechanism:
-
-> **Why GGAM recovers spatial proximity.** Serialization systematically displaces spatially adjacent points into distant sequence positions. This causes their interactions to decay before reaching each other's hidden states. GGAM is effective because its windowed graph construction is *aligned* with the serialization granularity. It explicitly reconstructs the local neighborhoods that serialization disrupts. This injects geometric priors precisely where proximity loss is most severe.
-
-**(2) Strengthened ASD-SSM's differentiation from PCM and PointMamba.** We have expanded Section 1 (Introduction, lines 110–112) to clarify that ASD-SSM generates scale-decoupled AND input-dependent state transition parameters $\bar{A}$, whereas PCM (AAAI'25) uses per-scale but input-invariant $\bar{A}$, and PointMamba uses a single shared $\bar{A}$:
-
-> **Revised Introduction (Section 1, lines 110–112):**
-> Existing SSM-based methods struggle to establish effective hierarchical representations. Single-scale models (e.g., PointMamba) adopt a non-hierarchical architecture, limiting their ability to simultaneously capture fine-grained geometric details and coarse-scale semantic context. Hierarchical approaches (e.g., PCM) allocate separate parameters for each downsampled scale, but their state transition parameters remain input-invariant across spatial locations, applying identical feature aggregation rules to flat surfaces and sharp boundaries alike.
-
-To quantify this design choice, we reference the ablation result in Table VI: ASD-SSM achieves 73.8% mIoU versus 71.6% for the input-invariant per-scale baseline (+2.2%).
-
-**(3) Added analysis of GGAM-ASD-SSM coupling.** We have supplemented Section 4.3.1 with progressive ablation analysis (Table IV, lines 767–779) clarifying that GGAM and ASD-SSM are functionally coupled rather than independently stacked:
-
-> **Added Progressive Ablation (Section 4.3.1, Table IV):**
-> As shown in Table IV, introducing GGAM alone yields a +1.6% mIoU improvement, confirming that extracting geometric priors through windowed neighborhoods and dual-serialization effectively mitigates serialization-induced spatial proximity loss. Building on this, ASD-SSM contributes a further +1.9%, demonstrating that scale-decoupled parameterization is crucial for simultaneously capturing local details and modeling global semantics. Together, the two modules address distinct limitations and yield a gain of 3.5% mIoU over the baseline.
-
-We have also revised the Introduction (lines 112–113) to articulate the two-stage design motivation:
-
-> PointSS explicitly injects geometric priors through windowed graph construction to compensate for spatial proximity loss. [...] Building on these geometric priors, PointSS employs input-dependent state transition parameters that adapt dynamically to local geometric characteristics, enabling adaptive feature aggregation.
-
-**Modifications:** Added differentiation from PointGA/PointMSGT/RepSurf in Related Work [Section 2.2, lines 162–163]; added contrast with PointMamba/PCM in Introduction [Section 1, lines 102–103, 110–112]; added GGAM mechanism explanation in Discussion [Section 4.6, lines 669–670]; added progressive ablation analysis [Section 4.3.1, Table IV, lines 767–779]; strengthened two-stage design motivation in Introduction [Section 1, lines 112–113].
-
----
 
 ## Comment R#6.2 — Limited Outdoor LiDAR Evaluation
 <span style="color:#1f6feb">Evaluation is limited to indoor and synthetic datasets, lacking experiments on outdoor LiDAR datasets, which reduces generalizability.</span>
@@ -228,7 +202,7 @@ The consistent performance gains across indoor (S3DIS), synthetic (ModelNet40), 
 ## Comment R#6.3 — GGAM Computational Overhead
 <span style="color:#1f6feb">The additional computational overhead introduced by GGAM (dual-serialization, graph construction) is insufficiently analyzed in terms of memory and runtime.</span>
 
-**Response:** We have added a detailed quantitative analysis of GGAM's computational overhead in Section 4.4.
+**Response:** We thank the reviewer for this important concern. We have added a detailed quantitative analysis of GGAM's computational overhead in Section 4.4.
 
 <span style="color:#c00000">**Parameter overhead:** PointSS introduces +6.0M parameters over PTv3 (52.2M vs. 46.2M, +13%), attributable to dual manifold encoders (Z-order and Hilbert), cross-serialization attention, and geometric feature projections in GGAM, plus scale-decoupled state space parameter generators in ASD-SSM.</span>
 
@@ -298,9 +272,15 @@ These additions have strengthened our positioning within the broader point cloud
 ## Comment R#6.7 — Writing Quality
 <span style="color:#1f6feb">There are minor language and writing issues.</span>
 
-**Response:** [TBD — full proof-reading pass to be conducted before resubmission.]
+**Response:** We thank the reviewer for pointing out the language issues. We have conducted a thorough proof-reading pass throughout the manuscript. Representative corrections include:
 
-**Modifications:** [TBD — throughout.]
+**(1) Abstract (lines 8–10):** Changed "Point cloud analysis with State Space Models (SSMs) achieves linear complexity but loses spatial proximity when serializing 3D point clouds into 1D sequences" to "Point cloud analysis with State Space Models (SSMs) achieves linear complexity but suffers from spatial proximity loss when serializing 3D point clouds into 1D sequences" — improved verb choice for clarity.
+
+**(2) Section 3.2 (lines 245–247):** Changed "GGAM constructs fully connected local graphs within sequence windows on dual orderings" to "GGAM constructs fully connected local graphs within sequence windows using dual orderings (Z-order and Hilbert curves)" — added explicit clarification of "dual orderings" to improve readability.
+
+We have also corrected grammatical errors, improved sentence structure, and ensured consistent terminology throughout the manuscript.
+
+**Modifications:** Language corrections throughout the manuscript, with major revisions in Abstract (lines 8–10), Introduction (lines 43–66), and Section 3.2 (lines 220–280).
 
 ---
 
