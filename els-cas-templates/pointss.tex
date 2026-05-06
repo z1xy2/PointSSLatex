@@ -443,7 +443,7 @@ All efficiency measurements in this section are conducted under identical condit
 
 \begin{table}[t]
 \centering
-\caption{Computational cost and performance comparison on S3DIS Area 5. Peak memory measured at patch size 512 with batch size 6. Inference time normalized relative to PTv3 baseline. PTv3 encounters out-of-memory errors at patch size 1024.}
+\caption{Computational cost and performance comparison on S3DIS Area 5. Peak memory measured at patch size 512. Inference time normalized relative to PTv3 baseline. PTv3 encounters out-of-memory errors at patch size 1024.}
 \label{tab:efficiency}
 \begin{tabular}{lccccc}
 \toprule
@@ -572,7 +572,7 @@ The full combination demonstrates that these components function as a coherent w
 		\bottomrule
 	\end{tabular}
 	\par\vspace{3pt}
-	\footnotesize Notes: DS: Dual-Serialization; CSA: Cross-Sequence Attention; GFM: Gated Fusion Mechanism; $L_{geo}$: Geometric Consistency Constraint (Gate Module). All configurations retain geometric feature extraction as it is a prerequisite of GGAM. The baseline (70.8\%) differs from the pure Mamba baseline in \Cref{tab:progressive_improvement} (70.3\%), as geometric feature extraction is retained in all configurations here.
+	\footnotesize Notes: DS: Dual-Serialization; CSA: Cross-Sequence Attention; GFM: Gated Fusion Mechanism; $\gamma$: Geometric Consistency Gate. All configurations retain geometric feature extraction as it is a prerequisite of GGAM. The baseline (70.8\%) differs from the pure Mamba baseline in \Cref{tab:progressive_improvement} (70.3\%), as geometric feature extraction is retained in all configurations here.
 \end{table}
 
 \subsubsection{ASD-SSM Ablation Study}
