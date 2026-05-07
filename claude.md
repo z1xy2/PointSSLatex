@@ -43,7 +43,7 @@ PointSS introduces additional parameters (+43% over PTv3) primarily from the GGA
 
 标准差统计：
 pointss在s3dis数据集八次运行mIoU：73.2 73.4 73.6 73.8 73.8 74.0 74.1 74.3
-均值73.76% 标准差±0.38% T检验0.011相较于ptv3，相较于pamba 0.035
+均值73.76% 标准差±0.37% T检验0.011相较于ptv3，相较于pamba 0.035
 此外我发现，我复现3次ptv3，结果都小于73.4%,可以提一嘴，在rebuttal letter里，也就是说选73.4%甚至是对我们不利的，你可以委婉说一下
 
 pcm在s3dis数据集五次运行mIoU：73.4, 73.5, 73.8, 73.8, 74.3
