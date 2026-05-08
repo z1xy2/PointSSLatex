@@ -257,7 +257,7 @@ To address this issue, we propose the Global Geometry-Aware Mechanism (GGAM) to 
 
 \subsubsection{Graph Construction and Geometric Feature Extraction}
 
-Following Point Transformer V3 \cite{ptv3}, we partition the serialized sequence into non-overlapping windows of 64 consecutive points. Within each window, we construct a fully-connected local graph where each point is connected to all other points in the same window. This windowed neighborhood construction reduces complexity from $\mathcal{O}(N\log N)$ (KNN-based) to $\mathcal{O}(N)$. The window size of 64 provides a sufficient neighborhood for stable PCA-based estimation of local geometric properties such as surface normals and curvature.
+Following PTv3 \cite{ptv3}, we partition the serialized sequence into non-overlapping windows of 64 consecutive points. Within each window, we construct a fully-connected local graph where each point is connected to all other points in the same window. This windowed neighborhood construction reduces complexity from $\mathcal{O}(N\log N)$ (KNN-based) to $\mathcal{O}(N)$. The window size of 64 provides a sufficient neighborhood for stable PCA-based estimation of local geometric properties such as surface normals and curvature.
 
 For each edge $(q_i, q_j)$ connecting two points in the serialized sequence within the same window, we extract an 8-dimensional geometric feature vector:
 \begin{equation}
@@ -373,14 +373,14 @@ We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic 
 		\toprule
 		\textbf{Method} & \textbf{Venue} & \textbf{mIoU (\%)} \\ \midrule
 		\multicolumn{3}{l}{\textit{w/o Mamba}} \\
-		Point Transformer V2\cite{ptv2} & NeurIPS'22 & 72.6 \\
+		PTv2 \cite{ptv2} & NeurIPS'22 & 72.6 \\
 		PointMetaBase\cite{pmb} & CVPR'23 & 72.0 \\
 		SuperpointTransformer\cite{spt} & ICCV'23 & 68.1 \\
 		Swin3D\cite{Swin3D} & CVMJ'25 & 72.5 \\
 		PPT+SpareUNET\cite{ppt} & CVPR'24 & 72.7 \\
 		OA-CNNs\cite{oacnn} & CVPR'24 & 71.1 \\
 		OneFormer3D\cite{OneFormer3D} & CVPR'24 & 72.4 \\
-		Point Transformer V3\cite{ptv3} & CVPR'24 & 73.4 \\
+		PTv3\cite{ptv3} & CVPR'24 & 73.4 \\
 		PointMSGT\cite{pointmsgt} & Mathematics'24 & 68.6 \\
 		PointGA\cite{pointga} & Sci. Rep.'25 & 66.2 \\ \midrule
 		\multicolumn{3}{l}{\textit{w/ Mamba}} \\
@@ -403,7 +403,7 @@ We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic 
 		\toprule
 		\textbf{Method} & \textbf{Venue} & \textbf{OA (\%)} \\ \midrule
 		\multicolumn{3}{l}{\textit{w/o Mamba}} \\
-		Point Transformer V2 \cite{ptv2} & NeurIPS'22 & 94.2 \\
+		PTv2 \cite{ptv2} & NeurIPS'22 & 94.2 \\
 		Point-FEMAE \cite{FEMAE} & AAAI'24 & 94.5 \\
 		PointGA \cite{pointga} & Sci. Rep.'25 & 93.8 \\ \midrule
 		\multicolumn{3}{l}{\textit{w/ Mamba}} \\
@@ -430,7 +430,7 @@ To evaluate the generalization capability of PointSS on outdoor LiDAR data, we c
 		PTv2 \cite{ptv2} & NeurIPS'22 & 80.2 \\
 		SphereFormer \cite{sphereformer} & CVPR'23 & 79.5 \\
 		OA-CNNs \cite{oacnn} & CVPR'24 & 78.9 \\
-		Point Transformer V3 \cite{ptv3} & CVPR'24 & 80.4 \\ \midrule
+		PTv3 \cite{ptv3} & CVPR'24 & 80.4 \\ \midrule
 		\multicolumn{3}{l}{\textit{w/ Mamba}} \\
 		Pamba \cite{pamba} & AAAI'25 & 80.4 \\
 		PointSS$^\dagger$ (Ours) & -- & \textbf{81.0$\pm$0.4} \\ \bottomrule
