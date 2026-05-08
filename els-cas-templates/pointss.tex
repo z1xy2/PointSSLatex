@@ -363,7 +363,7 @@ We evaluate PointSS on three benchmarks: S3DIS~\cite{s3dis} for indoor semantic 
 
 \subsubsection{Experiment Results on the S3DIS Dataset}
 
-\cref{tab:s3dis} summarizes the semantic segmentation performance on S3DIS Area 5. Without pre-training, PointSS achieves 73.8$\pm$0.4\% mean Intersection over Union (mIoU), achieving competitive performance among compared methods. To assess the reliability of our results, we conduct eight independent training runs with different random seeds. One-sample t-tests comparing the PointSS mean against baselines yield: $t(7)=2.90$, $p=0.012$ vs. PTv3 (73.4\%); $t(7)=2.14$, $p=0.035$ vs. Pamba (73.5\%). Although the margins are modest (+0.4\% over PTv3, +0.3\% over Pamba), both differences are statistically significant at the 5\% level, confirming that the improvements are not attributable to random variation.
+\cref{tab:s3dis} summarizes the semantic segmentation performance on S3DIS Area 5. Without pre-training, PointSS achieves 73.8$\pm$0.4\% mean Intersection over Union (mIoU), achieving competitive performance among compared methods. To assess the reliability of our results, we conduct eight independent training runs with different random seeds. One-sample t-tests comparing the PointSS mean against baselines yield: $t(7)=2.90$, $p=0.012$ vs. PTv3 (73.4\%); $t(7)=2.14$, $p=0.035$ vs. Pamba (73.5\%). Both differences are statistically significant ($p<0.05$), confirming that the improvements are not attributable to random variation.
 
 \begin{table*}
 	\centering
